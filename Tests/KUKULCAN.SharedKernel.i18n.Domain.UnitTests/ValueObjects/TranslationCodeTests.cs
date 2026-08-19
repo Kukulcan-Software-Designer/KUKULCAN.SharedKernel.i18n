@@ -1,4 +1,5 @@
 using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
+using KUKULCAN.SharedKernel.Results;
 using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.ValueObjects;
@@ -13,7 +14,7 @@ public sealed class TranslationCodeTests
     [TestCase("ABCDE0042", "ABCDE", 42)]
     public void From_ValidCode_ReturnsNormalisedValue(string raw, string module, int sequence)
     {
-        var result = TranslationCode.From(raw);
+        Result<TranslationCode> result = TranslationCode.From(raw);
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Value.Value, Is.EqualTo($"{module}{sequence:D4}"));
@@ -66,7 +67,7 @@ public sealed class TranslationCodeTests
     [TestCase("ABCDE", 9999, "ABCDE9999")]
     public void Create_ValidComponents_ReturnsExpectedCode(string module, int sequence, string expected)
     {
-        var result = TranslationCode.Create(module, sequence);
+        Result<TranslationCode> result = TranslationCode.Create(module, sequence);
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Value.Value, Is.EqualTo(expected));
@@ -88,8 +89,8 @@ public sealed class TranslationCodeTests
     [Test]
     public void Equality_IsBasedOnValue()
     {
-        var first = TranslationCode.From("crm0001").Value;
-        var second = TranslationCode.Create("CRM", 1).Value;
+        TranslationCode first = TranslationCode.From("crm0001").Value;
+        TranslationCode second = TranslationCode.Create("CRM", 1).Value;
 
         Assert.That(first, Is.EqualTo(second));
         Assert.That(first.GetHashCode(), Is.EqualTo(second.GetHashCode()));

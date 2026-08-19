@@ -1,4 +1,5 @@
 using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
+using KUKULCAN.SharedKernel.Results;
 using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.ValueObjects;
@@ -12,7 +13,7 @@ public sealed class LanguageCodeTests
     [TestCase("ca-ES", "ca-ES", "ca", "ES")]
     public void Create_ValidTag_NormalisesAndParses(string input, string value, string language, string? region)
     {
-        var result = LanguageCode.Create(input);
+        Result<LanguageCode> result = LanguageCode.Create(input);
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Value.Value, Is.EqualTo(value));
@@ -27,7 +28,7 @@ public sealed class LanguageCodeTests
     [TestCase("   ")]
     public void Create_EmptyTag_ReturnsFailure(string? input)
     {
-        var result = LanguageCode.Create(input);
+        Result<LanguageCode> result = LanguageCode.Create(input);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -39,7 +40,7 @@ public sealed class LanguageCodeTests
     [TestCase("es-123456789")]
     public void Create_InvalidTag_ReturnsFailure(string input)
     {
-        var result = LanguageCode.Create(input);
+        Result<LanguageCode> result = LanguageCode.Create(input);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -47,7 +48,7 @@ public sealed class LanguageCodeTests
     [Test]
     public void FallbackChain_RegionalLanguage_ReturnsExactLanguageThenParentThenEnglish()
     {
-        var result = LanguageCode.Create("es-MX");
+        Result<LanguageCode> result = LanguageCode.Create("es-MX");
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Value.FallbackChain, Is.EqualTo(new[] { "es-MX", "es", "en" }));
@@ -56,7 +57,7 @@ public sealed class LanguageCodeTests
     [Test]
     public void FallbackChain_LanguageOnly_DoesNotDuplicateEnglish()
     {
-        var result = LanguageCode.Create("en");
+        Result<LanguageCode> result = LanguageCode.Create("en");
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Value.FallbackChain, Is.EqualTo(new[] { "en" }));
@@ -65,10 +66,10 @@ public sealed class LanguageCodeTests
     [Test]
     public void FallbackChain_IsReadOnlyAndStableAcrossReads()
     {
-        var result = LanguageCode.Create("fr-FR");
+        Result<LanguageCode> result = LanguageCode.Create("fr-FR");
 
-        var first = result.Value.FallbackChain;
-        var second = result.Value.FallbackChain;
+        IReadOnlyList<string> first = result.Value.FallbackChain;
+        IReadOnlyList<string> second = result.Value.FallbackChain;
 
         Assert.That(first, Is.EqualTo(second));
         Assert.That(first, Is.Not.SameAs(second));
@@ -78,7 +79,7 @@ public sealed class LanguageCodeTests
     [TestCase("sr-Latn-RS")]
     public void Create_ComplexBcp47Tag_IsAccepted(string input)
     {
-        var result = LanguageCode.Create(input);
+        Result<LanguageCode> result = LanguageCode.Create(input);
 
         Assert.That(result.IsSuccess, Is.True);
     }
@@ -86,8 +87,8 @@ public sealed class LanguageCodeTests
     [Test]
     public void Equality_IsBasedOnNormalisedValue()
     {
-        var first = LanguageCode.Create("ES-es").Value;
-        var second = LanguageCode.Create("es-ES").Value;
+        LanguageCode first = LanguageCode.Create("ES-es").Value;
+        LanguageCode second = LanguageCode.Create("es-ES").Value;
 
         Assert.That(first, Is.EqualTo(second));
         Assert.That(first.GetHashCode(), Is.EqualTo(second.GetHashCode()));
