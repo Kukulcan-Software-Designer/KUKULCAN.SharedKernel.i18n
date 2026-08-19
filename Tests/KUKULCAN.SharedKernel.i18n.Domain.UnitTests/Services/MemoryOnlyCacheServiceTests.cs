@@ -114,11 +114,15 @@ public sealed class MemoryOnlyCacheServiceTests
 
         await _service.RemoveByPrefixAsync("language:");
 
-        Assert.Multiple(async () =>
+        var esExists = await _service.ExistsAsync("language:es");
+        var enExists = await _service.ExistsAsync("language:en");
+        var eurExists = await _service.ExistsAsync("currency:eur");
+
+        Assert.Multiple(() =>
         {
-            Assert.That(await _service.ExistsAsync("language:es"), Is.False);
-            Assert.That(await _service.ExistsAsync("language:en"), Is.False);
-            Assert.That(await _service.ExistsAsync("currency:eur"), Is.True);
+            Assert.That(esExists, Is.False);
+            Assert.That(enExists, Is.False);
+            Assert.That(eurExists, Is.True);
         });
     }
 }
