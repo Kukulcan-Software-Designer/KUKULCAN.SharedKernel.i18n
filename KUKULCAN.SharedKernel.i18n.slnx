@@ -14,7 +14,6 @@
     <File Path="CODE_OF_CONDUCT.md" />
     <File Path="CONTRIBUTING.md" />
     <File Path="Directory.Build.props" />
-    <File Path="global.json" />
     <File Path="GOVERNANCE.md" />
     <File Path="LICENSE" />
     <File Path="README.md" />
@@ -40,6 +39,8 @@
     <Project Path="SourceClient/KUKULCAN.SharedKernel.i18n.Client.csproj" />
   </Folder>
 
-  <Folder Name="/Tests/" />
+  <Folder Name="/Tests/">
+    <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests.csproj" />
+  </Folder>
 
 </Solution>
