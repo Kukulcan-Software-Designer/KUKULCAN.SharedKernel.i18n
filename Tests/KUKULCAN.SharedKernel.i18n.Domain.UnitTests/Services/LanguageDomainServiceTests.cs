@@ -2,6 +2,7 @@ using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Repositories;
 using KUKULCAN.SharedKernel.i18n.Domain.Services;
 using Moq;
+using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Services;
 

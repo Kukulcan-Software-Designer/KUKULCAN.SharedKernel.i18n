@@ -1,4 +1,5 @@
 using KUKULCAN.SharedKernel.i18n.Domain.Entities;
+using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Entities;
 

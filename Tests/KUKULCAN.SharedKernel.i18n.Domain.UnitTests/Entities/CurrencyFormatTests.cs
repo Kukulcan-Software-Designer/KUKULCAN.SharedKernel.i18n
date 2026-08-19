@@ -1,4 +1,7 @@
 using KUKULCAN.SharedKernel.i18n.Domain.Entities;
+using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects.Enums;
+using KUKULCAN.SharedKernel.Results;
+using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Entities;
 
@@ -7,7 +10,7 @@ public sealed class CurrencyFormatTests
 {
     private static CurrencyFormat CreateUsdBefore(int decimalPlaces = 2, string negativePattern = "-{symbol}{amount}")
     {
-        var result = CurrencyFormat.Create(
+        Result<CurrencyFormat> result = CurrencyFormat.Create(
             Guid.NewGuid(), "en-US", "usd", " US Dollar ", " $ ",
             default, false, '.', ',', decimalPlaces, negativePattern);
 
@@ -17,7 +20,7 @@ public sealed class CurrencyFormatTests
 
     private static CurrencyFormat CreateEurAfter()
     {
-        var result = CurrencyFormat.Create(
+        Result<CurrencyFormat> result = CurrencyFormat.Create(
             Guid.NewGuid(), "es-ES", "eur", " Euro ", " € ",
             (CurrencySymbolPosition)1, true, ',', '.', 2, "-{amount} {symbol}");
 
@@ -28,7 +31,7 @@ public sealed class CurrencyFormatTests
     [Test]
     public void Create_ValidInput_NormalisesAndStoresValues()
     {
-        var format = CreateUsdBefore();
+        CurrencyFormat format = CreateUsdBefore();
 
         Assert.Multiple(() =>
         {
@@ -48,7 +51,7 @@ public sealed class CurrencyFormatTests
     [TestCase("US$")]
     public void Create_InvalidCurrencyCode_ReturnsFailure(string currencyCode)
     {
-        var result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", currencyCode, "Dollar", "$", default, false, '.', ',', 2);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", currencyCode, "Dollar", "$", default, false, '.', ',', 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -56,7 +59,7 @@ public sealed class CurrencyFormatTests
     [Test]
     public void Create_DefaultGuid_ReturnsFailure()
     {
-        var result = CurrencyFormat.Create(Guid.Empty, "en-US", "USD", "Dollar", "$", default, false, '.', ',', 2);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.Empty, "en-US", "USD", "Dollar", "$", default, false, '.', ',', 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -66,7 +69,7 @@ public sealed class CurrencyFormatTests
     [TestCase(" ")]
     public void Create_EmptyCurrencyName_ReturnsFailure(string? currencyName)
     {
-        var result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", currencyName!, "$", default, false, '.', ',', 2);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", currencyName!, "$", default, false, '.', ',', 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -76,7 +79,7 @@ public sealed class CurrencyFormatTests
     [TestCase(" ")]
     public void Create_EmptySymbol_ReturnsFailure(string? symbol)
     {
-        var result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", symbol!, default, false, '.', ',', 2);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", symbol!, default, false, '.', ',', 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -84,7 +87,7 @@ public sealed class CurrencyFormatTests
     [Test]
     public void Create_EqualSeparators_ReturnsFailure()
     {
-        var result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", "$", default, false, '.', '.', 2);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", "$", default, false, '.', '.', 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -93,7 +96,7 @@ public sealed class CurrencyFormatTests
     [TestCase(11)]
     public void Create_DecimalPlacesOutsideRange_ReturnsFailure(int decimalPlaces)
     {
-        var result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", "$", default, false, '.', ',', decimalPlaces);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", "$", default, false, '.', ',', decimalPlaces);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -104,7 +107,7 @@ public sealed class CurrencyFormatTests
     [TestCase("{symbol}")]
     public void Create_InvalidNegativePattern_ReturnsFailure(string? pattern)
     {
-        var result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", "$", default, false, '.', ',', 2, pattern!);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", "$", default, false, '.', ',', 2, pattern!);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -112,7 +115,7 @@ public sealed class CurrencyFormatTests
     [Test]
     public void Format_BeforeSymbol_UsesGroupingAndDecimals()
     {
-        var format = CreateUsdBefore();
+        CurrencyFormat format = CreateUsdBefore();
 
         Assert.That(format.Format(1234567.89m), Is.EqualTo("$1,234,567.89"));
         Assert.That(format.Format(12m), Is.EqualTo("$12.00"));
@@ -122,7 +125,7 @@ public sealed class CurrencyFormatTests
     [Test]
     public void Format_AfterSymbolWithSpace_UsesLocaleStyle()
     {
-        var format = CreateEurAfter();
+        CurrencyFormat format = CreateEurAfter();
 
         Assert.That(format.Format(1234567.89m), Is.EqualTo("1.234.567,89 €"));
     }
@@ -130,7 +133,7 @@ public sealed class CurrencyFormatTests
     [Test]
     public void Format_NegativeAmount_UsesConfiguredPattern()
     {
-        var format = CreateUsdBefore(2, "-{symbol}{amount}");
+        CurrencyFormat format = CreateUsdBefore(2, "-{symbol}{amount}");
 
         Assert.That(format.Format(-1234.56m), Is.EqualTo("-$1,234.56"));
     }
@@ -138,7 +141,7 @@ public sealed class CurrencyFormatTests
     [Test]
     public void Format_AccountingNegativePattern_UsesParentheses()
     {
-        var format = CreateUsdBefore(2, "({symbol}{amount})");
+        CurrencyFormat format = CreateUsdBefore(2, "({symbol}{amount})");
 
         Assert.That(format.Format(-1234.56m), Is.EqualTo("($1,234.56)"));
     }
@@ -149,7 +152,7 @@ public sealed class CurrencyFormatTests
     [TestCase(1.235m, "$1.24")]
     public void Format_RoundsToConfiguredDecimalPlaces(decimal amount, string expected)
     {
-        var format = CreateUsdBefore();
+        CurrencyFormat format = CreateUsdBefore();
 
         Assert.That(format.Format(amount), Is.EqualTo(expected));
     }
@@ -157,7 +160,7 @@ public sealed class CurrencyFormatTests
     [Test]
     public void Format_ZeroDecimalPlaces_DoesNotEmitDecimalSeparator()
     {
-        var format = CreateUsdBefore(0);
+        CurrencyFormat format = CreateUsdBefore(0);
 
         Assert.That(format.Format(1234.56m), Is.EqualTo("$1,235"));
     }
@@ -165,9 +168,9 @@ public sealed class CurrencyFormatTests
     [Test]
     public void Update_ValidInput_ReplacesFormattingProperties()
     {
-        var format = CreateUsdBefore();
+        CurrencyFormat format = CreateUsdBefore();
 
-        var result = format.Update("US Dollar Updated", "USD", (CurrencySymbolPosition)1, true, ',', '.', 3, "-{amount} {symbol}");
+        Result result = format.Update("US Dollar Updated", "USD", (CurrencySymbolPosition)1, true, ',', '.', 3, "-{amount} {symbol}");
 
         Assert.Multiple(() =>
         {
@@ -186,9 +189,9 @@ public sealed class CurrencyFormatTests
     [Test]
     public void Update_InvalidValues_DoNotMutateExistingState()
     {
-        var format = CreateUsdBefore();
+        CurrencyFormat format = CreateUsdBefore();
 
-        var result = format.Update("Changed", "€", default, false, '.', '.', 2, "-{symbol}{amount}");
+        Result result = format.Update("Changed", "€", default, false, '.', '.', 2, "-{symbol}{amount}");
 
         Assert.That(result.IsFailure, Is.True);
         Assert.That(format.CurrencyName, Is.EqualTo("US Dollar"));
