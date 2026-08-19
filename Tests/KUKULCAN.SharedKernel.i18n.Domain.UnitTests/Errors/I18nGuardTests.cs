@@ -3,7 +3,7 @@ using KUKULCAN.SharedKernel.i18n.Domain.Errors;
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Errors;
 
 [TestFixture]
-public sealed class I18NGuardTests
+public sealed class I18nGuardTests
 {
     [Test]
     public void Null_WithNonNullReference_ReturnsSameReference()
