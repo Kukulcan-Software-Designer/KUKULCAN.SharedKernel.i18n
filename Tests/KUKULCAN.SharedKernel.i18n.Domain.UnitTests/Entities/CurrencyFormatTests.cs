@@ -1,4 +1,5 @@
 using KUKULCAN.SharedKernel.i18n.Domain.Entities;
+using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects.Enums;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Entities;
 
@@ -19,7 +20,7 @@ public sealed class CurrencyFormatTests
     {
         var result = CurrencyFormat.Create(
             Guid.NewGuid(), "es-ES", "eur", " Euro ", " € ",
-            (CurrencySymbolPosition)1, true, ',', '.', 2, "-{amount} {symbol}");
+            CurrencySymbolPosition.After, true, ',', '.', 2, "-{amount} {symbol}");
 
         Assert.That(result.IsSuccess, Is.True, result.IsFailure ? result.Error.ToString() : string.Empty);
         return result.Value;
@@ -167,14 +168,14 @@ public sealed class CurrencyFormatTests
     {
         var format = CreateUsdBefore();
 
-        var result = format.Update("US Dollar Updated", "USD", (CurrencySymbolPosition)1, true, ',', '.', 3, "-{amount} {symbol}");
+        var result = format.Update("US Dollar Updated", "USD", CurrencySymbolPosition.After, true, ',', '.', 3, "-{amount} {symbol}");
 
         Assert.Multiple(() =>
         {
             Assert.That(result.IsSuccess, Is.True);
             Assert.That(format.CurrencyName, Is.EqualTo("US Dollar Updated"));
             Assert.That(format.Symbol, Is.EqualTo("USD"));
-            Assert.That(format.SymbolPosition, Is.EqualTo((CurrencySymbolPosition)1));
+            Assert.That(format.SymbolPosition, Is.EqualTo(CurrencySymbolPosition.After));
             Assert.That(format.SpaceBetweenSymbolAndAmount, Is.True);
             Assert.That(format.DecimalSeparator, Is.EqualTo(','));
             Assert.That(format.ThousandsSeparator, Is.EqualTo('.'));
@@ -188,7 +189,7 @@ public sealed class CurrencyFormatTests
     {
         var format = CreateUsdBefore();
 
-        var result = format.Update("Changed", "€", default, false, '.', '.', 2, "-{symbol}{amount}");
+        var result = format.Update("Changed", "€", CurrencySymbolPosition.Before, false, '.', '.', 2, "-{symbol}{amount}");
 
         Assert.That(result.IsFailure, Is.True);
         Assert.That(format.CurrencyName, Is.EqualTo("US Dollar"));
