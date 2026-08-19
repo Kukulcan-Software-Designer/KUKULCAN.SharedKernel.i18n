@@ -2,6 +2,7 @@ using KUKULCAN.SharedKernel.i18n.Domain.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
+using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Services;
 
