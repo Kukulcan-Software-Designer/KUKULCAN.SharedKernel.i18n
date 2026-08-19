@@ -1,4 +1,5 @@
 using KUKULCAN.SharedKernel.i18n.Domain.Entities;
+using KUKULCAN.SharedKernel.Results;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Entities;
 
@@ -7,7 +8,7 @@ public sealed class LocaleConfigurationTests
 {
     private static LocaleConfiguration CreateDefault()
     {
-        var result = LocaleConfiguration.Create(
+        Result<LocaleConfiguration> result = LocaleConfiguration.Create(
             Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm",
             default, ',', '.', 2, 2);
 
@@ -18,7 +19,7 @@ public sealed class LocaleConfigurationTests
     [Test]
     public void Create_ValidInput_NormalisesAndStoresValues()
     {
-        var config = CreateDefault();
+        LocaleConfiguration config = CreateDefault();
 
         Assert.Multiple(() =>
         {
@@ -37,7 +38,7 @@ public sealed class LocaleConfigurationTests
     [Test]
     public void Create_DefaultGuid_ReturnsFailure()
     {
-        var result = LocaleConfiguration.Create(
+        Result<LocaleConfiguration> result = LocaleConfiguration.Create(
             Guid.Empty, "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm",
             default, ',', '.', 2, 2);
 
@@ -49,7 +50,7 @@ public sealed class LocaleConfigurationTests
     [TestCase(" ")]
     public void Create_EmptyDateFormat_ReturnsFailure(string? value)
     {
-        var result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", value!, "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm", default, ',', '.', 2, 2);
+        Result<LocaleConfiguration> result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", value!, "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm", default, ',', '.', 2, 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -57,7 +58,7 @@ public sealed class LocaleConfigurationTests
     [Test]
     public void Create_EmptyShortDateFormat_ReturnsFailure()
     {
-        var result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "", "HH:mm", "dd/MM/yyyy HH:mm", default, ',', '.', 2, 2);
+        Result<LocaleConfiguration> result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "", "HH:mm", "dd/MM/yyyy HH:mm", default, ',', '.', 2, 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -65,7 +66,7 @@ public sealed class LocaleConfigurationTests
     [Test]
     public void Create_EmptyTimeFormat_ReturnsFailure()
     {
-        var result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "", "dd/MM/yyyy HH:mm", default, ',', '.', 2, 2);
+        Result<LocaleConfiguration> result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "", "dd/MM/yyyy HH:mm", default, ',', '.', 2, 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -73,7 +74,7 @@ public sealed class LocaleConfigurationTests
     [Test]
     public void Create_EmptyDateTimeFormat_ReturnsFailure()
     {
-        var result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "", default, ',', '.', 2, 2);
+        Result<LocaleConfiguration> result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "", default, ',', '.', 2, 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -81,7 +82,7 @@ public sealed class LocaleConfigurationTests
     [Test]
     public void Create_EqualSeparators_ReturnsFailure()
     {
-        var result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm", default, ',', ',', 2, 2);
+        Result<LocaleConfiguration> result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm", default, ',', ',', 2, 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -90,7 +91,7 @@ public sealed class LocaleConfigurationTests
     [TestCase(11)]
     public void Create_InvalidDecimalPlaces_ReturnsFailure(int decimalPlaces)
     {
-        var result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm", default, ',', '.', decimalPlaces, 2);
+        Result<LocaleConfiguration> result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm", default, ',', '.', decimalPlaces, 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -99,7 +100,7 @@ public sealed class LocaleConfigurationTests
     [TestCase(11)]
     public void Create_InvalidCurrencyDecimalPlaces_ReturnsFailure(int decimalPlaces)
     {
-        var result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm", default, ',', '.', 2, decimalPlaces);
+        Result<LocaleConfiguration> result = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm", default, ',', '.', 2, decimalPlaces);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -107,9 +108,9 @@ public sealed class LocaleConfigurationTests
     [Test]
     public void Update_ValidInput_ReplacesAllValues()
     {
-        var config = CreateDefault();
+        LocaleConfiguration config = CreateDefault();
 
-        var result = config.Update("MM/dd/yyyy", "M/d/yy", "h:mm tt", "MM/dd/yyyy h:mm tt", default, '.', ',', 3, 0);
+        Result result = config.Update("MM/dd/yyyy", "M/d/yy", "h:mm tt", "MM/dd/yyyy h:mm tt", default, '.', ',', 3, 0);
 
         Assert.Multiple(() =>
         {
@@ -128,9 +129,9 @@ public sealed class LocaleConfigurationTests
     [Test]
     public void Update_InvalidValues_DoNotMutateExistingState()
     {
-        var config = CreateDefault();
+        LocaleConfiguration config = CreateDefault();
 
-        var result = config.Update("changed", "changed", default, "changed", default, '.', '.', 3, 3);
+        Result result = config.Update("changed", "changed", default, "changed", default, '.', '.', 3, 3);
 
         Assert.That(result.IsFailure, Is.True);
         Assert.That(config.DateFormat, Is.EqualTo("dd/MM/yyyy"));

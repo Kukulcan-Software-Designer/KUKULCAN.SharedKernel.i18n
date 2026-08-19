@@ -3,7 +3,7 @@ using KUKULCAN.SharedKernel.i18n.Domain.Identifiers;
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Identifiers;
 
 [TestFixture]
-public sealed class I18nEntityIdTests
+public sealed class I18NEntityIdTests
 {
     [Test]
     public void GuidConstructor_PreservesValue()

@@ -3,14 +3,14 @@ using KUKULCAN.SharedKernel.i18n.Domain.Errors;
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Errors;
 
 [TestFixture]
-public sealed class I18nGuardTests
+public sealed class I18NGuardTests
 {
     [Test]
     public void Null_WithNonNullReference_ReturnsSameReference()
     {
-        var value = new object();
+        object value = new object();
 
-        var result = I18nGuard.Null(value, "value");
+        object result = I18nGuard.Null(value, "value");
 
         Assert.That(result, Is.SameAs(value));
     }
@@ -30,7 +30,7 @@ public sealed class I18nGuardTests
     {
         const string value = "text";
 
-        var result = I18nGuard.NullOrWhiteSpace(value, "value");
+        string result = I18nGuard.NullOrWhiteSpace(value, "value");
 
         Assert.That(result, Is.SameAs(value));
     }

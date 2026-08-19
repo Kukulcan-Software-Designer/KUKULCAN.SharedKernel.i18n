@@ -22,7 +22,7 @@ public sealed class MemoryOnlyCacheServiceTests
     [Test]
     public async Task GetAsync_WhenKeyDoesNotExist_ReturnsNull()
     {
-        var value = await _service.GetAsync<string>("missing");
+        string? value = await _service.GetAsync<string>("missing");
 
         Assert.That(value, Is.Null);
     }
@@ -32,7 +32,7 @@ public sealed class MemoryOnlyCacheServiceTests
     {
         await _service.SetAsync("key", "value");
 
-        var value = await _service.GetAsync<string>("key");
+        string? value = await _service.GetAsync<string>("key");
 
         Assert.That(value, Is.EqualTo("value"));
     }
@@ -60,14 +60,14 @@ public sealed class MemoryOnlyCacheServiceTests
     [Test]
     public async Task GetOrCreateAsync_OnMiss_InvokesFactoryAndCachesResult()
     {
-        var calls = 0;
+        int calls = 0;
 
-        var first = await _service.GetOrCreateAsync("key", _ =>
+        string first = await _service.GetOrCreateAsync("key", _ =>
         {
             calls++;
             return Task.FromResult("created");
         });
-        var second = await _service.GetOrCreateAsync("key", _ =>
+        string second = await _service.GetOrCreateAsync("key", _ =>
         {
             calls++;
             return Task.FromResult("created-again");
@@ -99,7 +99,7 @@ public sealed class MemoryOnlyCacheServiceTests
     [Test]
     public async Task GetOrCreateAsync_WhenFactoryReturnsNull_DoesNotCreatePersistentEntry()
     {
-        var result = await _service.GetOrCreateAsync<string?>("key", _ => Task.FromResult<string?>(null));
+        string? result = await _service.GetOrCreateAsync<string?>("key", _ => Task.FromResult<string?>(null));
 
         Assert.That(result, Is.Null);
         Assert.That(await _service.ExistsAsync("key"), Is.False);
@@ -114,9 +114,9 @@ public sealed class MemoryOnlyCacheServiceTests
 
         await _service.RemoveByPrefixAsync("language:");
 
-        var esExists = await _service.ExistsAsync("language:es");
-        var enExists = await _service.ExistsAsync("language:en");
-        var eurExists = await _service.ExistsAsync("currency:eur");
+        bool esExists = await _service.ExistsAsync("language:es");
+        bool enExists = await _service.ExistsAsync("language:en");
+        bool eurExists = await _service.ExistsAsync("currency:eur");
 
         Assert.Multiple(() =>
         {

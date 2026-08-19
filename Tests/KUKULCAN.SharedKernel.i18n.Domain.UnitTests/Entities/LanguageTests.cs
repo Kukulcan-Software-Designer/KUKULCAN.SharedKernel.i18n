@@ -1,4 +1,5 @@
 using KUKULCAN.SharedKernel.i18n.Domain.Entities;
+using KUKULCAN.SharedKernel.Results;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Entities;
 
@@ -7,7 +8,7 @@ public sealed class LanguageTests
 {
     private static Language CreateLanguage(string code = "es-ES", bool isDefault = false)
     {
-        var result = Language.Create(Guid.NewGuid(), code, "Spanish", "Español", isDefault);
+        Result<Language> result = Language.Create(Guid.NewGuid(), code, "Spanish", "Español", isDefault);
 
         Assert.That(result.IsSuccess, Is.True, result.IsFailure ? result.Error.ToString() : string.Empty);
         return result.Value;
@@ -15,7 +16,7 @@ public sealed class LanguageTests
 
     private static CurrencyFormat CreateCurrency(string code = "USD")
     {
-        var result = CurrencyFormat.Create(Guid.NewGuid(), "es-ES", code, "Dólar estadounidense", "$", default, false, ',', '.', 2);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "es-ES", code, "Dólar estadounidense", "$", default, false, ',', '.', 2);
 
         Assert.That(result.IsSuccess, Is.True, result.IsFailure ? result.Error.ToString() : string.Empty);
         return result.Value;
@@ -25,10 +26,10 @@ public sealed class LanguageTests
     public void Create_ValidInput_NormalisesAndInitialisesActiveState()
     {
         var id = Guid.NewGuid();
-        var result = Language.Create(id, "ES-es", " Spanish ", " Español ", true);
+        Result<Language> result = Language.Create(id, "ES-es", " Spanish ", " Español ", true);
 
         Assert.That(result.IsSuccess, Is.True);
-        var language = result.Value;
+        Language language = result.Value;
 
         Assert.Multiple(() =>
         {
@@ -46,7 +47,7 @@ public sealed class LanguageTests
     [Test]
     public void Create_DefaultGuid_ReturnsFailure()
     {
-        var result = Language.Create(Guid.Empty, "es-ES", "Spanish", "Español");
+        Result<Language> result = Language.Create(Guid.Empty, "es-ES", "Spanish", "Español");
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -54,7 +55,7 @@ public sealed class LanguageTests
     [Test]
     public void Create_InvalidLanguageCode_ReturnsFailure()
     {
-        var result = Language.Create(Guid.NewGuid(), "invalid", "Spanish", "Español");
+        Result<Language> result = Language.Create(Guid.NewGuid(), "invalid", "Spanish", "Español");
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -64,7 +65,7 @@ public sealed class LanguageTests
     [TestCase(" ")]
     public void Create_EmptyName_ReturnsFailure(string? name)
     {
-        var result = Language.Create(Guid.NewGuid(), "es-ES", name!, "Español");
+        Result<Language> result = Language.Create(Guid.NewGuid(), "es-ES", name!, "Español");
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -74,7 +75,7 @@ public sealed class LanguageTests
     [TestCase(" ")]
     public void Create_EmptyNativeName_ReturnsFailure(string? nativeName)
     {
-        var result = Language.Create(Guid.NewGuid(), "es-ES", "Spanish", nativeName!);
+        Result<Language> result = Language.Create(Guid.NewGuid(), "es-ES", "Spanish", nativeName!);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -82,9 +83,9 @@ public sealed class LanguageTests
     [Test]
     public void Update_ValidNames_TrimsAndUpdates()
     {
-        var language = CreateLanguage();
+        Language language = CreateLanguage();
 
-        var result = language.Update(" Castilian Spanish ", " Castellano ");
+        Result result = language.Update(" Castilian Spanish ", " Castellano ");
 
         Assert.Multiple(() =>
         {
@@ -97,9 +98,9 @@ public sealed class LanguageTests
     [Test]
     public void Update_InvalidName_DoesNotMutateState()
     {
-        var language = CreateLanguage();
+        Language language = CreateLanguage();
 
-        var result = language.Update(" ", "Castellano");
+        Result result = language.Update(" ", "Castellano");
 
         Assert.That(result.IsFailure, Is.True);
         Assert.That(language.Name, Is.EqualTo("Spanish"));
@@ -109,9 +110,9 @@ public sealed class LanguageTests
     [Test]
     public void Deactivate_NonDefaultLanguage_Deactivates()
     {
-        var language = CreateLanguage(isDefault: false);
+        Language language = CreateLanguage(isDefault: false);
 
-        var result = language.Deactivate();
+        Result result = language.Deactivate();
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(language.IsActive, Is.False);
@@ -120,9 +121,9 @@ public sealed class LanguageTests
     [Test]
     public void Deactivate_DefaultLanguage_ReturnsConflictAndRemainsActive()
     {
-        var language = CreateLanguage(isDefault: true);
+        Language language = CreateLanguage(isDefault: true);
 
-        var result = language.Deactivate();
+        Result result = language.Deactivate();
 
         Assert.That(result.IsFailure, Is.True);
         Assert.That(language.IsActive, Is.True);
@@ -132,10 +133,10 @@ public sealed class LanguageTests
     [Test]
     public void Activate_ReactivatesInactiveLanguage()
     {
-        var language = CreateLanguage();
+        Language language = CreateLanguage();
         Assert.That(language.Deactivate().IsSuccess, Is.True);
 
-        var result = language.Activate();
+        Result result = language.Activate();
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(language.IsActive, Is.True);
@@ -144,8 +145,8 @@ public sealed class LanguageTests
     [Test]
     public void SetLocaleConfiguration_AttachesConfiguration()
     {
-        var language = CreateLanguage();
-        var configResult = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm", default, ',', '.', 2, 2);
+        Language language = CreateLanguage();
+        Result<LocaleConfiguration> configResult = LocaleConfiguration.Create(Guid.NewGuid(), "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm", default, ',', '.', 2, 2);
         Assert.That(configResult.IsSuccess, Is.True);
 
         language.SetLocaleConfiguration(configResult.Value);
@@ -156,7 +157,7 @@ public sealed class LanguageTests
     [Test]
     public void SetLocaleConfiguration_Null_Throws()
     {
-        var language = CreateLanguage();
+        Language language = CreateLanguage();
 
         Assert.Throws<ArgumentNullException>(() => language.SetLocaleConfiguration(null!));
     }
@@ -164,10 +165,10 @@ public sealed class LanguageTests
     [Test]
     public void AddCurrencyFormat_AddsFirstFormat()
     {
-        var language = CreateLanguage();
-        var format = CreateCurrency();
+        Language language = CreateLanguage();
+        CurrencyFormat format = CreateCurrency();
 
-        var result = language.AddCurrencyFormat(format);
+        Result result = language.AddCurrencyFormat(format);
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(language.CurrencyFormats, Has.Count.EqualTo(1));
@@ -177,11 +178,11 @@ public sealed class LanguageTests
     [Test]
     public void AddCurrencyFormat_DuplicateCurrency_ReturnsConflictAndDoesNotAdd()
     {
-        var language = CreateLanguage();
+        Language language = CreateLanguage();
         Assert.That(language.AddCurrencyFormat(CreateCurrency("USD")).IsSuccess, Is.True);
-        var duplicate = CreateCurrency("usd");
+        CurrencyFormat duplicate = CreateCurrency("usd");
 
-        var result = language.AddCurrencyFormat(duplicate);
+        Result result = language.AddCurrencyFormat(duplicate);
 
         Assert.That(result.IsFailure, Is.True);
         Assert.That(language.CurrencyFormats, Has.Count.EqualTo(1));
@@ -190,7 +191,7 @@ public sealed class LanguageTests
     [Test]
     public void AddCurrencyFormat_Null_Throws()
     {
-        var language = CreateLanguage();
+        Language language = CreateLanguage();
 
         Assert.Throws<ArgumentNullException>(() => language.AddCurrencyFormat(null!));
     }
@@ -198,10 +199,10 @@ public sealed class LanguageTests
     [Test]
     public void RemoveCurrencyFormat_IsCaseInsensitive()
     {
-        var language = CreateLanguage();
+        Language language = CreateLanguage();
         Assert.That(language.AddCurrencyFormat(CreateCurrency("USD")).IsSuccess, Is.True);
 
-        var result = language.RemoveCurrencyFormat("usd");
+        Result result = language.RemoveCurrencyFormat("usd");
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(language.CurrencyFormats, Is.Empty);
@@ -210,9 +211,9 @@ public sealed class LanguageTests
     [Test]
     public void RemoveCurrencyFormat_MissingCurrency_ReturnsNotFound()
     {
-        var language = CreateLanguage();
+        Language language = CreateLanguage();
 
-        var result = language.RemoveCurrencyFormat("EUR");
+        Result result = language.RemoveCurrencyFormat("EUR");
 
         Assert.That(result.IsFailure, Is.True);
     }
