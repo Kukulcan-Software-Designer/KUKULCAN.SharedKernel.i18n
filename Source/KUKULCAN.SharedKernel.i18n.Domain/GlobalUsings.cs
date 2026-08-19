@@ -1,0 +1,12 @@
+global using KUKULCAN.SharedKernel.Abstractions;
+global using KUKULCAN.SharedKernel.Domain;
+global using KUKULCAN.SharedKernel.Globalization.Models;
+global using KUKULCAN.SharedKernel.Guards;
+global using KUKULCAN.SharedKernel.Results;
+global using KUKULCAN.SharedKernel.i18n.Domain.Entities;
+global using KUKULCAN.SharedKernel.i18n.Domain.Errors;
+global using KUKULCAN.SharedKernel.i18n.Domain.Identifiers;
+global using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Repositories;
+global using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Services;
+global using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects.Enums;
+global using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;

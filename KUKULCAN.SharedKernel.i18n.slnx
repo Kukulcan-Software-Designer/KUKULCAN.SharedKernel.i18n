@@ -1,0 +1,45 @@
+<Solution>
+  <Folder Name="/Documentation/" />
+  <!--
+    ATLAS.Kernel.i18n — Internationalization core library for the **ATLAS ERP** platform.
+    Solution format: .slnx (XML, .NET 9+ / Visual Studio 2022 17.12+)
+    Brand: TITÁN Software — Sostenemos lo que construyes.
+  -->
+
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="API_GUIDELINES.md" />
+    <File Path="CHANGELOG.md" />
+    <File Path="CODE_OF_CONDUCT.md" />
+    <File Path="CONTRIBUTING.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path="GOVERNANCE.md" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+    <File Path="RELEASE_NOTES.md" />
+    <File Path="ROADMAP.md" />
+    <File Path="SECURITY.md" />
+    <File Path="stylecop.json" />
+  </Folder>
+  
+  <Folder Name="/Solution Items/.github/" />
+  <Folder Name="/Solution Items/.github/workflows/">
+    <File Path=".github/workflows/delete-merged-branches.yml" />
+  </Folder>
+  
+  <Folder Name="/Source/">
+    <Project Path="Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj" />
+    <Project Path="Source/KUKULCAN.SharedKernel.i18n.Application/KUKULCAN.SharedKernel.i18n.Application.csproj" />
+    <Project Path="Source/KUKULCAN.SharedKernel.i18n.Domain/KUKULCAN.SharedKernel.i18n.Domain.csproj" />
+    <Project Path="Source/KUKULCAN.SharedKernel.i18n.Infrastructure/KUKULCAN.SharedKernel.i18n.Infrastructure.csproj" />
+  </Folder>
+  
+  <Folder Name="/Source Client/">
+    <Project Path="SourceClient/KUKULCAN.SharedKernel.i18n.Client.csproj" />
+  </Folder>
+
+  <Folder Name="/Tests/" />
+
+</Solution>

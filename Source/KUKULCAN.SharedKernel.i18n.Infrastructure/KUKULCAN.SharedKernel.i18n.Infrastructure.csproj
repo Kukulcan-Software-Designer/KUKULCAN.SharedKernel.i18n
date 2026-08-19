@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>preview</LangVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <RootNamespace>KUKULCAN.SharedKernel.i18n.Infrastructure</RootNamespace>
+    <AssemblyName>KUKULCAN.SharedKernel.i18n.Infrastructure</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KUKULCAN.SharedKernel.i18n.Application\KUKULCAN.SharedKernel.i18n.Application.csproj" />
+    <!-- SharedKernel.Database provides the EF Core persistence infrastructure. -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+	  Database Provider: PostgreSQL is the default database for applications in Kukulcan Software Designer.
+      This package is intentionally referenced only here (per-module), never in Kernel.
+    -->
+    <PackageReference Include="KUKULCAN.SharedKernel.Database" Version="1.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.10" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.*" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.*" />
+
+    <!-- Distributed cache — Redis via StackExchange -->
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.*" />
+
+    <!-- JSON for cache serialisation -->
+  </ItemGroup>
+
+</Project>

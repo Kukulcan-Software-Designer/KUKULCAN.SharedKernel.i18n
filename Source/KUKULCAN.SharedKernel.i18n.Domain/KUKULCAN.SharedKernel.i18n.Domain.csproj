@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>preview</LangVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <RootNamespace>KUKULCAN.SharedKernel.i18n.Domain</RootNamespace>
+    <AssemblyName>KUKULCAN.SharedKernel.i18n.Domain</AssemblyName>
+  </PropertyGroup>
+
+    <!-- Domain logic depends only on SharedKernel and cache/logging abstractions used by module services. -->
+    <ItemGroup>
+    <PackageReference Include="KUKULCAN.SharedKernel" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.*" />
+  </ItemGroup>
+
+</Project>

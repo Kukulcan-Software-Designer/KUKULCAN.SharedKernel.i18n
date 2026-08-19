@@ -1,0 +1,10 @@
+global using KUKULCAN.SharedKernel.Results;
+global using KUKULCAN.SharedKernel.i18n.Application.Abstractions;
+global using KUKULCAN.SharedKernel.i18n.Application.Common.Pagination;
+global using KUKULCAN.SharedKernel.i18n.Domain.Entities;
+global using KUKULCAN.SharedKernel.i18n.Domain.Errors;
+global using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Repositories;
+global using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Services;
+global using KUKULCAN.SharedKernel.i18n.Domain.Services;
+global using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
+global using MediatR;

@@ -1,0 +1,14 @@
+global using KUKULCAN.SharedKernel.Abstractions;
+global using KUKULCAN.SharedKernel.Database.Abstractions;
+global using KUKULCAN.SharedKernel.Database.Configuration;
+global using KUKULCAN.SharedKernel.Database.Extensions;
+global using KUKULCAN.SharedKernel.Database;
+global using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
+global using KUKULCAN.SharedKernel.i18n.Domain.Entities;
+global using KUKULCAN.SharedKernel.i18n.Domain.Identifiers;
+global using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Repositories;
+global using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Services;
+global using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
+global using KUKULCAN.SharedKernel.i18n.Infrastructure.Abstractions;
+global using Microsoft.EntityFrameworkCore.Metadata.Builders;
+global using Microsoft.EntityFrameworkCore;
