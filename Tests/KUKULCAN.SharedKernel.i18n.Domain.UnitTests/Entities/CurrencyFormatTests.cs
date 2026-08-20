@@ -12,7 +12,7 @@ public sealed class CurrencyFormatTests
     {
         Result<CurrencyFormat> result = CurrencyFormat.Create(
             Guid.NewGuid(), "en-US", "usd", " US Dollar ", " $ ",
-            default, false, '.', ',', decimalPlaces, negativePattern);
+            CurrencySymbolPosition.Before, false, '.', ',', decimalPlaces, negativePattern);
 
         Assert.That(result.IsSuccess, Is.True, result.IsFailure ? result.Error.ToString() : string.Empty);
         return result.Value;
@@ -51,7 +51,7 @@ public sealed class CurrencyFormatTests
     [TestCase("US$")]
     public void Create_InvalidCurrencyCode_ReturnsFailure(string currencyCode)
     {
-        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", currencyCode, "Dollar", "$", default, false, '.', ',', 2);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", currencyCode, "Dollar", "$", CurrencySymbolPosition.Before, false, '.', ',', 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -59,9 +59,8 @@ public sealed class CurrencyFormatTests
     [Test]
     public void Create_DefaultGuid_ReturnsFailure()
     {
-        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.Empty, "en-US", "USD", "Dollar", "$", default, false, '.', ',', 2);
-
-        Assert.That(result.IsFailure, Is.True);
+        Assert.Throws<ArgumentException>(() =>
+            CurrencyFormat.Create(Guid.Empty, "en-US", "USD", "Dollar", "$", CurrencySymbolPosition.Before, false, '.', ',', 2));
     }
 
     [TestCase(null)]
@@ -69,7 +68,7 @@ public sealed class CurrencyFormatTests
     [TestCase(" ")]
     public void Create_EmptyCurrencyName_ReturnsFailure(string? currencyName)
     {
-        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", currencyName!, "$", default, false, '.', ',', 2);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", currencyName!, "$", CurrencySymbolPosition.Before, false, '.', ',', 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -79,7 +78,7 @@ public sealed class CurrencyFormatTests
     [TestCase(" ")]
     public void Create_EmptySymbol_ReturnsFailure(string? symbol)
     {
-        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", symbol!, default, false, '.', ',', 2);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", symbol!, CurrencySymbolPosition.Before, false, '.', ',', 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -87,7 +86,7 @@ public sealed class CurrencyFormatTests
     [Test]
     public void Create_EqualSeparators_ReturnsFailure()
     {
-        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", "$", default, false, '.', '.', 2);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", "$", CurrencySymbolPosition.Before, false, '.', '.', 2);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -96,7 +95,7 @@ public sealed class CurrencyFormatTests
     [TestCase(11)]
     public void Create_DecimalPlacesOutsideRange_ReturnsFailure(int decimalPlaces)
     {
-        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", "$", default, false, '.', ',', decimalPlaces);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", "$", CurrencySymbolPosition.Before, false, '.', ',', decimalPlaces);
 
         Assert.That(result.IsFailure, Is.True);
     }
@@ -107,7 +106,7 @@ public sealed class CurrencyFormatTests
     [TestCase("{symbol}")]
     public void Create_InvalidNegativePattern_ReturnsFailure(string? pattern)
     {
-        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", "$", default, false, '.', ',', 2, pattern!);
+        Result<CurrencyFormat> result = CurrencyFormat.Create(Guid.NewGuid(), "en-US", "USD", "Dollar", "$", CurrencySymbolPosition.Before, false, '.', ',', 2, pattern!);
 
         Assert.That(result.IsFailure, Is.True);
     }
