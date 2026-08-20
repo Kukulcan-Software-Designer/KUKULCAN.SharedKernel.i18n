@@ -69,7 +69,7 @@ public sealed class I18NEntityIdTests
         {
             Assert.That(first.Equals(same), Is.True);
             Assert.That(first.Equals(different), Is.False);
-            Assert.That(first.Equals(null), Is.False);
+            Assert.That(first.Equals((object?)null), Is.False);
             Assert.That(first.Equals(guid), Is.False);
         });
     }
