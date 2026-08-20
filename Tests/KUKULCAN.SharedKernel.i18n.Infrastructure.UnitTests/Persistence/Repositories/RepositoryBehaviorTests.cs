@@ -3,9 +3,9 @@ using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests.Persistence.Repositories;
-
 [assembly: LevelOfParallelism(1)]
+
+namespace KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests.Persistence.Repositories;
 
 internal static class RepositoryTestData
 {
