@@ -13,6 +13,36 @@ public sealed class CurrencyFormat : AuditableEntity<I18nEntityId>
 {
     private CurrencyFormat() { }
 
+    /// <summary>Language to which this currency formatting definition applies.</summary>
+    public LanguageCode LanguageCode { get; private set; } = null!;
+
+    /// <summary>ISO 4217 currency code.</summary>
+    public string CurrencyCode { get; private set; } = string.Empty;
+
+    /// <summary>Display name of the currency.</summary>
+    public string CurrencyName { get; private set; } = string.Empty;
+
+    /// <summary>Currency symbol used when formatting amounts.</summary>
+    public string Symbol { get; private set; } = string.Empty;
+
+    /// <summary>Position of the currency symbol relative to the amount.</summary>
+    public CurrencySymbolPosition SymbolPosition { get; private set; }
+
+    /// <summary>Indicates whether a space is inserted between the symbol and amount.</summary>
+    public bool SpaceBetweenSymbolAndAmount { get; private set; }
+
+    /// <summary>Decimal separator used when formatting amounts.</summary>
+    public char DecimalSeparator { get; private set; }
+
+    /// <summary>Thousands grouping separator used when formatting amounts.</summary>
+    public char ThousandsSeparator { get; private set; }
+
+    /// <summary>Number of decimal places emitted when formatting amounts.</summary>
+    public int DecimalPlaces { get; private set; }
+
+    /// <summary>Pattern used to format negative amounts.</summary>
+    public string NegativePattern { get; private set; } = string.Empty;
+
     /// <summary>
     /// Creates a currency formatting definition.
     /// </summary>
