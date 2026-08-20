@@ -13,7 +13,7 @@ public sealed class CurrencyFormatRepository(I18NDbContext context) : ICurrencyF
     /// <param name="ct">The cancellation token.</param>
     /// <returns>The currency format if found; otherwise, null.</returns>
     public async Task<CurrencyFormat?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
-        await context.CurrencyFormats.FirstOrDefaultAsync(cf => cf.Id.Value == id, ct);
+        await context.CurrencyFormats.FirstOrDefaultAsync(cf => cf.Id == new I18nEntityId(id), ct);
 
     /// <summary>
     /// Finds a currency format by its language code and currency code.
@@ -58,7 +58,7 @@ public sealed class CurrencyFormatRepository(I18NDbContext context) : ICurrencyF
     /// <param name="ct">The cancellation token.</param>
     /// <returns>True if the currency format exists; otherwise, false.</returns>
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default) =>
-        await context.CurrencyFormats.AnyAsync(cf => cf.Id.Value == id, ct);
+        await context.CurrencyFormats.AnyAsync(cf => cf.Id == new I18nEntityId(id), ct);
 
     /// <summary>
     /// Adds a new currency format.
