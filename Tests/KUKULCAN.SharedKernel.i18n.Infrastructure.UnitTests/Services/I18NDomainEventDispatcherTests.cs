@@ -1,4 +1,5 @@
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests.Services;
 
