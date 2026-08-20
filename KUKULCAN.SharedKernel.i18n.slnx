@@ -29,6 +29,7 @@
       <File Path=".github/workflows/domain-unit-tests.yml" />
       <File Path=".github/workflows/application-unit-tests.yml" />
       <File Path=".github/workflows/infrastructure-unit-tests.yml" />
+      <File Path=".github/workflows/api-unit-tests.yml" />
   </Folder>
 
   <Folder Name="/Source/">
