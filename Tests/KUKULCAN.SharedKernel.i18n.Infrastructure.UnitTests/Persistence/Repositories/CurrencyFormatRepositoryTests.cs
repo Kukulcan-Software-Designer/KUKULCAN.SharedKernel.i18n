@@ -60,7 +60,15 @@ public sealed class CurrencyFormatRepositoryTests
     public async Task ExistsAsync_ReturnsExpectedValue()
     {
         await using I18NDbContext c = await RepositoryTestDatabase.CreateContextAsync();
-        CurrencyFormat e = RepositoryTestData.Currency(); c.CurrencyFormats.Add(e); await c.SaveChangesAsync(); var r = new CurrencyFormatRepository(c); Assert.That(await r.ExistsAsync(e.Id.Value), Is.True); Assert.That(await r.ExistsAsync(Guid.CreateVersion7()), Is.False);
+        CurrencyFormat e = RepositoryTestData.Currency();
+
+        c.CurrencyFormats.Add(e);
+        await c.SaveChangesAsync();
+
+        var r = new CurrencyFormatRepository(c);
+
+        Assert.That(await r.ExistsAsync(e.Id.Value), Is.True);
+        Assert.That(await r.ExistsAsync(Guid.CreateVersion7()), Is.False);
     }
 
     [Test]
