@@ -71,7 +71,7 @@ public sealed class I18NEntityIdTests
             Assert.That(first.Equals(same), Is.True);
             Assert.That(first.Equals(different), Is.False);
             Assert.That(object.Equals(first, null), Is.False);
-            Assert.That(first.Equals(differentType), Is.False);
+            Assert.That(object.Equals(first, differentType), Is.False);
         });
     }
 
