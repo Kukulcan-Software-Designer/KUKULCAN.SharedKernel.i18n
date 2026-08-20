@@ -22,19 +22,20 @@
     <File Path="SECURITY.md" />
     <File Path="stylecop.json" />
   </Folder>
-  
+
   <Folder Name="/Solution Items/.github/" />
   <Folder Name="/Solution Items/.github/workflows/">
-    <File Path=".github/workflows/delete-merged-branches.yml" />
+      <File Path=".github/workflows/delete-merged-branches.yml" />
+      <File Path=".github/workflows/domain-unit-tests.yml" />
   </Folder>
-  
+
   <Folder Name="/Source/">
     <Project Path="Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj" />
     <Project Path="Source/KUKULCAN.SharedKernel.i18n.Application/KUKULCAN.SharedKernel.i18n.Application.csproj" />
     <Project Path="Source/KUKULCAN.SharedKernel.i18n.Domain/KUKULCAN.SharedKernel.i18n.Domain.csproj" />
     <Project Path="Source/KUKULCAN.SharedKernel.i18n.Infrastructure/KUKULCAN.SharedKernel.i18n.Infrastructure.csproj" />
   </Folder>
-  
+
   <Folder Name="/Source Client/">
     <Project Path="SourceClient/KUKULCAN.SharedKernel.i18n.Client.csproj" />
   </Folder>
