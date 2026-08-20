@@ -152,7 +152,7 @@ public sealed class TranslationsControllerBehaviorTests
     public async Task BulkUpsert_ForwardsCommandUnchanged()
     {
         var mediator = new Mock<IMediator>();
-        SetupException<Result<IReadOnlyList<TranslationDto>>>(mediator);
+        SetupException<Result<BulkUpsertResultDto>>(mediator);
         var command = new BulkUpsertTranslationsCommand(Array.Empty<BulkTranslationDto>());
         using var cts = new CancellationTokenSource();
 
