@@ -131,7 +131,7 @@ public sealed class LocaleConfigurationTests
     {
         LocaleConfiguration config = CreateDefault();
 
-        Result result = config.Update("changed", "changed", default, "changed", default, '.', '.', 3, 3);
+        Result result = config.Update("changed", "changed", "", "changed", default, '.', '.', 3, 3);
 
         Assert.That(result.IsFailure, Is.True);
         Assert.That(config.DateFormat, Is.EqualTo("dd/MM/yyyy"));
