@@ -13,7 +13,7 @@ namespace KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests.Persistence.Reposi
 
 internal static class RepositoryTestData
 {
-    public static Language Language(string code = "es-ES", string name = "Spanish", bool isDefault = false)
+    public static DomainLanguage Language(string code = "es-ES", string name = "Spanish", bool isDefault = false)
         => DomainLanguage.Create(Guid.CreateVersion7(), code, name, name, isDefault).Value;
 
     public static LocaleConfiguration Locale(string languageCode = "es-ES")
@@ -22,7 +22,7 @@ internal static class RepositoryTestData
     public static CurrencyFormat Currency(string languageCode = "es-ES", string code = "EUR")
         => CurrencyFormat.Create(Guid.CreateVersion7(), languageCode, code, "Euro", "€", CurrencySymbolPosition.After, true, ',', '.', 2, "-{amount} {symbol}").Value;
 
-    public static Translation Translation(string code = "CRM0001", string languageCode = "es-ES", string text = "Hola")
+    public static DomainTranslation Translation(string code = "CRM0001", string languageCode = "es-ES", string text = "Hola")
         => DomainTranslation.Create(Guid.CreateVersion7(), code, languageCode, text).Value;
 
     public static LanguageCode LanguageCode(string value) => KUKULCAN.SharedKernel.i18n.Domain.ValueObjects.LanguageCode.Create(value).Value;
