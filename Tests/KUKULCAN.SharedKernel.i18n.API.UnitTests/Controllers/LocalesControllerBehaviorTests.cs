@@ -12,7 +12,7 @@ namespace KUKULCAN.SharedKernel.i18n.API.UnitTests.Controllers;
 public sealed class LocalesControllerBehaviorTests
 {
     private static UpsertLocaleRequest CreateRequest() => new(
-        "dd/MM/yyyy", "dd/MM/yyyy", "HH:mm", "dd/MM/yyyy HH:mm", "Monday", ',', '.', 2, 2);
+        "dd/MM/yyyy", "dd/MM/yyyy", "HH:mm", "dd/MM/yyyy HH:mm", "Monday", ",", ".", 2, 2);
 
     [Test]
     public async Task Upsert_BuildsCommandFromRouteAndBody()
