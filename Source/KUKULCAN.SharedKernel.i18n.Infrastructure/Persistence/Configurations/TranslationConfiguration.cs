@@ -51,15 +51,15 @@ public sealed class TranslationConfiguration : IEntityTypeConfiguration<Translat
             .IsUnique()
             .HasDatabaseName("UX_Translations_Code_Language");
 
-        // Index for module queries — EF LIKE 'CRM%'
+        // Index for language queries.
         builder.HasIndex(t => t.LanguageCode)
             .HasDatabaseName("IX_Translations_LanguageCode");
 
-        // Soft FK to Language (restrict delete — language can't be deleted if translations exist)
-        builder.HasOne<Language>()
-            .WithMany()
-            .HasForeignKey(t => t.LanguageCode)
-            .HasPrincipalKey(l => l.Code)
-            .OnDelete(DeleteBehavior.Restrict);
+        // LanguageCode is a value object in Translation while Language.Code is a string.
+        // EF Core requires the CLR types of FK and principal-key properties to match, even
+        // when both properties are persisted as strings through value converters. Therefore
+        // an actual EF relationship cannot be declared here without changing the domain model.
+        // The language association remains a domain-level invariant and is intentionally not
+        // represented as a database foreign key.
     }
 }
