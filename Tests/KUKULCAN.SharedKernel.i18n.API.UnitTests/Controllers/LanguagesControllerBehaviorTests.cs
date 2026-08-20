@@ -9,6 +9,7 @@ using KUKULCAN.SharedKernel.i18n.Application.Features.Languages.Queries.GetLangu
 using KUKULCAN.SharedKernel.i18n.Domain.DTOs;
 using MediatR;
 using Moq;
+using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.API.UnitTests.Controllers;
 
@@ -25,7 +26,7 @@ public sealed class LanguagesControllerBehaviorTests
             .ThrowsAsync(new InvalidOperationException("sentinel"));
 
         var command = new CreateLanguageCommand("es-ES", "Spanish", "Español");
-        var token = new CancellationTokenSource().Token;
+        CancellationToken token = new CancellationTokenSource().Token;
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() => new LanguagesController(mediator.Object).Create(command, token));
 

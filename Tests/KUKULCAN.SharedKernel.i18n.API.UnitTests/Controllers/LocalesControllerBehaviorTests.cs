@@ -5,6 +5,7 @@ using KUKULCAN.SharedKernel.i18n.Application.Features.Locales.Queries.GetAllLoca
 using KUKULCAN.SharedKernel.i18n.Application.Features.Locales.Queries.GetLocaleConfiguration;
 using MediatR;
 using Moq;
+using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.API.UnitTests.Controllers;
 
@@ -40,7 +41,7 @@ public sealed class LocalesControllerBehaviorTests
     public async Task GetAll_SendsQueryAndCancellationToken()
     {
         var mediator = new Mock<IMediator>();
-        var calledToken = CancellationToken.None;
+        CancellationToken calledToken = CancellationToken.None;
         mediator.Setup(x => x.Send(It.IsAny<GetAllLocaleConfigurationsQuery>(), It.IsAny<CancellationToken>()))
             .Callback<GetAllLocaleConfigurationsQuery, CancellationToken>((_, token) => calledToken = token)
             .ThrowsAsync(new InvalidOperationException("sentinel"));

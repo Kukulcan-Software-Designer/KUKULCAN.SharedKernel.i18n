@@ -11,6 +11,7 @@ using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTr
 using KUKULCAN.SharedKernel.i18n.Domain.DTOs;
 using MediatR;
 using Moq;
+using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.API.UnitTests.Controllers;
 
@@ -49,8 +50,8 @@ public sealed class TranslationsControllerBehaviorTests
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
         Assert.That(captured!.Code, Is.EqualTo("CRM0001"));
         Assert.That(captured.LanguageCode, Is.EqualTo("es-ES"));
-        Assert.That(captured.Text, Is.EqualTo("Cliente"));
-        Assert.That(captured.Context, Is.EqualTo("CRM"));
+        Assert.That(captured.NewText, Is.EqualTo("Cliente"));
+        Assert.That(captured.NewContext, Is.EqualTo("CRM"));
     }
 
     [Test]
