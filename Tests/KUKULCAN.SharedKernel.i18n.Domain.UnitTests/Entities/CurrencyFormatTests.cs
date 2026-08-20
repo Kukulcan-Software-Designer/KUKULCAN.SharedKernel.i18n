@@ -1,3 +1,4 @@
+using System.Globalization;
 using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects.Enums;
 using KUKULCAN.SharedKernel.Results;
@@ -146,12 +147,13 @@ public sealed class CurrencyFormatTests
         Assert.That(format.Format(-1234.56m), Is.EqualTo("($1,234.56)"));
     }
 
-    [TestCase(0.004m, "$0.00")]
-    [TestCase(0.005m, "$0.01")]
-    [TestCase(1.234m, "$1.23")]
-    [TestCase(1.235m, "$1.24")]
-    public void Format_RoundsToConfiguredDecimalPlaces(decimal amount, string expected)
+    [TestCase("0.004", "$0.00")]
+    [TestCase("0.005", "$0.01")]
+    [TestCase("1.234", "$1.23")]
+    [TestCase("1.235", "$1.24")]
+    public void Format_RoundsToConfiguredDecimalPlaces(string amountText, string expected)
     {
+        decimal amount = decimal.Parse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture);
         CurrencyFormat format = CreateUsdBefore();
 
         Assert.That(format.Format(amount), Is.EqualTo(expected));
