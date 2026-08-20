@@ -42,6 +42,7 @@
 
   <Folder Name="/Tests/">
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests.csproj" />
+    <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Application.UnitTests/KUKULCAN.SharedKernel.i18n.Application.UnitTests.csproj" />
   </Folder>
 
 </Solution>
