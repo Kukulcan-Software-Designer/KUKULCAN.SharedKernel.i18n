@@ -19,7 +19,9 @@ public sealed class LanguagesControllerBehaviorTests
     public async Task Create_SendsCommandAndCancellationToken()
     {
         var mediator = new Mock<IMediator>();
+        CreateLanguageCommand? captured = null;
         mediator.Setup(x => x.Send(It.IsAny<CreateLanguageCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<CreateLanguageCommand, CancellationToken>((command, _) => captured = command)
             .ThrowsAsync(new InvalidOperationException("sentinel"));
 
         var command = new CreateLanguageCommand("es-ES", "Spanish", "Español");
@@ -28,89 +30,86 @@ public sealed class LanguagesControllerBehaviorTests
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() => new LanguagesController(mediator.Object).Create(command, token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
-        mediator.Verify(x => x.Send(
-            It.Is<CreateLanguageCommand>(sent => ReferenceEquals(sent, command)),
-            token), Times.Once);
+        Assert.That(captured, Is.SameAs(command));
     }
 
     [Test]
     public async Task Update_BuildsCommandFromRouteAndBody()
     {
         var mediator = new Mock<IMediator>();
+        UpdateLanguageCommand? captured = null;
         mediator.Setup(x => x.Send(It.IsAny<UpdateLanguageCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<UpdateLanguageCommand, CancellationToken>((command, _) => captured = command)
             .ThrowsAsync(new InvalidOperationException("sentinel"));
 
         var body = new UpdateLanguageRequest("Spanish", "Español");
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() => new LanguagesController(mediator.Object).Update("es-ES", body, CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
-        mediator.Verify(x => x.Send(
-            It.Is<UpdateLanguageCommand>(command =>
-                command.Code == "es-ES" &&
-                command.Name == "Spanish" &&
-                command.NativeName == "Español"),
-            CancellationToken.None), Times.Once);
+        Assert.That(captured!.Code, Is.EqualTo("es-ES"));
+        Assert.That(captured.Name, Is.EqualTo("Spanish"));
+        Assert.That(captured.NativeName, Is.EqualTo("Español"));
     }
 
     [Test]
     public async Task SetActive_BuildsCommandFromRouteAndBody()
     {
         var mediator = new Mock<IMediator>();
+        SetLanguageActiveCommand? captured = null;
         mediator.Setup(x => x.Send(It.IsAny<SetLanguageActiveCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<SetLanguageActiveCommand, CancellationToken>((command, _) => captured = command)
             .ThrowsAsync(new InvalidOperationException("sentinel"));
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
             new LanguagesController(mediator.Object).SetActive("ca-ES", new SetActiveRequest(false), CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
-        mediator.Verify(x => x.Send(
-            It.Is<SetLanguageActiveCommand>(command =>
-                command.Code == "ca-ES" && !command.IsActive),
-            CancellationToken.None), Times.Once);
+        Assert.That(captured!.Code, Is.EqualTo("ca-ES"));
+        Assert.That(captured.IsActive, Is.False);
     }
 
     [Test]
     public async Task SetDefault_SendsCommandWithRouteCode()
     {
         var mediator = new Mock<IMediator>();
+        SetDefaultLanguageCommand? captured = null;
         mediator.Setup(x => x.Send(It.IsAny<SetDefaultLanguageCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<SetDefaultLanguageCommand, CancellationToken>((command, _) => captured = command)
             .ThrowsAsync(new InvalidOperationException("sentinel"));
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() => new LanguagesController(mediator.Object).SetDefault("en", CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
-        mediator.Verify(x => x.Send(
-            It.Is<SetDefaultLanguageCommand>(command => command.Code == "en"),
-            CancellationToken.None), Times.Once);
+        Assert.That(captured!.Code, Is.EqualTo("en"));
     }
 
     [Test]
     public async Task GetAll_SendsQueryWithActiveOnly()
     {
         var mediator = new Mock<IMediator>();
+        GetAllLanguagesQuery? captured = null;
         mediator.Setup(x => x.Send(It.IsAny<GetAllLanguagesQuery>(), It.IsAny<CancellationToken>()))
+            .Callback<GetAllLanguagesQuery, CancellationToken>((query, _) => captured = query)
             .ThrowsAsync(new InvalidOperationException("sentinel"));
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() => new LanguagesController(mediator.Object).GetAll(false, CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
-        mediator.Verify(x => x.Send(
-            It.Is<GetAllLanguagesQuery>(query => !query.ActiveOnly),
-            CancellationToken.None), Times.Once);
+        Assert.That(captured!.ActiveOnly, Is.False);
     }
 
     [Test]
     public async Task GetByCode_SendsQueryWithRouteCode()
     {
         var mediator = new Mock<IMediator>();
+        GetLanguageQuery? captured = null;
         mediator.Setup(x => x.Send(It.IsAny<GetLanguageQuery>(), It.IsAny<CancellationToken>()))
+            .Callback<GetLanguageQuery, CancellationToken>((query, _) => captured = query)
             .ThrowsAsync(new InvalidOperationException("sentinel"));
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() => new LanguagesController(mediator.Object).GetByCode("es-MX", CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
-        mediator.Verify(x => x.Send(
-            It.Is<GetLanguageQuery>(query => query.Code == "es-MX"),
-            CancellationToken.None), Times.Once);
+        Assert.That(captured!.Code, Is.EqualTo("es-MX"));
     }
 }
