@@ -1,11 +1,12 @@
 using DatabaseUnitOfWork = KUKULCAN.SharedKernel.Database.Abstractions.IUnitOfWork;
 using ApplicationUnitOfWork = KUKULCAN.SharedKernel.i18n.Application.Abstractions.IUnitOfWork;
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Services;
+using Moq;
 
 namespace KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests.Services;
 
 [TestFixture]
-public sealed class I18nUnitOfWorkTests
+public sealed class I18NUnitOfWorkTests
 {
     private Mock<DatabaseUnitOfWork> _inner = null!;
     private I18nUnitOfWork _sut = null!;
