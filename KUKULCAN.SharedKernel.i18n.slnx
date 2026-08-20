@@ -2,7 +2,7 @@
   <Folder Name="/Documentation/" />
   <!--
     ATLAS.Kernel.i18n — Internationalization core library for the **ATLAS ERP** platform.
-    Solution format: .slnx (XML, .NET 9+ / Visual Studio 2022 17.12+)
+    Solution format: .slnx (.NET 9+ / Visual Studio 2022 17.12+)
     Brand: TITÁN Software — Sostenemos lo que construyes.
   -->
 
@@ -28,6 +28,7 @@
       <File Path=".github/workflows/delete-merged-branches.yml" />
       <File Path=".github/workflows/domain-unit-tests.yml" />
       <File Path=".github/workflows/application-unit-tests.yml" />
+      <File Path=".github/workflows/infrastructure-unit-tests.yml" />
   </Folder>
 
   <Folder Name="/Source/">
@@ -44,6 +45,7 @@
   <Folder Name="/Tests/">
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Application.UnitTests/KUKULCAN.SharedKernel.i18n.Application.UnitTests.csproj" />
+    <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests/KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests.csproj" />
   </Folder>
 
 </Solution>
