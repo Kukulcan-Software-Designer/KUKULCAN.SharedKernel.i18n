@@ -27,6 +27,7 @@
   <Folder Name="/Solution Items/.github/workflows/">
       <File Path=".github/workflows/delete-merged-branches.yml" />
       <File Path=".github/workflows/domain-unit-tests.yml" />
+      <File Path=".github/workflows/application-unit-tests.yml" />
   </Folder>
 
   <Folder Name="/Source/">
