@@ -26,8 +26,9 @@ public sealed class SequentialGuidTests
     public void NewSequentialGuidAtEnd_ReturnsVersion7Guid()
     {
         var result = SequentialGuid.NewSequentialGuidAtEnd();
+        var parts = result.ToString("D").Split('-');
 
-        Assert.That(result.ToString("D"), Has.Length.EqualTo(36));
-        Assert.That((result.ToByteArray()[7] & 0xF0) >> 4, Is.EqualTo(7));
+        Assert.That(parts, Has.Length.EqualTo(5));
+        Assert.That(parts[2], Does.StartWith("7"));
     }
 }
