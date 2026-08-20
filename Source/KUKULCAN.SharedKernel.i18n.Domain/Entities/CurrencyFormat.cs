@@ -9,42 +9,9 @@ namespace KUKULCAN.SharedKernel.i18n.Domain.Entities;
 /// <summary>
 /// Defines how a currency is formatted for a specific language/locale.
 /// </summary>
-public sealed class CurrencyFormat
+public sealed class CurrencyFormat : AuditableEntity<I18nEntityId>
 {
     private CurrencyFormat() { }
-
-    /// <summary>Gets the entity identifier.</summary>
-    public I18nEntityId Id { get; private set; } = null!;
-
-    /// <summary>Gets the language code.</summary>
-    public LanguageCode LanguageCode { get; private set; } = null!;
-
-    /// <summary>Gets the ISO 4217 currency code.</summary>
-    public string CurrencyCode { get; private set; } = string.Empty;
-
-    /// <summary>Gets the currency display name.</summary>
-    public string CurrencyName { get; private set; } = string.Empty;
-
-    /// <summary>Gets the currency symbol.</summary>
-    public string Symbol { get; private set; } = string.Empty;
-
-    /// <summary>Gets the symbol position.</summary>
-    public CurrencySymbolPosition SymbolPosition { get; private set; }
-
-    /// <summary>Gets whether a space is inserted between symbol and amount.</summary>
-    public bool SpaceBetweenSymbolAndAmount { get; private set; }
-
-    /// <summary>Gets the decimal separator.</summary>
-    public char DecimalSeparator { get; private set; }
-
-    /// <summary>Gets the thousands separator.</summary>
-    public char ThousandsSeparator { get; private set; }
-
-    /// <summary>Gets the number of decimal places.</summary>
-    public int DecimalPlaces { get; private set; }
-
-    /// <summary>Gets the negative amount pattern.</summary>
-    public string NegativePattern { get; private set; } = string.Empty;
 
     /// <summary>
     /// Creates a currency formatting definition.
@@ -103,6 +70,46 @@ public sealed class CurrencyFormat
         });
     }
 
+    /// <summary>
+    /// Replaces all formatting values for this currency definition.
+    /// </summary>
+    public Result Update(
+        string currencyName,
+        string symbol,
+        CurrencySymbolPosition symbolPosition,
+        bool spaceBetweenSymbolAndAmount,
+        char decimalSeparator,
+        char thousandsSeparator,
+        int decimalPlaces,
+        string negativePattern)
+    {
+        if (string.IsNullOrWhiteSpace(currencyName))
+            return Result<CurrencyFormat>.Failure(I18nErrors.Validation("CurrencyFormat.CurrencyName.Empty", "Currency name must not be empty."));
+
+        if (string.IsNullOrWhiteSpace(symbol))
+            return Result<CurrencyFormat>.Failure(I18nErrors.Validation("CurrencyFormat.Symbol.Empty", "Currency symbol must not be empty."));
+
+        if (decimalSeparator == thousandsSeparator)
+            return Result<CurrencyFormat>.Failure(I18nErrors.Validation("CurrencyFormat.Separators.Conflict", "DecimalSeparator and ThousandsSeparator must be different characters."));
+
+        if (decimalPlaces is < 0 or > 10)
+            return Result<CurrencyFormat>.Failure(I18nErrors.Validation("CurrencyFormat.DecimalPlaces.OutOfRange", $"DecimalPlaces must be between 0 and 10. Got: {decimalPlaces}."));
+
+        if (string.IsNullOrWhiteSpace(negativePattern) || !negativePattern.Contains("{amount}"))
+            return Result<CurrencyFormat>.Failure(I18nErrors.Validation("CurrencyFormat.NegativePattern.Invalid", "NegativePattern must contain the {amount} placeholder."));
+
+        CurrencyName = currencyName.Trim();
+        Symbol = symbol.Trim();
+        SymbolPosition = symbolPosition;
+        SpaceBetweenSymbolAndAmount = spaceBetweenSymbolAndAmount;
+        DecimalSeparator = decimalSeparator;
+        ThousandsSeparator = thousandsSeparator;
+        DecimalPlaces = decimalPlaces;
+        NegativePattern = negativePattern.Trim();
+
+        return Result.Success();
+    }
+
     /// <summary>Formats an amount according to this currency's rules.</summary>
     public string Format(decimal amount)
     {
@@ -121,8 +128,6 @@ public sealed class CurrencyFormat
 
     private string FormatAbsoluteAmount(decimal value)
     {
-        // Monetary formatting uses conventional half-away-from-zero rounding,
-        // rather than decimal's default midpoint-to-even behaviour.
         var rounded = Math.Round(value, DecimalPlaces, MidpointRounding.AwayFromZero);
         var intPart = (long)Math.Truncate(rounded);
         var decPart = rounded - Math.Truncate(rounded);
