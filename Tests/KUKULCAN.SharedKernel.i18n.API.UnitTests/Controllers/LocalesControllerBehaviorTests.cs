@@ -19,31 +19,31 @@ public sealed class LocalesControllerBehaviorTests
     public async Task Upsert_BuildsCommandFromRouteAndBody()
     {
         var mediator = new Mock<IMediator>();
-        UpsertLocaleConfigurationCommand? captured = null;
         mediator.Setup(x => x.Send(It.IsAny<UpsertLocaleConfigurationCommand>(), It.IsAny<CancellationToken>()))
-            .Callback<UpsertLocaleConfigurationCommand, CancellationToken>((command, _) => captured = command)
             .ThrowsAsync(new InvalidOperationException("sentinel"));
 
+        var request = CreateRequest();
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
-            new LocalesController(mediator.Object).Upsert("es-ES", CreateRequest(), CancellationToken.None));
+            new LocalesController(mediator.Object).Upsert("es-ES", request, CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
-        Assert.That(captured!.LanguageCode, Is.EqualTo("es-ES"));
-        Assert.That(captured.DateFormat, Is.EqualTo("dd/MM/yyyy"));
-        Assert.That(captured.ShortDateFormat, Is.EqualTo("dd/MM/yyyy"));
-        Assert.That(captured.TimeFormat, Is.EqualTo("HH:mm"));
-        Assert.That(captured.DateTimeFormat, Is.EqualTo("dd/MM/yyyy HH:mm"));
-        Assert.That(captured.DecimalPlaces, Is.EqualTo(2));
-        Assert.That(captured.CurrencyDecimalPlaces, Is.EqualTo(2));
+        mediator.Verify(x => x.Send(
+            It.Is<UpsertLocaleConfigurationCommand>(command =>
+                command.LanguageCode == "es-ES" &&
+                command.DateFormat == "dd/MM/yyyy" &&
+                command.ShortDateFormat == "dd/MM/yyyy" &&
+                command.TimeFormat == "HH:mm" &&
+                command.DateTimeFormat == "dd/MM/yyyy HH:mm" &&
+                command.DecimalPlaces == 2 &&
+                command.CurrencyDecimalPlaces == 2),
+            CancellationToken.None), Times.Once);
     }
 
     [Test]
     public async Task GetAll_SendsQueryAndCancellationToken()
     {
         var mediator = new Mock<IMediator>();
-        CancellationToken calledToken = CancellationToken.None;
         mediator.Setup(x => x.Send(It.IsAny<GetAllLocaleConfigurationsQuery>(), It.IsAny<CancellationToken>()))
-            .Callback<GetAllLocaleConfigurationsQuery, CancellationToken>((_, token) => calledToken = token)
             .ThrowsAsync(new InvalidOperationException("sentinel"));
         using var cts = new CancellationTokenSource();
 
@@ -51,22 +51,24 @@ public sealed class LocalesControllerBehaviorTests
             new LocalesController(mediator.Object).GetAll(cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
-        Assert.That(calledToken, Is.EqualTo(cts.Token));
+        mediator.Verify(x => x.Send(
+            It.IsAny<GetAllLocaleConfigurationsQuery>(),
+            cts.Token), Times.Once);
     }
 
     [Test]
     public async Task GetByLanguage_BuildsQueryFromRoute()
     {
         var mediator = new Mock<IMediator>();
-        GetLocaleConfigurationQuery? captured = null;
         mediator.Setup(x => x.Send(It.IsAny<GetLocaleConfigurationQuery>(), It.IsAny<CancellationToken>()))
-            .Callback<GetLocaleConfigurationQuery, CancellationToken>((query, _) => captured = query)
             .ThrowsAsync(new InvalidOperationException("sentinel"));
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
             new LocalesController(mediator.Object).GetByLanguage("ca-ES", CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
-        Assert.That(captured!.LanguageCode, Is.EqualTo("ca-ES"));
+        mediator.Verify(x => x.Send(
+            It.Is<GetLocaleConfigurationQuery>(query => query.LanguageCode == "ca-ES"),
+            CancellationToken.None), Times.Once);
     }
 }
