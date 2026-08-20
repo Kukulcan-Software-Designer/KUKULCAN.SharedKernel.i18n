@@ -45,11 +45,10 @@ public sealed class LanguageTests
     }
 
     [Test]
-    public void Create_DefaultGuid_ReturnsFailure()
+    public void Create_DefaultGuid_ThrowsArgumentException()
     {
-        Result<Language> result = Language.Create(Guid.Empty, "es-ES", "Spanish", "Español");
-
-        Assert.That(result.IsFailure, Is.True);
+        Assert.Throws<ArgumentException>(() =>
+            Language.Create(Guid.Empty, "es-ES", "Spanish", "Español"));
     }
 
     [Test]
