@@ -13,7 +13,12 @@ public static class I18nGuard
     /// <summary>Ensures that a string is not null, empty or whitespace and returns it.</summary>
     public static string NullOrWhiteSpace(string? value, string parameterName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
-        return value!;
+        if (value is null)
+            throw new ArgumentException("Value cannot be null.", parameterName);
+
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException("Value cannot be empty or consist only of white-space characters.", parameterName);
+
+        return value;
     }
 }
