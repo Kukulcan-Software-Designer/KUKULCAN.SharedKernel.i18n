@@ -36,13 +36,12 @@ public sealed class LocaleConfigurationTests
     }
 
     [Test]
-    public void Create_DefaultGuid_ReturnsFailure()
+    public void Create_DefaultGuid_ThrowsArgumentException()
     {
-        Result<LocaleConfiguration> result = LocaleConfiguration.Create(
-            Guid.Empty, "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm",
-            default, ',', '.', 2, 2);
-
-        Assert.That(result.IsFailure, Is.True);
+        Assert.Throws<ArgumentException>(() =>
+            LocaleConfiguration.Create(
+                Guid.Empty, "es-ES", "dd/MM/yyyy", "d/M/yy", "HH:mm", "dd/MM/yyyy HH:mm",
+                default, ',', '.', 2, 2));
     }
 
     [TestCase(null)]
