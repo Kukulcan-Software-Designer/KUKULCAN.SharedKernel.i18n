@@ -43,7 +43,8 @@ public sealed class LanguageRepositoryTests
         c.Languages.AddRange(RepositoryTestData.Language(name: "Spanish"), RepositoryTestData.Language("en-US", "English"));
         await c.SaveChangesAsync();
 
-        Assert.That((await new LanguageRepository(c).ListAllAsync()).Select(x => x.Name), Is.EqualTo(new[] { "English", "Spanish" }));
+        Assert.That((await new LanguageRepository(c).ListAllAsync()).Select(x => x.Name), Is.EqualTo(["English", "Spanish"
+        ]));
     }
 
     [Test]

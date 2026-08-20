@@ -39,10 +39,11 @@ public sealed class LocaleConfigurationRepositoryTests
     {
         await using I18NDbContext c = await RepositoryTestDatabase.CreateContextAsync();
 
-        c.LocaleConfigurations.AddRange(RepositoryTestData.Locale("es-ES"), RepositoryTestData.Locale("en-US"));
+        c.LocaleConfigurations.AddRange(RepositoryTestData.Locale(), RepositoryTestData.Locale("en-US"));
         await c.SaveChangesAsync();
 
-        Assert.That((await new LocaleConfigurationRepository(c).ListAllAsync()).Select(x => x.LanguageCode.Value), Is.EqualTo(new[] { "en-US", "es-ES" }));
+        Assert.That((await new LocaleConfigurationRepository(c).ListAllAsync()).Select(x => x.LanguageCode.Value), Is.EqualTo(
+            ["en-US", "es-ES"]));
     }
 
     [Test]
@@ -50,7 +51,7 @@ public sealed class LocaleConfigurationRepositoryTests
     {
         await using I18NDbContext c = await RepositoryTestDatabase.CreateContextAsync();
 
-        c.LocaleConfigurations.AddRange(RepositoryTestData.Locale("es-ES"), RepositoryTestData.Locale("en-US"));
+        c.LocaleConfigurations.AddRange(RepositoryTestData.Locale(), RepositoryTestData.Locale("en-US"));
         await c.SaveChangesAsync();
 
         Assert.That(await new LocaleConfigurationRepository(c).GetAllAsync(), Has.Count.EqualTo(2));

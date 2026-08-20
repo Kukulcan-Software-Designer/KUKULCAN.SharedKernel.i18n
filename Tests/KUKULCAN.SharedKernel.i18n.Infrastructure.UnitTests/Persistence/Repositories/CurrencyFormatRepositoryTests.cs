@@ -39,10 +39,11 @@ public sealed class CurrencyFormatRepositoryTests
     {
         await using I18NDbContext c = await RepositoryTestDatabase.CreateContextAsync();
 
-        c.CurrencyFormats.AddRange(RepositoryTestData.Currency("es-ES", "USD"), RepositoryTestData.Currency("en-US", "EUR"));
+        c.CurrencyFormats.AddRange(RepositoryTestData.Currency("es-ES", "USD"), RepositoryTestData.Currency("en-US"));
         await c.SaveChangesAsync();
 
-        Assert.That((await new CurrencyFormatRepository(c).ListAllAsync()).Select(x => $"{x.LanguageCode.Value}:{x.CurrencyCode}"), Is.EqualTo(new[] { "en-US:EUR", "es-ES:USD" }));
+        Assert.That((await new CurrencyFormatRepository(c).ListAllAsync()).Select(x => $"{x.LanguageCode.Value}:{x.CurrencyCode}"), Is.EqualTo(
+            ["en-US:EUR", "es-ES:USD"]));
     }
 
     [Test]
@@ -50,10 +51,11 @@ public sealed class CurrencyFormatRepositoryTests
     {
         await using I18NDbContext c = await RepositoryTestDatabase.CreateContextAsync();
 
-        c.CurrencyFormats.AddRange(RepositoryTestData.Currency("es-ES"), RepositoryTestData.Currency("en-US"));
+        c.CurrencyFormats.AddRange(RepositoryTestData.Currency(), RepositoryTestData.Currency("en-US"));
         await c.SaveChangesAsync();
 
-        Assert.That((await new CurrencyFormatRepository(c).GetByLanguageAsync(RepositoryTestData.LanguageCode("es-ES"))).Select(x => x.LanguageCode.Value), Is.EqualTo(new[] { "es-ES" }));
+        Assert.That((await new CurrencyFormatRepository(c).GetByLanguageAsync(RepositoryTestData.LanguageCode("es-ES"))).Select(x => x.LanguageCode.Value), Is.EqualTo(
+            ["es-ES"]));
     }
 
     [Test]

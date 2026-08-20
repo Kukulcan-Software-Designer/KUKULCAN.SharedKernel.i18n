@@ -1,9 +1,6 @@
 using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
 using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects.Enums;
-using KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence.Repositories;
-using Microsoft.EntityFrameworkCore;
-
 using DomainLanguage = KUKULCAN.SharedKernel.i18n.Domain.Entities.Language;
 using DomainTranslation = KUKULCAN.SharedKernel.i18n.Domain.Entities.Translation;
 
