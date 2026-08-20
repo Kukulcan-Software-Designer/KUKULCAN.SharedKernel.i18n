@@ -1,6 +1,5 @@
 using KUKULCAN.SharedKernel.i18n.Domain.Errors;
 using KUKULCAN.SharedKernel.Results;
-using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Errors;
 

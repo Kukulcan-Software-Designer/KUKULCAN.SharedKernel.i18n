@@ -1,6 +1,5 @@
 using KUKULCAN.SharedKernel.i18n.Domain.Services;
 using Microsoft.Extensions.Caching.Memory;
-using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Services;
 

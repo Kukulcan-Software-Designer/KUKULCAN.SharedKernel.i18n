@@ -1,5 +1,4 @@
 using KUKULCAN.SharedKernel.i18n.Domain.Identifiers;
-using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Identifiers;
 

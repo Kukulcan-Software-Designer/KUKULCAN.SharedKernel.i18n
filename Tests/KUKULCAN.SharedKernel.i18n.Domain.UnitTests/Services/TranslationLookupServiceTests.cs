@@ -4,7 +4,6 @@ using KUKULCAN.SharedKernel.i18n.Domain.Services;
 using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
 using KUKULCAN.SharedKernel.Results;
 using Moq;
-using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.Domain.UnitTests.Services;
 
