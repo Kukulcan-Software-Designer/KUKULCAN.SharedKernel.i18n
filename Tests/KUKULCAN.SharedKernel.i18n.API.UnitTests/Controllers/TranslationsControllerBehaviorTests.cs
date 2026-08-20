@@ -9,6 +9,7 @@ using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTr
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTranslationVariants;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTranslationsByModule;
 using KUKULCAN.SharedKernel.i18n.Domain.DTOs;
+using KUKULCAN.SharedKernel.Results;
 using MediatR;
 using Moq;
 using NUnit.Framework;
@@ -18,32 +19,41 @@ namespace KUKULCAN.SharedKernel.i18n.API.UnitTests.Controllers;
 [TestFixture]
 public sealed class TranslationsControllerBehaviorTests
 {
+    private static void SetupException<TResponse>(Mock<IMediator> mediator)
+    {
+        mediator.Setup(x => x.Send(
+                It.IsAny<IRequest<TResponse>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((IRequest<TResponse> _, CancellationToken _) =>
+                Task.FromException<TResponse>(new InvalidOperationException("sentinel")));
+    }
+
     [Test]
     public async Task Create_ForwardsCommandUnchanged()
     {
         var mediator = new Mock<IMediator>();
-        mediator.Setup(x => x.Send(It.IsAny<CreateTranslationCommand>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("sentinel"));
+        SetupException<Result<TranslationDto>>(mediator);
         var command = new CreateTranslationCommand("CRM0001", "es-ES", "Cliente");
+        using var cts = new CancellationTokenSource();
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
-            new TranslationsController(mediator.Object).Create(command, CancellationToken.None));
+            new TranslationsController(mediator.Object).Create(command, cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
         mediator.Verify(x => x.Send(
             It.Is<CreateTranslationCommand>(sent => ReferenceEquals(sent, command)),
-            CancellationToken.None), Times.Once);
+            cts.Token), Times.Once);
     }
 
     [Test]
     public async Task Update_BuildsCommandFromRouteAndBody()
     {
         var mediator = new Mock<IMediator>();
-        mediator.Setup(x => x.Send(It.IsAny<UpdateTranslationCommand>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("sentinel"));
+        SetupException<Result<TranslationDto>>(mediator);
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
-            new TranslationsController(mediator.Object).Update("CRM0001", "es-ES", new UpdateTranslationRequest("Cliente", "CRM"), CancellationToken.None));
+            new TranslationsController(mediator.Object).Update(
+                "CRM0001", "es-ES", new UpdateTranslationRequest("Cliente", "CRM"), CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
         mediator.Verify(x => x.Send(
@@ -59,11 +69,11 @@ public sealed class TranslationsControllerBehaviorTests
     public async Task SetReviewed_BuildsCommandFromRouteAndBody()
     {
         var mediator = new Mock<IMediator>();
-        mediator.Setup(x => x.Send(It.IsAny<SetTranslationReviewedCommand>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("sentinel"));
+        SetupException<Result>(mediator);
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
-            new TranslationsController(mediator.Object).SetReviewed("CRM0001", "ca-ES", new SetReviewedRequest(true), CancellationToken.None));
+            new TranslationsController(mediator.Object).SetReviewed(
+                "CRM0001", "ca-ES", new SetReviewedRequest(true), CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
         mediator.Verify(x => x.Send(
@@ -78,8 +88,7 @@ public sealed class TranslationsControllerBehaviorTests
     public async Task Delete_BuildsCommandFromRoute()
     {
         var mediator = new Mock<IMediator>();
-        mediator.Setup(x => x.Send(It.IsAny<DeleteTranslationCommand>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("sentinel"));
+        SetupException<Result>(mediator);
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
             new TranslationsController(mediator.Object).Delete("CRM0001", "es-ES", CancellationToken.None));
@@ -95,8 +104,7 @@ public sealed class TranslationsControllerBehaviorTests
     public async Task GetTranslation_BuildsQueryFromRoute()
     {
         var mediator = new Mock<IMediator>();
-        mediator.Setup(x => x.Send(It.IsAny<GetTranslationQuery>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("sentinel"));
+        SetupException<Result<TranslationLookupDto>>(mediator);
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
             new TranslationsController(mediator.Object).GetTranslation("CRM0001", "es-MX", CancellationToken.None));
@@ -112,11 +120,11 @@ public sealed class TranslationsControllerBehaviorTests
     public async Task GetModuleTranslations_BuildsQueryFromRoute()
     {
         var mediator = new Mock<IMediator>();
-        mediator.Setup(x => x.Send(It.IsAny<GetTranslationsByModuleQuery>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("sentinel"));
+        SetupException<Result<TranslationMapDto>>(mediator);
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
-            new TranslationsController(mediator.Object).GetModuleTranslations("CRM", "es-ES", CancellationToken.None));
+            new TranslationsController(mediator.Object).GetModuleTranslations(
+                "CRM", "es-ES", CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
         mediator.Verify(x => x.Send(
@@ -129,8 +137,7 @@ public sealed class TranslationsControllerBehaviorTests
     public async Task GetVariants_BuildsQueryFromRoute()
     {
         var mediator = new Mock<IMediator>();
-        mediator.Setup(x => x.Send(It.IsAny<GetTranslationVariantsQuery>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("sentinel"));
+        SetupException<Result<IReadOnlyList<TranslationDto>>>(mediator);
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
             new TranslationsController(mediator.Object).GetVariants("CRM0001", CancellationToken.None));
@@ -145,16 +152,16 @@ public sealed class TranslationsControllerBehaviorTests
     public async Task BulkUpsert_ForwardsCommandUnchanged()
     {
         var mediator = new Mock<IMediator>();
-        mediator.Setup(x => x.Send(It.IsAny<BulkUpsertTranslationsCommand>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("sentinel"));
+        SetupException<Result<IReadOnlyList<TranslationDto>>>(mediator);
         var command = new BulkUpsertTranslationsCommand(Array.Empty<BulkTranslationDto>());
+        using var cts = new CancellationTokenSource();
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
-            new TranslationsController(mediator.Object).BulkUpsert(command, CancellationToken.None));
+            new TranslationsController(mediator.Object).BulkUpsert(command, cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
         mediator.Verify(x => x.Send(
             It.Is<BulkUpsertTranslationsCommand>(sent => ReferenceEquals(sent, command)),
-            CancellationToken.None), Times.Once);
+            cts.Token), Times.Once);
     }
 }
