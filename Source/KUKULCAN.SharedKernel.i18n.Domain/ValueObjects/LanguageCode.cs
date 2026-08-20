@@ -7,17 +7,6 @@ namespace KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
 /// Represents a BCP-47 language tag used to identify a locale
 /// (e.g., <c>es-ES</c>, <c>en-US</c>, <c>ca-ES</c>, <c>fr-FR</c>).
 /// </summary>
-/// <example>
-/// <code>
-/// var locale = LanguageCode.Create("es-ES").Value;
-/// Console.WriteLine(locale.Language); // "es"
-/// Console.WriteLine(locale.Region);   // "ES"
-/// Console.WriteLine(locale.Value);    // "es-ES"
-///
-/// // Checking fallback chain:
-/// var chain = locale.FallbackChain;   // ["es-ES", "es", "en"]
-/// </code>
-/// </example>
 public sealed class LanguageCode : ValueObject
 {
     private static readonly Regex _bcp47 = new(
@@ -25,13 +14,13 @@ public sealed class LanguageCode : ValueObject
         RegexOptions.Compiled,
         TimeSpan.FromMilliseconds(50));
 
-    /// <summary>Gets the full normalized BCP-47 language tag (e.g., <c>es-ES</c>).</summary>
+    /// <summary>Gets the full normalized BCP-47 language tag.</summary>
     public string Value { get; }
 
-    /// <summary>Gets the two or three letter language subtag (e.g., <c>es</c>).</summary>
+    /// <summary>Gets the two or three letter language subtag.</summary>
     public string Language { get; }
 
-    /// <summary>Gets the region/country subtag, or <c>null</c> if not specified (e.g., <c>ES</c>).</summary>
+    /// <summary>Gets the region/country subtag, or <c>null</c> if not specified.</summary>
     public string? Region { get; }
 
     private LanguageCode(string value, string language, string? region)
@@ -42,7 +31,6 @@ public sealed class LanguageCode : ValueObject
     }
 
     /// <summary>Creates a validated BCP-47 <see cref="LanguageCode"/> value object.</summary>
-    /// <param name="tag">The BCP-47 language tag (e.g., <c>"es-ES"</c>).</param>
     public static Result<LanguageCode> Create(string? tag)
     {
         if (string.IsNullOrWhiteSpace(tag))
@@ -70,8 +58,10 @@ public sealed class LanguageCode : ValueObject
         get
         {
             var chain = new List<string> { Value };
-            if (Region is not null) chain.Add(Language);
-            chain.Add("en"); // ultimate fallback
+            if (Region is not null)
+                chain.Add(Language);
+            if (!chain.Contains("en", StringComparer.OrdinalIgnoreCase))
+                chain.Add("en");
             return chain;
         }
     }
