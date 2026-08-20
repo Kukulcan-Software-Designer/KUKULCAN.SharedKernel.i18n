@@ -36,11 +36,10 @@ public sealed class TranslationTests
     }
 
     [Test]
-    public void Create_DefaultGuid_ReturnsFailure()
+    public void Create_DefaultGuid_ThrowsArgumentException()
     {
-        Result<Translation> result = Translation.Create(Guid.Empty, "CRM0001", "es-ES", "Hello");
-
-        Assert.That(result.IsFailure, Is.True);
+        Assert.Throws<ArgumentException>(() =>
+            Translation.Create(Guid.Empty, "CRM0001", "es-ES", "Hello"));
     }
 
     [Test]
