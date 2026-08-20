@@ -64,13 +64,14 @@ public sealed class I18NEntityIdTests
         var first = new I18nEntityId(guid);
         var same = new I18nEntityId(guid);
         var different = new I18nEntityId(Guid.NewGuid());
+        object differentType = guid;
 
         Assert.Multiple(() =>
         {
             Assert.That(first.Equals(same), Is.True);
             Assert.That(first.Equals(different), Is.False);
-            Assert.That(first.Equals((object?)null), Is.False);
-            Assert.That(first.Equals(guid), Is.False);
+            Assert.That(object.Equals(first, null), Is.False);
+            Assert.That(first.Equals(differentType), Is.False);
         });
     }
 
