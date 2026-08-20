@@ -41,7 +41,7 @@ public sealed class UpsertCurrencyFormatCommandValidator : AbstractValidator<Ups
 
         RuleFor(x => x.NegativePattern)
             .NotEmpty()
-            .Must(p => p.Contains("{amount}"))
+            .Must(p => !string.IsNullOrWhiteSpace(p) && p.Contains("{amount}"))
             .WithMessage("NegativePattern must contain the {amount} placeholder.");
 
         RuleFor(x => x)
