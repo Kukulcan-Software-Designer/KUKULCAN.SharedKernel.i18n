@@ -1,3 +1,4 @@
+using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,7 +8,7 @@ namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence.Configurations;
 /// EF Core configuration for <see cref="LocaleConfiguration"/>.
 /// Maps locale formatting rules to the <c>i18n.LocaleConfigurations</c> table.
 /// </summary>
-public sealed class LocaleConfigurationConfiguration1 : IEntityTypeConfiguration<LocaleConfiguration>
+public sealed class LocaleConfigurationConfiguration : IEntityTypeConfiguration<LocaleConfiguration>
 {
     /// <summary>
     /// Configures the entity type for <see cref="LocaleConfiguration"/>.
