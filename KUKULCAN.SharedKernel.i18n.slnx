@@ -1,10 +1,13 @@
 <Solution>
-  <Folder Name="/Documentation/" />
-  <!--
-    ATLAS.Kernel.i18n — Internationalization core library for the **ATLAS ERP** platform.
-    Solution format: .slnx (.NET 9+ / Visual Studio 2022 17.12+)
-    Brand: TITÁN Software — Sostenemos lo que construyes.
-  -->
+  <Folder Name="/Documentation/">
+    <File Path="Documentation/README.md" />
+    <File Path="Documentation/architecture.md" />
+    <File Path="Documentation/domain.md" />
+    <File Path="Documentation/application.md" />
+    <File Path="Documentation/infrastructure.md" />
+    <File Path="Documentation/api.md" />
+    <File Path="Documentation/operations.md" />
+  </Folder>
 
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
