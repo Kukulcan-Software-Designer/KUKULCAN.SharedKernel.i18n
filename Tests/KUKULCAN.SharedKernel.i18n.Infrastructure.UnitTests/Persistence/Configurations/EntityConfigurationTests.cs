@@ -1,4 +1,7 @@
+using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence.Configurations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests.Persistence.Configurations;
 
@@ -12,7 +15,7 @@ public sealed class EntityConfigurationTests
 
         new CurrencyFormatConfiguration().Configure(modelBuilder.Entity<CurrencyFormat>());
 
-        var entity = modelBuilder.Model.FindEntityType(typeof(CurrencyFormat))!;
+        IMutableEntityType entity = modelBuilder.Model.FindEntityType(typeof(CurrencyFormat))!;
 
         Assert.Multiple(() =>
         {
@@ -32,7 +35,7 @@ public sealed class EntityConfigurationTests
 
         new LanguageConfiguration().Configure(modelBuilder.Entity<Language>());
 
-        var entity = modelBuilder.Model.FindEntityType(typeof(Language))!;
+        IMutableEntityType entity = modelBuilder.Model.FindEntityType(typeof(Language))!;
 
         Assert.Multiple(() =>
         {
@@ -51,7 +54,7 @@ public sealed class EntityConfigurationTests
 
         new LocaleConfigurationConfiguration().Configure(modelBuilder.Entity<LocaleConfiguration>());
 
-        var entity = modelBuilder.Model.FindEntityType(typeof(LocaleConfiguration))!;
+        IMutableEntityType entity = modelBuilder.Model.FindEntityType(typeof(LocaleConfiguration))!;
 
         Assert.Multiple(() =>
         {
@@ -71,7 +74,7 @@ public sealed class EntityConfigurationTests
 
         new TranslationConfiguration().Configure(modelBuilder.Entity<Translation>());
 
-        var entity = modelBuilder.Model.FindEntityType(typeof(Translation))!;
+        IMutableEntityType entity = modelBuilder.Model.FindEntityType(typeof(Translation))!;
 
         Assert.Multiple(() =>
         {
