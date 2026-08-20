@@ -8,6 +8,7 @@ using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Commands.Upda
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTranslation;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTranslationVariants;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTranslationsByModule;
+using KUKULCAN.SharedKernel.i18n.Domain.DTOs;
 using MediatR;
 using Moq;
 using NUnit.Framework;
