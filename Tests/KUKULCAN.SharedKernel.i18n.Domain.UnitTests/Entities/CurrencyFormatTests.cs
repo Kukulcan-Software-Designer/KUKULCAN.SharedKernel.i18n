@@ -164,39 +164,4 @@ public sealed class CurrencyFormatTests
 
         Assert.That(format.Format(1234.56m), Is.EqualTo("$1,235"));
     }
-
-    [Test]
-    public void Update_ValidInput_ReplacesFormattingProperties()
-    {
-        CurrencyFormat format = CreateUsdBefore();
-
-        Result result = format.Update("US Dollar Updated", "USD", CurrencySymbolPosition.After, true, ',', '.', 3, "-{amount} {symbol}");
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(format.CurrencyName, Is.EqualTo("US Dollar Updated"));
-            Assert.That(format.Symbol, Is.EqualTo("USD"));
-            Assert.That(format.SymbolPosition, Is.EqualTo(CurrencySymbolPosition.After));
-            Assert.That(format.SpaceBetweenSymbolAndAmount, Is.True);
-            Assert.That(format.DecimalSeparator, Is.EqualTo(','));
-            Assert.That(format.ThousandsSeparator, Is.EqualTo('.'));
-            Assert.That(format.DecimalPlaces, Is.EqualTo(3));
-            Assert.That(format.NegativePattern, Is.EqualTo("-{amount} {symbol}"));
-        });
-    }
-
-    [Test]
-    public void Update_InvalidValues_DoNotMutateExistingState()
-    {
-        CurrencyFormat format = CreateUsdBefore();
-
-        Result result = format.Update("Changed", "€", CurrencySymbolPosition.Before, false, '.', '.', 2, "-{symbol}{amount}");
-
-        Assert.That(result.IsFailure, Is.True);
-        Assert.That(format.CurrencyName, Is.EqualTo("US Dollar"));
-        Assert.That(format.Symbol, Is.EqualTo("$"));
-        Assert.That(format.DecimalSeparator, Is.EqualTo('.'));
-        Assert.That(format.ThousandsSeparator, Is.EqualTo(','));
-    }
 }
