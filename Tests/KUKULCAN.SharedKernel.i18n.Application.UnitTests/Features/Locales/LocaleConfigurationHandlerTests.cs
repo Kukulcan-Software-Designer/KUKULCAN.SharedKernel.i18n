@@ -57,7 +57,7 @@ public sealed class LocaleConfigurationHandlerTests
     public async Task Upsert_InvalidLanguageCode_ReturnsFailureBeforeRepositoryAccess()
     {
         var langRepo = new Mock<ILanguageRepository>(); var sut = new UpsertLocaleConfigurationCommandHandler(new Mock<ILocaleConfigurationRepository>().Object, langRepo.Object, new Mock<IUnitOfWork>().Object, new Mock<ICacheService>().Object);
-        Result<LocaleConfigurationDto> result = await sut.Handle(Command("bad-code"), CancellationToken.None);
+        Result<LocaleConfigurationDto> result = await sut.Handle(Command("a-"), CancellationToken.None);
         Assert.That(result.IsFailure, Is.True); langRepo.Verify(x => x.ExistsByCodeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -73,7 +73,7 @@ public sealed class LocaleConfigurationHandlerTests
     public async Task GetLocaleConfiguration_InvalidLanguageCode_ReturnsFailure()
     {
         var repo = new Mock<ILocaleConfigurationRepository>(); var sut = new GetLocaleConfigurationQueryHandler(repo.Object);
-        Result<LocaleConfigurationDto> result = await sut.Handle(new GetLocaleConfigurationQuery("bad-code"), CancellationToken.None);
+        Result<LocaleConfigurationDto> result = await sut.Handle(new GetLocaleConfigurationQuery("a-"), CancellationToken.None);
         Assert.That(result.IsFailure, Is.True); repo.Verify(x => x.GetByLanguageAsync(It.IsAny<LanguageCode>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
