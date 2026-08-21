@@ -15,7 +15,7 @@ public sealed class TranslationRepository(I18NDbContext context) : ITranslationR
     /// <param name="ct">The ct parameter.</param>
     /// <returns>The operation result.</returns>
     public async Task<Translation?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
-        await context.Translations.FirstOrDefaultAsync(t => t.Id.Value == id, ct);
+        await context.Translations.FirstOrDefaultAsync(t => t.Id == new I18nEntityId(id), ct);
 
     /// <summary>
     /// Executes FindAsync.
@@ -46,11 +46,18 @@ public sealed class TranslationRepository(I18NDbContext context) : ITranslationR
     {
         var prefix = module.ToUpperInvariant();
 
-        return await context.Translations
-            .Where(t =>
-                t.LanguageCode == languageCode && EF.Functions.Like(EF.Property<string>(t, "Code"), $"{prefix}%"))
+        // TranslationCode is persisted through a value converter. EF Core cannot translate
+        // EF.Property<string>(..., "Code") because the CLR property type is TranslationCode.
+        // Apply the translatable language predicate in SQL and perform the prefix comparison
+        // against the value-object value after materialization.
+        var translations = await context.Translations
+            .Where(t => t.LanguageCode == languageCode)
             .OrderBy(t => t.Code)
             .ToListAsync(ct);
+
+        return translations
+            .Where(t => t.Code.Value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            .ToList();
     }
 
     /// <summary>
@@ -79,11 +86,6 @@ public sealed class TranslationRepository(I18NDbContext context) : ITranslationR
     {
         var query = context.Translations.AsQueryable();
 
-        if (moduleFilter is not null)
-            query = query.Where(t => EF.Functions.Like(
-                EF.Property<string>(t, "Code"),
-                $"{moduleFilter.ToUpperInvariant()}%"));
-
         if (languageFilter is not null)
         {
             var langResult = LanguageCode.Create(languageFilter);
@@ -91,13 +93,24 @@ public sealed class TranslationRepository(I18NDbContext context) : ITranslationR
                 query = query.Where(t => t.LanguageCode == langResult.Value);
         }
 
-        var total = await query.LongCountAsync(ct);
-        var items = await query
+        var translations = await query
             .OrderBy(t => t.Code)
             .ThenBy(t => t.LanguageCode)
+            .ToListAsync(ct);
+
+        if (moduleFilter is not null)
+        {
+            var prefix = moduleFilter.ToUpperInvariant();
+            translations = translations
+                .Where(t => t.Code.Value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        var total = translations.Count;
+        var items = translations
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync(ct);
+            .ToList();
 
         return (items, total);
     }
@@ -119,7 +132,7 @@ public sealed class TranslationRepository(I18NDbContext context) : ITranslationR
     /// <param name="ct">The ct parameter.</param>
     /// <returns>The operation result.</returns>
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default) =>
-        await context.Translations.AnyAsync(t => t.Id.Value == id, ct);
+        await context.Translations.AnyAsync(t => t.Id == new I18nEntityId(id), ct);
 
     /// <summary>
     /// Executes AddAsync.

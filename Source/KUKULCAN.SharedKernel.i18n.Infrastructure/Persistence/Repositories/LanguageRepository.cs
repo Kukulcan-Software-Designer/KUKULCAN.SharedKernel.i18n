@@ -18,7 +18,7 @@ public sealed class LanguageRepository(I18NDbContext context) : ILanguageReposit
         await context.Languages
             .Include(l => l.LocaleConfiguration)
             .Include(l => l.CurrencyFormats)
-            .FirstOrDefaultAsync(l => l.Id.Value == id, ct);
+            .FirstOrDefaultAsync(l => l.Id == new I18nEntityId(id), ct);
 
     /// <summary>
     /// Gets a language by its BCP-47 code.
@@ -67,7 +67,7 @@ public sealed class LanguageRepository(I18NDbContext context) : ILanguageReposit
     /// <param name="ct">The cancellation token.</param>
     /// <returns>True if the language exists; otherwise, false.</returns>
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
-        => await context.Languages.AnyAsync(l => l.Id.Value == id, ct);
+        => await context.Languages.AnyAsync(l => l.Id == new I18nEntityId(id), ct);
 
     /// <summary>
     /// Checks if a language exists by its BCP-47 code.
