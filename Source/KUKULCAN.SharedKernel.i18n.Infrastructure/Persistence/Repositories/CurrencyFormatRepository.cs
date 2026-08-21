@@ -26,7 +26,7 @@ public sealed class CurrencyFormatRepository(I18NDbContext context) : ICurrencyF
         await context.CurrencyFormats
             .FirstOrDefaultAsync(cf =>
                 cf.LanguageCode == languageCode &&
-                cf.CurrencyCode.Equals(currencyCode, StringComparison.InvariantCultureIgnoreCase), ct);
+                cf.CurrencyCode.ToUpper() == currencyCode.ToUpper(), ct);
 
     /// <summary>
     /// Lists all currency formats.
