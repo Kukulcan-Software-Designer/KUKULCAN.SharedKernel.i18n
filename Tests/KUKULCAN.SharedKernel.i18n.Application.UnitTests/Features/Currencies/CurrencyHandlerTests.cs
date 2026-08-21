@@ -167,7 +167,7 @@ public sealed class CurrencyHandlerTests
         Assert.That(result.Value, Has.Count.EqualTo(1));
         Assert.That(result.Value[0].CurrencyCode, Is.EqualTo("EUR"));
         Assert.That(result.Value[0].LanguageCode, Is.EqualTo("es-ES"));
-        Assert.That(result.Value[0].Example, Is.Not.Empty);
+        Assert.That(result.Value[0].FormattedExample, Is.Not.Empty);
         repo.Verify(x => x.GetByLanguageAsync(It.IsAny<LanguageCode>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
