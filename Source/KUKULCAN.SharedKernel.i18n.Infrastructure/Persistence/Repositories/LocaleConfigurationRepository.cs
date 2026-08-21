@@ -15,7 +15,7 @@ public sealed class LocaleConfigurationRepository(I18NDbContext context) : ILoca
     /// <param name="ct">The cancellation token.</param>
     /// <returns>The locale configuration if found; otherwise, null.</returns>
     public async Task<LocaleConfiguration?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
-        await context.LocaleConfigurations.FirstOrDefaultAsync(lc => lc.Id.Value == id, ct);
+        await context.LocaleConfigurations.FirstOrDefaultAsync(lc => lc.Id == new I18nEntityId(id), ct);
 
     /// <summary>
     /// Gets a locale configuration by its language code.
@@ -48,7 +48,7 @@ public sealed class LocaleConfigurationRepository(I18NDbContext context) : ILoca
     /// <param name="ct">The cancellation token.</param>
     /// <returns>True if the locale configuration exists; otherwise, false.</returns>
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
-        => await context.LocaleConfigurations.AnyAsync(lc => lc.Id.Value == id, ct);
+        => await context.LocaleConfigurations.AnyAsync(lc => lc.Id == new I18nEntityId(id), ct);
 
     /// <summary>
     /// Adds a new locale configuration.
