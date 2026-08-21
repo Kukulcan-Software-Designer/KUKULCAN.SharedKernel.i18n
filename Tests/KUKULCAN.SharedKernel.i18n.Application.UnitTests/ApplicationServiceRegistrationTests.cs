@@ -28,6 +28,8 @@ public sealed class ApplicationServiceRegistrationTests
         using ServiceProvider provider = services.BuildServiceProvider();
         Assert.That(provider.GetService<ITranslationLookupService>(), Is.Not.Null);
         Assert.That(provider.GetService<ILanguageDomainService>(), Is.Not.Null);
-        Assert.That(provider.GetServices<IPipelineBehavior<CreateLanguageCommand, Result<LanguageDto>>>(), Has.Count.EqualTo(3));
+        Assert.That(
+            provider.GetServices<IPipelineBehavior<CreateLanguageCommand, Result<LanguageDto>>>(),
+            Has.Length.EqualTo(3));
     }
 }
