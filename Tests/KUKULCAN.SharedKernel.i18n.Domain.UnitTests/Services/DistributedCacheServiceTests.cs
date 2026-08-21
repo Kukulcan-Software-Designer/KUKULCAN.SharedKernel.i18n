@@ -114,9 +114,9 @@ public sealed class DistributedCacheServiceTests
         using var memory = new MemoryCache(new MemoryCacheOptions());
         var service = new DistributedCacheService(distributed, memory, NullLogger<DistributedCacheService>.Instance);
         await service.SetAsync("key", new CacheValue("existing"));
-        var calls = 0;
+        int calls = 0;
 
-        var value = await service.GetOrCreateAsync("key", _ =>
+        CacheValue value = await service.GetOrCreateAsync("key", _ =>
         {
             calls++;
             return Task.FromResult(new CacheValue("created"));
@@ -132,9 +132,9 @@ public sealed class DistributedCacheServiceTests
         var distributed = new TestDistributedCache();
         using var memory = new MemoryCache(new MemoryCacheOptions());
         var service = new DistributedCacheService(distributed, memory, NullLogger<DistributedCacheService>.Instance);
-        var calls = 0;
+        int calls = 0;
 
-        var value = await service.GetOrCreateAsync("key", _ =>
+        CacheValue value = await service.GetOrCreateAsync("key", _ =>
         {
             calls++;
             return Task.FromResult(new CacheValue("created"));

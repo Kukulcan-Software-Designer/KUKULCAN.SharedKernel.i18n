@@ -14,6 +14,7 @@ using KUKULCAN.SharedKernel.i18n.Domain.DTOs;
 using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Repositories;
 using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Services;
 using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
+using KUKULCAN.SharedKernel.Results;
 using Moq;
 
 namespace KUKULCAN.SharedKernel.i18n.Application.UnitTests.Features.Translations;
@@ -28,7 +29,7 @@ public sealed class TranslationHandlerTests
         languages.Setup(x => x.GetByCodeAsync("es-ES", It.IsAny<CancellationToken>())).ReturnsAsync(ApplicationTestData.Language());
         translations.Setup(x => x.ExistsAsync(It.IsAny<TranslationCode>(), It.IsAny<LanguageCode>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
         var sut = new CreateTranslationCommandHandler(translations.Object, languages.Object, uow.Object, cache.Object);
-        var result = await sut.Handle(new CreateTranslationCommand("CRM0001", "es-ES", "Hola"), CancellationToken.None);
+        Result<TranslationDto> result = await sut.Handle(new CreateTranslationCommand("CRM0001", "es-ES", "Hola"), CancellationToken.None);
         Assert.That(result.IsSuccess, Is.True); Assert.That(result.Value.Text, Is.EqualTo("Hola"));
         translations.Verify(x => x.AddAsync(It.IsAny<Domain.Entities.Translation>(), It.IsAny<CancellationToken>()), Times.Once); uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         cache.Verify(x => x.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
@@ -41,7 +42,7 @@ public sealed class TranslationHandlerTests
         languages.Setup(x => x.GetByCodeAsync("es-ES", It.IsAny<CancellationToken>())).ReturnsAsync(ApplicationTestData.Language());
         translations.Setup(x => x.ExistsAsync(It.IsAny<TranslationCode>(), It.IsAny<LanguageCode>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
         var sut = new CreateTranslationCommandHandler(translations.Object, languages.Object, uow.Object, new Mock<ICacheService>().Object);
-        var result = await sut.Handle(new CreateTranslationCommand("CRM0001", "es-ES", "Hola"), CancellationToken.None);
+        Result<TranslationDto> result = await sut.Handle(new CreateTranslationCommand("CRM0001", "es-ES", "Hola"), CancellationToken.None);
         Assert.That(result.Error.Code, Is.EqualTo("Translation.Duplicate")); translations.Verify(x => x.AddAsync(It.IsAny<Domain.Entities.Translation>(), It.IsAny<CancellationToken>()), Times.Never); uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -50,7 +51,7 @@ public sealed class TranslationHandlerTests
     {
         var languages = new Mock<ILanguageRepository>(); languages.Setup(x => x.GetByCodeAsync("es-ES", It.IsAny<CancellationToken>())).ReturnsAsync(ApplicationTestData.Language(active: false));
         var sut = new CreateTranslationCommandHandler(new Mock<ITranslationRepository>().Object, languages.Object, new Mock<IUnitOfWork>().Object, new Mock<ICacheService>().Object);
-        var result = await sut.Handle(new CreateTranslationCommand("CRM0001", "es-ES", "Hola"), CancellationToken.None);
+        Result<TranslationDto> result = await sut.Handle(new CreateTranslationCommand("CRM0001", "es-ES", "Hola"), CancellationToken.None);
         Assert.That(result.Error.Code, Is.EqualTo("Language.Inactive"));
     }
 
@@ -67,14 +68,14 @@ public sealed class TranslationHandlerTests
     public async Task UpdateTranslation_Missing_ReturnsNotFound()
     {
         var repo = new Mock<ITranslationRepository>(); var sut = new UpdateTranslationCommandHandler(repo.Object, new Mock<IUnitOfWork>().Object, new Mock<ICacheService>().Object);
-        var result = await sut.Handle(new UpdateTranslationCommand("CRM0001", "es-ES", "Adiós"), CancellationToken.None); Assert.That(result.Error.Code, Is.EqualTo("Translation.NotFound"));
+        Result<TranslationDto> result = await sut.Handle(new UpdateTranslationCommand("CRM0001", "es-ES", "Adiós"), CancellationToken.None); Assert.That(result.Error.Code, Is.EqualTo("Translation.NotFound"));
     }
 
     [Test]
     public async Task DeleteTranslation_EnglishIsProtected()
     {
         var sut = new DeleteTranslationCommandHandler(new Mock<ITranslationRepository>().Object, new Mock<IUnitOfWork>().Object, new Mock<ICacheService>().Object);
-        var result = await sut.Handle(new DeleteTranslationCommand("CRM0001", "en-US"), CancellationToken.None); Assert.That(result.Error.Code, Is.EqualTo("Translation.English.ProtectedDelete"));
+        Result result = await sut.Handle(new DeleteTranslationCommand("CRM0001", "en-US"), CancellationToken.None); Assert.That(result.Error.Code, Is.EqualTo("Translation.English.ProtectedDelete"));
     }
 
     [Test]

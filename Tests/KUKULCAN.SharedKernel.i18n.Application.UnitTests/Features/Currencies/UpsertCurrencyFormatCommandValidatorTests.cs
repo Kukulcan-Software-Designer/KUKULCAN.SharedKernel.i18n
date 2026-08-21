@@ -1,3 +1,4 @@
+using FluentValidation.Results;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Currencies.Commands.UpsertCurrencyFormat;
 
 namespace KUKULCAN.SharedKernel.i18n.Application.UnitTests.Features.Currencies;
@@ -10,7 +11,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [Test]
     public void Validate_ValidCommand_ReturnsSuccess()
     {
-        var result = _validator.Validate(CreateValidCommand());
+        ValidationResult result = _validator.Validate(CreateValidCommand());
 
         Assert.That(result.IsValid, Is.True);
         Assert.That(result.Errors, Is.Empty);
@@ -23,7 +24,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [TestCase("english")]
     public void Validate_InvalidLanguageCode_ReturnsFailure(string? languageCode)
     {
-        var result = _validator.Validate(CreateValidCommand() with { LanguageCode = languageCode! });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { LanguageCode = languageCode! });
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(UpsertCurrencyFormatCommand.LanguageCode)), Is.True);
@@ -37,7 +38,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [TestCase("EURO")]
     public void Validate_InvalidCurrencyCode_ReturnsFailure(string? currencyCode)
     {
-        var result = _validator.Validate(CreateValidCommand() with { CurrencyCode = currencyCode! });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { CurrencyCode = currencyCode! });
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(UpsertCurrencyFormatCommand.CurrencyCode)), Is.True);
@@ -48,7 +49,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [TestCase(" ")]
     public void Validate_EmptyCurrencyName_ReturnsFailure(string? currencyName)
     {
-        var result = _validator.Validate(CreateValidCommand() with { CurrencyName = currencyName! });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { CurrencyName = currencyName! });
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(UpsertCurrencyFormatCommand.CurrencyName)), Is.True);
@@ -59,7 +60,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [TestCase(" ")]
     public void Validate_EmptySymbol_ReturnsFailure(string? symbol)
     {
-        var result = _validator.Validate(CreateValidCommand() with { Symbol = symbol! });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { Symbol = symbol! });
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(UpsertCurrencyFormatCommand.Symbol)), Is.True);
@@ -71,7 +72,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [TestCase("after")]
     public void Validate_ValidSymbolPosition_ReturnsSuccess(string symbolPosition)
     {
-        var result = _validator.Validate(CreateValidCommand() with { SymbolPosition = symbolPosition });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { SymbolPosition = symbolPosition });
 
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(UpsertCurrencyFormatCommand.SymbolPosition)), Is.False);
     }
@@ -82,7 +83,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [TestCase("Left")]
     public void Validate_InvalidSymbolPosition_ReturnsFailure(string? symbolPosition)
     {
-        var result = _validator.Validate(CreateValidCommand() with { SymbolPosition = symbolPosition! });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { SymbolPosition = symbolPosition! });
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(UpsertCurrencyFormatCommand.SymbolPosition)), Is.True);
@@ -92,7 +93,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [TestCase(11)]
     public void Validate_DecimalPlacesOutsideRange_ReturnsFailure(int decimalPlaces)
     {
-        var result = _validator.Validate(CreateValidCommand() with { DecimalPlaces = decimalPlaces });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { DecimalPlaces = decimalPlaces });
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(UpsertCurrencyFormatCommand.DecimalPlaces)), Is.True);
@@ -103,7 +104,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [TestCase(10)]
     public void Validate_DecimalPlacesWithinRange_ReturnsSuccess(int decimalPlaces)
     {
-        var result = _validator.Validate(CreateValidCommand() with { DecimalPlaces = decimalPlaces });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { DecimalPlaces = decimalPlaces });
 
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(UpsertCurrencyFormatCommand.DecimalPlaces)), Is.False);
     }
@@ -111,7 +112,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [Test]
     public void Validate_EqualSeparators_ReturnsFailure()
     {
-        var result = _validator.Validate(CreateValidCommand() with
+        ValidationResult result = _validator.Validate(CreateValidCommand() with
         {
             DecimalSeparator = ".",
             ThousandsSeparator = "."
@@ -127,7 +128,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [TestCase("{symbol}")]
     public void Validate_InvalidNegativePattern_ReturnsFailure(string? negativePattern)
     {
-        var result = _validator.Validate(CreateValidCommand() with { NegativePattern = negativePattern! });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { NegativePattern = negativePattern! });
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(UpsertCurrencyFormatCommand.NegativePattern)), Is.True);
@@ -145,7 +146,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [Test]
     public void Validate_CurrencyNameLongerThanMaximum_ReturnsFailure()
     {
-        var result = _validator.Validate(CreateValidCommand() with { CurrencyName = new string('A', 101) });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { CurrencyName = new string('A', 101) });
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(UpsertCurrencyFormatCommand.CurrencyName)), Is.True);
@@ -154,7 +155,7 @@ public sealed class UpsertCurrencyFormatCommandValidatorTests
     [Test]
     public void Validate_SymbolLongerThanMaximum_ReturnsFailure()
     {
-        var result = _validator.Validate(CreateValidCommand() with { Symbol = "123456" });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { Symbol = "123456" });
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(UpsertCurrencyFormatCommand.Symbol)), Is.True);

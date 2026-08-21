@@ -5,6 +5,8 @@ using KUKULCAN.SharedKernel.i18n.Application.Features.Languages.Commands.SetLang
 using KUKULCAN.SharedKernel.i18n.Application.Features.Languages.Commands.UpdateLanguage;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Languages.Queries.GetAllLanguages;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Languages.Queries.GetLanguage;
+using KUKULCAN.SharedKernel.i18n.Domain.DTOs;
+using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Domain.Errors;
 using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Repositories;
 using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Services;
@@ -20,10 +22,10 @@ public sealed class LanguageHandlerTests
     public async Task SetLanguageActive_ActivatesLanguage_PersistsAndInvalidatesCaches()
     {
         var repo = new Mock<ILanguageRepository>(); var uow = new Mock<IUnitOfWork>(); var cache = new Mock<ICacheService>();
-        var language = ApplicationTestData.Language(active: false);
+        Language language = ApplicationTestData.Language(active: false);
         repo.Setup(x => x.GetByCodeAsync("es-ES", It.IsAny<CancellationToken>())).ReturnsAsync(language);
         var sut = new SetLanguageActiveCommandHandler(repo.Object, uow.Object, cache.Object);
-        var result = await sut.Handle(new SetLanguageActiveCommand("es-ES", true), CancellationToken.None);
+        Result result = await sut.Handle(new SetLanguageActiveCommand("es-ES", true), CancellationToken.None);
         Assert.That(result.IsSuccess, Is.True); Assert.That(language.IsActive, Is.True);
         repo.Verify(x => x.Update(language), Times.Once); uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         cache.Verify(x => x.RemoveAsync(I18NCacheKeys.Language("es-ES"), It.IsAny<CancellationToken>()), Times.Once);
@@ -33,10 +35,10 @@ public sealed class LanguageHandlerTests
     public async Task SetLanguageActive_DefaultLanguageCannotBeDeactivated()
     {
         var repo = new Mock<ILanguageRepository>(); var uow = new Mock<IUnitOfWork>(); var cache = new Mock<ICacheService>();
-        var language = ApplicationTestData.Language(isDefault: true);
+        Language language = ApplicationTestData.Language(isDefault: true);
         repo.Setup(x => x.GetByCodeAsync("en-US", It.IsAny<CancellationToken>())).ReturnsAsync(language);
         var sut = new SetLanguageActiveCommandHandler(repo.Object, uow.Object, cache.Object);
-        var result = await sut.Handle(new SetLanguageActiveCommand("en-US", false), CancellationToken.None);
+        Result result = await sut.Handle(new SetLanguageActiveCommand("en-US", false), CancellationToken.None);
         Assert.That(result.IsFailure, Is.True); Assert.That(result.Error.Code, Is.EqualTo("Language.Default.CannotDeactivate"));
         repo.Verify(x => x.Update(It.IsAny<Domain.Entities.Language>()), Times.Never); uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -45,7 +47,7 @@ public sealed class LanguageHandlerTests
     public async Task SetLanguageActive_MissingLanguage_ReturnsNotFound()
     {
         var repo = new Mock<ILanguageRepository>(); var sut = new SetLanguageActiveCommandHandler(repo.Object, new Mock<IUnitOfWork>().Object, new Mock<ICacheService>().Object);
-        var result = await sut.Handle(new SetLanguageActiveCommand("xx-XX", true), CancellationToken.None);
+        Result result = await sut.Handle(new SetLanguageActiveCommand("xx-XX", true), CancellationToken.None);
         Assert.That(result.Error.Code, Is.EqualTo("Language.NotFound"));
     }
 
@@ -55,7 +57,7 @@ public sealed class LanguageHandlerTests
         var domain = new Mock<ILanguageDomainService>(); var uow = new Mock<IUnitOfWork>(); var cache = new Mock<ICacheService>();
         domain.Setup(x => x.SetDefaultLanguageAsync("es-ES", It.IsAny<CancellationToken>())).ReturnsAsync(Result.Success());
         var sut = new SetDefaultLanguageCommandHandler(domain.Object, uow.Object, cache.Object);
-        var result = await sut.Handle(new SetDefaultLanguageCommand("es-ES"), CancellationToken.None);
+        Result result = await sut.Handle(new SetDefaultLanguageCommand("es-ES"), CancellationToken.None);
         Assert.That(result.IsSuccess, Is.True); uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         cache.Verify(x => x.RemoveAsync(I18NCacheKeys.LanguageDefault, It.IsAny<CancellationToken>()), Times.Once);
         cache.Verify(x => x.RemoveAsync(I18NCacheKeys.LanguagesAll, It.IsAny<CancellationToken>()), Times.Once);
@@ -68,7 +70,7 @@ public sealed class LanguageHandlerTests
         var domain = new Mock<ILanguageDomainService>(); var uow = new Mock<IUnitOfWork>(); var cache = new Mock<ICacheService>();
         domain.Setup(x => x.SetDefaultLanguageAsync("xx-XX", It.IsAny<CancellationToken>())).ReturnsAsync(Result.Failure(I18nErrors.NotFound("Language.NotFound", "missing")));
         var sut = new SetDefaultLanguageCommandHandler(domain.Object, uow.Object, cache.Object);
-        var result = await sut.Handle(new SetDefaultLanguageCommand("xx-XX"), CancellationToken.None);
+        Result result = await sut.Handle(new SetDefaultLanguageCommand("xx-XX"), CancellationToken.None);
         Assert.That(result.IsFailure, Is.True); uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never); cache.VerifyNoOtherCalls();
     }
 
@@ -78,7 +80,7 @@ public sealed class LanguageHandlerTests
         var repo = new Mock<ILanguageRepository>(); var uow = new Mock<IUnitOfWork>(); var cache = new Mock<ICacheService>(); var language = ApplicationTestData.Language();
         repo.Setup(x => x.GetByCodeAsync("es-ES", It.IsAny<CancellationToken>())).ReturnsAsync(language);
         var sut = new UpdateLanguageCommandHandler(repo.Object, uow.Object, cache.Object);
-        var result = await sut.Handle(new UpdateLanguageCommand("es-ES", "Spanish Updated", "Español"), CancellationToken.None);
+        Result<LanguageDto> result = await sut.Handle(new UpdateLanguageCommand("es-ES", "Spanish Updated", "Español"), CancellationToken.None);
         Assert.That(result.IsSuccess, Is.True); Assert.That(result.Value.Name, Is.EqualTo("Spanish Updated"));
         repo.Verify(x => x.Update(language), Times.Once); uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -87,7 +89,7 @@ public sealed class LanguageHandlerTests
     public async Task UpdateLanguage_MissingLanguage_ReturnsNotFound()
     {
         var repo = new Mock<ILanguageRepository>(); var sut = new UpdateLanguageCommandHandler(repo.Object, new Mock<IUnitOfWork>().Object, new Mock<ICacheService>().Object);
-        var result = await sut.Handle(new UpdateLanguageCommand("xx-XX", "X", "X"), CancellationToken.None);
+        Result result = await sut.Handle(new UpdateLanguageCommand("xx-XX", "X", "X"), CancellationToken.None);
         Assert.That(result.Error.Code, Is.EqualTo("Language.NotFound"));
     }
 
@@ -97,7 +99,7 @@ public sealed class LanguageHandlerTests
         var repo = new Mock<ILanguageRepository>(); var uow = new Mock<IUnitOfWork>(); var language = ApplicationTestData.Language();
         repo.Setup(x => x.GetByCodeAsync("es-ES", It.IsAny<CancellationToken>())).ReturnsAsync(language);
         var sut = new UpdateLanguageCommandHandler(repo.Object, uow.Object, new Mock<ICacheService>().Object);
-        var result = await sut.Handle(new UpdateLanguageCommand("es-ES", "", "Español"), CancellationToken.None);
+        Result result = await sut.Handle(new UpdateLanguageCommand("es-ES", "", "Español"), CancellationToken.None);
         Assert.That(result.IsFailure, Is.True); repo.Verify(x => x.Update(It.IsAny<Domain.Entities.Language>()), Times.Never); uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -106,7 +108,7 @@ public sealed class LanguageHandlerTests
     {
         var repo = new Mock<ILanguageRepository>(); repo.Setup(x => x.GetAllActiveAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new[] { ApplicationTestData.Language() });
         var sut = new GetAllLanguagesQueryHandler(repo.Object);
-        var result = await sut.Handle(new GetAllLanguagesQuery(true), CancellationToken.None);
+        Result<IReadOnlyList<LanguageDto>> result = await sut.Handle(new GetAllLanguagesQuery(true), CancellationToken.None);
         Assert.That(result.IsSuccess, Is.True); Assert.That(result.Value, Has.Count.EqualTo(1)); repo.Verify(x => x.GetAllActiveAsync(It.IsAny<CancellationToken>()), Times.Once); repo.Verify(x => x.ListAllAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -115,7 +117,7 @@ public sealed class LanguageHandlerTests
     {
         var repo = new Mock<ILanguageRepository>(); repo.Setup(x => x.ListAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new[] { ApplicationTestData.Language() });
         var sut = new GetAllLanguagesQueryHandler(repo.Object);
-        var result = await sut.Handle(new GetAllLanguagesQuery(false), CancellationToken.None);
+        Result<IReadOnlyList<LanguageDto>> result = await sut.Handle(new GetAllLanguagesQuery(false), CancellationToken.None);
         Assert.That(result.Value[0].Code, Is.EqualTo("es-ES")); repo.Verify(x => x.ListAllAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -123,7 +125,7 @@ public sealed class LanguageHandlerTests
     public async Task GetLanguage_Missing_ReturnsNotFound()
     {
         var repo = new Mock<ILanguageRepository>(); var sut = new GetLanguageQueryHandler(repo.Object);
-        var result = await sut.Handle(new GetLanguageQuery("xx-XX"), CancellationToken.None);
+        Result<LanguageDto> result = await sut.Handle(new GetLanguageQuery("xx-XX"), CancellationToken.None);
         Assert.That(result.Error.Code, Is.EqualTo("Language.NotFound"));
     }
 

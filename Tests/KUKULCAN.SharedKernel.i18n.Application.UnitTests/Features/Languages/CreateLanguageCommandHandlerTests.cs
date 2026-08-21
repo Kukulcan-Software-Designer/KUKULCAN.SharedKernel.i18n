@@ -1,9 +1,11 @@
 using KUKULCAN.SharedKernel.i18n.Application.Abstractions;
 using KUKULCAN.SharedKernel.i18n.Application.Common;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Languages.Commands.CreateLanguage;
+using KUKULCAN.SharedKernel.i18n.Domain.DTOs;
 using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Repositories;
 using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Services;
+using KUKULCAN.SharedKernel.Results;
 using Moq;
 
 namespace KUKULCAN.SharedKernel.i18n.Application.UnitTests.Features.Languages;
@@ -17,12 +19,12 @@ public sealed class CreateLanguageCommandHandlerTests
         var repository = new Mock<ILanguageRepository>();
         var unitOfWork = new Mock<IUnitOfWork>();
         var cache = new Mock<ICacheService>();
-        var cancellationToken = new CancellationTokenSource().Token;
+
+        CancellationToken cancellationToken = new CancellationTokenSource().Token;
         repository.Setup(x => x.ExistsByCodeAsync("es-ES", cancellationToken)).ReturnsAsync(true);
 
         var handler = new CreateLanguageCommandHandler(repository.Object, unitOfWork.Object, cache.Object);
-
-        var result = await handler.Handle(new CreateLanguageCommand("es-ES", "Spanish", "Español"), cancellationToken);
+        Result<LanguageDto> result = await handler.Handle(new CreateLanguageCommand("es-ES", "Spanish", "Español"), cancellationToken);
 
         Assert.That(result.IsFailure, Is.True);
         Assert.That(result.Error.Code, Is.EqualTo("Language.Duplicate"));
@@ -37,7 +39,7 @@ public sealed class CreateLanguageCommandHandlerTests
         var repository = new Mock<ILanguageRepository>();
         var unitOfWork = new Mock<IUnitOfWork>();
         var cache = new Mock<ICacheService>();
-        var cancellationToken = new CancellationTokenSource().Token;
+        CancellationToken cancellationToken = new CancellationTokenSource().Token;
         repository.Setup(x => x.ExistsByCodeAsync("es-ES", cancellationToken)).ReturnsAsync(false);
         repository.Setup(x => x.AddAsync(It.IsAny<Language>(), cancellationToken)).Returns(Task.CompletedTask);
         unitOfWork.Setup(x => x.SaveChangesAsync(cancellationToken)).ReturnsAsync(1);
@@ -45,7 +47,7 @@ public sealed class CreateLanguageCommandHandlerTests
 
         var handler = new CreateLanguageCommandHandler(repository.Object, unitOfWork.Object, cache.Object);
 
-        var result = await handler.Handle(new CreateLanguageCommand("es-ES", "Spanish", "Español"), cancellationToken);
+        Result<LanguageDto> result = await handler.Handle(new CreateLanguageCommand("es-ES", "Spanish", "Español"), cancellationToken);
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Value.Code, Is.EqualTo("es-ES"));

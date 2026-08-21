@@ -3,9 +3,12 @@ using KUKULCAN.SharedKernel.i18n.Application.Common;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Locales.Commands.UpsertLocaleConfiguration;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Locales.Queries.GetAllLocaleConfigurations;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Locales.Queries.GetLocaleConfiguration;
+using KUKULCAN.SharedKernel.i18n.Domain.DTOs;
+using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Repositories;
 using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Services;
 using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
+using KUKULCAN.SharedKernel.Results;
 using Moq;
 
 namespace KUKULCAN.SharedKernel.i18n.Application.UnitTests.Features.Locales;
@@ -23,7 +26,7 @@ public sealed class LocaleConfigurationHandlerTests
         langRepo.Setup(x => x.ExistsByCodeAsync("es-ES", It.IsAny<CancellationToken>())).ReturnsAsync(true);
         repo.Setup(x => x.GetByLanguageAsync(It.IsAny<LanguageCode>(), It.IsAny<CancellationToken>())).ReturnsAsync((Domain.Entities.LocaleConfiguration?)null);
         var sut = new UpsertLocaleConfigurationCommandHandler(repo.Object, langRepo.Object, uow.Object, cache.Object);
-        var result = await sut.Handle(Command(), CancellationToken.None);
+        Result<LocaleConfigurationDto> result = await sut.Handle(Command(), CancellationToken.None);
         Assert.That(result.IsSuccess, Is.True); repo.Verify(x => x.AddAsync(It.IsAny<Domain.Entities.LocaleConfiguration>(), It.IsAny<CancellationToken>()), Times.Once);
         repo.Verify(x => x.Update(It.IsAny<Domain.Entities.LocaleConfiguration>()), Times.Never); uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         cache.Verify(x => x.RemoveAsync(I18NCacheKeys.LocaleConfig("es-ES"), It.IsAny<CancellationToken>()), Times.Once);
@@ -33,10 +36,10 @@ public sealed class LocaleConfigurationHandlerTests
     public async Task Upsert_ExistingConfiguration_UpdatesInsteadOfAdds()
     {
         var repo = new Mock<ILocaleConfigurationRepository>(); var langRepo = new Mock<ILanguageRepository>(); var uow = new Mock<IUnitOfWork>();
-        var existing = ApplicationTestData.Locale(); langRepo.Setup(x => x.ExistsByCodeAsync("es-ES", It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        LocaleConfiguration existing = ApplicationTestData.Locale(); langRepo.Setup(x => x.ExistsByCodeAsync("es-ES", It.IsAny<CancellationToken>())).ReturnsAsync(true);
         repo.Setup(x => x.GetByLanguageAsync(It.IsAny<LanguageCode>(), It.IsAny<CancellationToken>())).ReturnsAsync(existing);
         var sut = new UpsertLocaleConfigurationCommandHandler(repo.Object, langRepo.Object, uow.Object, new Mock<ICacheService>().Object);
-        var result = await sut.Handle(Command(), CancellationToken.None);
+        Result<LocaleConfigurationDto> result = await sut.Handle(Command(), CancellationToken.None);
         Assert.That(result.IsSuccess, Is.True); repo.Verify(x => x.Update(existing), Times.Once); repo.Verify(x => x.AddAsync(It.IsAny<Domain.Entities.LocaleConfiguration>(), It.IsAny<CancellationToken>()), Times.Never);
         uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -46,7 +49,7 @@ public sealed class LocaleConfigurationHandlerTests
     {
         var langRepo = new Mock<ILanguageRepository>(); var uow = new Mock<IUnitOfWork>(); langRepo.Setup(x => x.ExistsByCodeAsync("es-ES", It.IsAny<CancellationToken>())).ReturnsAsync(false);
         var sut = new UpsertLocaleConfigurationCommandHandler(new Mock<ILocaleConfigurationRepository>().Object, langRepo.Object, uow.Object, new Mock<ICacheService>().Object);
-        var result = await sut.Handle(Command(), CancellationToken.None);
+        Result<LocaleConfigurationDto> result = await sut.Handle(Command(), CancellationToken.None);
         Assert.That(result.Error.Code, Is.EqualTo("Language.NotFound")); uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -54,7 +57,7 @@ public sealed class LocaleConfigurationHandlerTests
     public async Task Upsert_InvalidLanguageCode_ReturnsFailureBeforeRepositoryAccess()
     {
         var langRepo = new Mock<ILanguageRepository>(); var sut = new UpsertLocaleConfigurationCommandHandler(new Mock<ILocaleConfigurationRepository>().Object, langRepo.Object, new Mock<IUnitOfWork>().Object, new Mock<ICacheService>().Object);
-        var result = await sut.Handle(Command("bad"), CancellationToken.None);
+        Result<LocaleConfigurationDto> result = await sut.Handle(Command("bad"), CancellationToken.None);
         Assert.That(result.IsFailure, Is.True); langRepo.Verify(x => x.ExistsByCodeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -70,7 +73,7 @@ public sealed class LocaleConfigurationHandlerTests
     public async Task GetLocaleConfiguration_InvalidLanguageCode_ReturnsFailure()
     {
         var repo = new Mock<ILocaleConfigurationRepository>(); var sut = new GetLocaleConfigurationQueryHandler(repo.Object);
-        var result = await sut.Handle(new GetLocaleConfigurationQuery("bad"), CancellationToken.None);
+        Result<LocaleConfigurationDto> result = await sut.Handle(new GetLocaleConfigurationQuery("bad"), CancellationToken.None);
         Assert.That(result.IsFailure, Is.True); repo.Verify(x => x.GetByLanguageAsync(It.IsAny<LanguageCode>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

@@ -8,7 +8,7 @@ public sealed class SequentialGuidTests
     [Test]
     public void NewSequentialGuidAtEnd_ReturnsNonDefaultGuid()
     {
-        var result = SequentialGuid.NewSequentialGuidAtEnd();
+        Guid result = SequentialGuid.NewSequentialGuidAtEnd();
 
         Assert.That(result, Is.Not.EqualTo(Guid.Empty));
     }
@@ -16,8 +16,8 @@ public sealed class SequentialGuidTests
     [Test]
     public void NewSequentialGuidAtEnd_ReturnsUniqueValues()
     {
-        var first = SequentialGuid.NewSequentialGuidAtEnd();
-        var second = SequentialGuid.NewSequentialGuidAtEnd();
+        Guid first = SequentialGuid.NewSequentialGuidAtEnd();
+        Guid second = SequentialGuid.NewSequentialGuidAtEnd();
 
         Assert.That(second, Is.Not.EqualTo(first));
     }
@@ -25,8 +25,8 @@ public sealed class SequentialGuidTests
     [Test]
     public void NewSequentialGuidAtEnd_ReturnsVersion7Guid()
     {
-        var result = SequentialGuid.NewSequentialGuidAtEnd();
-        var parts = result.ToString("D").Split('-');
+        Guid result = SequentialGuid.NewSequentialGuidAtEnd();
+        string[] parts = result.ToString("D").Split('-');
 
         Assert.That(parts, Has.Length.EqualTo(5));
         Assert.That(parts[2], Does.StartWith("7"));

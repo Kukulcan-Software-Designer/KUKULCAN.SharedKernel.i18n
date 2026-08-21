@@ -25,7 +25,7 @@ public sealed class MemoryOnlyCacheServiceTests
     [Test]
     public async Task GetAsync_WhenKeyMissing_ReturnsNull()
     {
-        var result = await _service.GetAsync<string>("missing");
+        string? result = await _service.GetAsync<string>("missing");
 
         Assert.That(result, Is.Null);
     }
@@ -35,7 +35,7 @@ public sealed class MemoryOnlyCacheServiceTests
     {
         await _service.SetAsync("key", "value");
 
-        var result = await _service.GetAsync<string>("key");
+        string? result = await _service.GetAsync<string>("key");
 
         Assert.That(result, Is.EqualTo("value"));
     }
@@ -75,15 +75,13 @@ public sealed class MemoryOnlyCacheServiceTests
     [Test]
     public async Task GetOrCreateAsync_WhenValueMissing_CreatesAndCachesValue()
     {
-        var calls = 0;
-
-        var first = await _service.GetOrCreateAsync("key", _ =>
+        int calls = 0;
+        string first = await _service.GetOrCreateAsync("key", _ =>
         {
             calls++;
             return Task.FromResult("created");
         });
-
-        var second = await _service.GetOrCreateAsync("key", _ =>
+        string second = await _service.GetOrCreateAsync("key", _ =>
         {
             calls++;
             return Task.FromResult("created-again");

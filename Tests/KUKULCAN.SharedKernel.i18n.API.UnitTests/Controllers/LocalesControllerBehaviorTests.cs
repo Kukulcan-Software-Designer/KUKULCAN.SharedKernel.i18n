@@ -31,7 +31,7 @@ public sealed class LocalesControllerBehaviorTests
     {
         var mediator = new Mock<IMediator>();
         SetupException<Result<LocaleConfigurationDto>>(mediator);
-        var request = CreateRequest();
+        UpsertLocaleRequest request = CreateRequest();
         using var cts = new CancellationTokenSource();
 
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>

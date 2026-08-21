@@ -37,20 +37,20 @@ public sealed class RepositoryTestDatabase
 
     public static async Task<I18NDbContext> CreateContextAsync()
     {
-        var options = Options.Create(new KukulcanDatabaseOptions
+        IOptions<KukulcanDatabaseOptions> options = Options.Create(new KukulcanDatabaseOptions
         {
             Provider = DatabaseProvider.PostgresSql,
             ConnectionString = ConnectionString,
             Retry = new KukulcanDatabaseOptions.RetryOptions { Enabled = false },
             Pool = new KukulcanDatabaseOptions.PoolOptions { Enabled = false },
         });
-
         var tenantContext = new Mock<ITenantContext>();
         var clock = new Mock<IClock>();
         var dispatcher = new Mock<IDomainEventDispatcher>();
-
         var context = new I18NDbContext(options, tenantContext.Object, clock.Object, dispatcher.Object);
+
         await context.Database.EnsureCreatedAsync();
+
         return context;
     }
 

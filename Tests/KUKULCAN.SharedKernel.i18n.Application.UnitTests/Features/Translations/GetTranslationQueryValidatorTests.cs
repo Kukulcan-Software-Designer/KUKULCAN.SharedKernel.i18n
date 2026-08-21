@@ -1,3 +1,4 @@
+using FluentValidation.Results;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTranslation;
 
 namespace KUKULCAN.SharedKernel.i18n.Application.UnitTests.Features.Translations;
@@ -10,7 +11,7 @@ public sealed class GetTranslationQueryValidatorTests
     [Test]
     public void Validate_ValidQuery_ReturnsSuccess()
     {
-        var result = _validator.Validate(new GetTranslationQuery("CRM0001", "es-ES"));
+        ValidationResult result = _validator.Validate(new GetTranslationQuery("CRM0001", "es-ES"));
 
         Assert.That(result.IsValid, Is.True);
     }
@@ -20,7 +21,7 @@ public sealed class GetTranslationQueryValidatorTests
     [TestCase("CRM")]
     public void Validate_InvalidCode_ReturnsFailure(string? code)
     {
-        var result = _validator.Validate(new GetTranslationQuery(code!, "es-ES"));
+        ValidationResult result = _validator.Validate(new GetTranslationQuery(code!, "es-ES"));
 
         Assert.That(result.IsValid, Is.False);
     }
@@ -30,7 +31,7 @@ public sealed class GetTranslationQueryValidatorTests
     [TestCase("spanish")]
     public void Validate_InvalidLanguageCode_ReturnsFailure(string? languageCode)
     {
-        var result = _validator.Validate(new GetTranslationQuery("CRM0001", languageCode!));
+        ValidationResult result = _validator.Validate(new GetTranslationQuery("CRM0001", languageCode!));
 
         Assert.That(result.IsValid, Is.False);
     }

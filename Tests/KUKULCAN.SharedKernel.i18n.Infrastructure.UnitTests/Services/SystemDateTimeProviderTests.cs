@@ -8,9 +8,9 @@ public sealed class SystemDateTimeProviderTests
     [Test]
     public void UtcNow_IsUtcAndCloseToCurrentTime()
     {
-        var before = DateTimeOffset.UtcNow;
-        var value = new SystemDateTimeProvider().UtcNow;
-        var after = DateTimeOffset.UtcNow;
+        DateTimeOffset before = DateTimeOffset.UtcNow;
+        DateTimeOffset value = new SystemDateTimeProvider().UtcNow;
+        DateTimeOffset after = DateTimeOffset.UtcNow;
 
         Assert.That(value.Offset, Is.EqualTo(TimeSpan.Zero));
         Assert.That(value, Is.GreaterThanOrEqualTo(before));

@@ -25,7 +25,7 @@ public sealed class ApplicationBehaviorTests
     {
         var cache = new Mock<ICacheService>(); var logger = new Mock<ILogger<CachingBehavior<PlainRequest, Result>>>(); var nextCalled = false;
         var sut = new CachingBehavior<PlainRequest, Result>(cache.Object, logger.Object);
-        var result = await sut.Handle(new PlainRequest("x"), _ => { nextCalled = true; return Task.FromResult(Result.Success()); }, CancellationToken.None);
+        Result result = await sut.Handle(new PlainRequest("x"), _ => { nextCalled = true; return Task.FromResult(Result.Success()); }, CancellationToken.None);
         Assert.That(result.IsSuccess, Is.True); Assert.That(nextCalled, Is.True); cache.VerifyNoOtherCalls();
     }
 
@@ -35,7 +35,7 @@ public sealed class ApplicationBehaviorTests
         var cache = new Mock<ICacheService>(); var logger = new Mock<ILogger<CachingBehavior<CacheRequest, Result<string>>>>(); var cached = Result<string>.Success("cached");
         cache.Setup(x => x.GetAsync<Result<string>>("test:key", It.IsAny<CancellationToken>())).ReturnsAsync(cached);
         var sut = new CachingBehavior<CacheRequest, Result<string>>(cache.Object, logger.Object); var nextCalled = false;
-        var result = await sut.Handle(new CacheRequest("x"), _ => { nextCalled = true; return Task.FromResult(Result<string>.Success("next")); }, CancellationToken.None);
+        Result<string> result = await sut.Handle(new CacheRequest("x"), _ => { nextCalled = true; return Task.FromResult(Result<string>.Success("next")); }, CancellationToken.None);
         Assert.That(result.Value, Is.EqualTo("cached")); Assert.That(nextCalled, Is.False); cache.Verify(x => x.SetAsync(It.IsAny<string>(), It.IsAny<Result<string>>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -45,7 +45,7 @@ public sealed class ApplicationBehaviorTests
         var cache = new Mock<ICacheService>(); var logger = new Mock<ILogger<CachingBehavior<CacheRequest, Result<string>>>>();
         cache.Setup(x => x.GetAsync<Result<string>>("test:key", It.IsAny<CancellationToken>())).ReturnsAsync((Result<string>?)null);
         var sut = new CachingBehavior<CacheRequest, Result<string>>(cache.Object, logger.Object);
-        var result = await sut.Handle(new CacheRequest("x"), _ => Task.FromResult(Result<string>.Success("next")), CancellationToken.None);
+        Result<string> result = await sut.Handle(new CacheRequest("x"), _ => Task.FromResult(Result<string>.Success("next")), CancellationToken.None);
         Assert.That(result.Value, Is.EqualTo("next")); cache.Verify(x => x.SetAsync("test:key", It.IsAny<Result<string>>(), TimeSpan.FromMinutes(5), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -53,7 +53,7 @@ public sealed class ApplicationBehaviorTests
     public async Task ValidationBehavior_NoValidators_ForwardsRequest()
     {
         var sut = new ValidationBehavior<PlainRequest, Result>(Array.Empty<IValidator<PlainRequest>>()); var called = false;
-        var result = await sut.Handle(new PlainRequest("x"), _ => { called = true; return Task.FromResult(Result.Success()); }, CancellationToken.None);
+        Result result = await sut.Handle(new PlainRequest("x"), _ => { called = true; return Task.FromResult(Result.Success()); }, CancellationToken.None);
         Assert.That(result.IsSuccess, Is.True); Assert.That(called, Is.True);
     }
 
@@ -62,7 +62,7 @@ public sealed class ApplicationBehaviorTests
     {
         var validator = new InlineValidator<PlainRequest>(); validator.RuleFor(x => x.Value).NotEmpty();
         var sut = new ValidationBehavior<PlainRequest, Result>(new[] { validator }); var called = false;
-        var result = await sut.Handle(new PlainRequest("ok"), _ => { called = true; return Task.FromResult(Result.Success()); }, CancellationToken.None);
+        Result result = await sut.Handle(new PlainRequest("ok"), _ => { called = true; return Task.FromResult(Result.Success()); }, CancellationToken.None);
         Assert.That(result.IsSuccess, Is.True); Assert.That(called, Is.True);
     }
 
@@ -71,7 +71,7 @@ public sealed class ApplicationBehaviorTests
     {
         var validator = new InlineValidator<PlainRequest>(); validator.RuleFor(x => x.Value).NotEmpty();
         var sut = new ValidationBehavior<PlainRequest, Result>(new[] { validator }); var called = false;
-        var result = await sut.Handle(new PlainRequest(""), _ => { called = true; return Task.FromResult(Result.Success()); }, CancellationToken.None);
+        Result result = await sut.Handle(new PlainRequest(""), _ => { called = true; return Task.FromResult(Result.Success()); }, CancellationToken.None);
         Assert.That(result.IsFailure, Is.True); Assert.That(called, Is.False); Assert.That(result.Error.Code, Does.Contain("Validation"));
     }
 
@@ -80,7 +80,7 @@ public sealed class ApplicationBehaviorTests
     {
         var validator = new InlineValidator<GenericRequest>(); validator.RuleFor(x => x.Value).NotEmpty();
         var sut = new ValidationBehavior<GenericRequest, Result<string>>(new[] { validator });
-        var result = await sut.Handle(new GenericRequest(""), _ => Task.FromResult(Result<string>.Success("ok")), CancellationToken.None);
+        Result<string> result = await sut.Handle(new GenericRequest(""), _ => Task.FromResult(Result<string>.Success("ok")), CancellationToken.None);
         Assert.That(result.IsFailure, Is.True); Assert.That(result.Error.Code, Is.EqualTo("Validation.Failed"));
     }
 
@@ -98,7 +98,7 @@ public sealed class ApplicationBehaviorTests
     public async Task LoggingBehavior_Success_ReturnsResponse()
     {
         var logger = new Mock<ILogger<LoggingBehavior<PlainRequest, Result>>>(); var sut = new LoggingBehavior<PlainRequest, Result>(logger.Object);
-        var result = await sut.Handle(new PlainRequest("x"), _ => Task.FromResult(Result.Success()), CancellationToken.None);
+        Result result = await sut.Handle(new PlainRequest("x"), _ => Task.FromResult(Result.Success()), CancellationToken.None);
         Assert.That(result.IsSuccess, Is.True);
     }
 
@@ -112,11 +112,11 @@ public sealed class ApplicationBehaviorTests
     [Test]
     public async Task LoggingBehavior_SlowRequest_ReturnsResponse()
     {
-        var original = LoggingBehavior<PlainRequest, Result>.SlowRequestThresholdMs; LoggingBehavior<PlainRequest, Result>.SlowRequestThresholdMs = -1;
+        int original = LoggingBehavior<PlainRequest, Result>.SlowRequestThresholdMs; LoggingBehavior<PlainRequest, Result>.SlowRequestThresholdMs = -1;
         try
         {
             var logger = new Mock<ILogger<LoggingBehavior<PlainRequest, Result>>>(); var sut = new LoggingBehavior<PlainRequest, Result>(logger.Object);
-            var result = await sut.Handle(new PlainRequest("x"), _ => Task.FromResult(Result.Success()), CancellationToken.None);
+            Result result = await sut.Handle(new PlainRequest("x"), _ => Task.FromResult(Result.Success()), CancellationToken.None);
             Assert.That(result.IsSuccess, Is.True);
         }
         finally { LoggingBehavior<PlainRequest, Result>.SlowRequestThresholdMs = original; }

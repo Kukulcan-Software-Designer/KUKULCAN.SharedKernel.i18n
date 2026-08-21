@@ -1,3 +1,4 @@
+using FluentValidation.Results;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTranslationsByModule;
 
 namespace KUKULCAN.SharedKernel.i18n.Application.UnitTests.Features.Translations;
@@ -10,7 +11,7 @@ public sealed class GetTranslationsByModuleQueryValidatorTests
     [Test]
     public void Validate_ValidQuery_ReturnsSuccess()
     {
-        var result = _validator.Validate(new GetTranslationsByModuleQuery("CRM", "es-ES"));
+        ValidationResult result = _validator.Validate(new GetTranslationsByModuleQuery("CRM", "es-ES"));
 
         Assert.That(result.IsValid, Is.True);
     }
@@ -22,7 +23,7 @@ public sealed class GetTranslationsByModuleQueryValidatorTests
     [TestCase("CRM-")]
     public void Validate_InvalidModule_ReturnsFailure(string? module)
     {
-        var result = _validator.Validate(new GetTranslationsByModuleQuery(module!, "es-ES"));
+        ValidationResult result = _validator.Validate(new GetTranslationsByModuleQuery(module!, "es-ES"));
 
         Assert.That(result.IsValid, Is.False);
     }
@@ -32,7 +33,7 @@ public sealed class GetTranslationsByModuleQueryValidatorTests
     [TestCase("spanish")]
     public void Validate_InvalidLanguageCode_ReturnsFailure(string? languageCode)
     {
-        var result = _validator.Validate(new GetTranslationsByModuleQuery("CRM", languageCode!));
+        ValidationResult result = _validator.Validate(new GetTranslationsByModuleQuery("CRM", languageCode!));
 
         Assert.That(result.IsValid, Is.False);
     }

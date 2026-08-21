@@ -64,7 +64,7 @@ public sealed class LanguageDomainServiceTests
 
         var service = new LanguageDomainService(repository.Object);
 
-        var result = await service.SetDefaultLanguageAsync("es-ES");
+        Result result = await service.SetDefaultLanguageAsync("es-ES");
 
         Assert.Multiple(() =>
         {
@@ -88,7 +88,7 @@ public sealed class LanguageDomainServiceTests
 
         var service = new LanguageDomainService(repository.Object);
 
-        var result = await service.SetDefaultLanguageAsync("es-ES");
+        Result result = await service.SetDefaultLanguageAsync("es-ES");
 
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(current.IsDefault, Is.True);

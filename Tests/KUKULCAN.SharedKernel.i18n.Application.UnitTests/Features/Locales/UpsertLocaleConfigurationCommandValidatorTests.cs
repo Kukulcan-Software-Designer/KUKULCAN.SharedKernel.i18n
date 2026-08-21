@@ -1,3 +1,4 @@
+using FluentValidation.Results;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Locales.Commands.UpsertLocaleConfiguration;
 
 namespace KUKULCAN.SharedKernel.i18n.Application.UnitTests.Features.Locales;
@@ -10,7 +11,7 @@ public sealed class UpsertLocaleConfigurationCommandValidatorTests
     [Test]
     public void Validate_ValidCommand_ReturnsSuccess()
     {
-        var result = _validator.Validate(CreateValidCommand());
+        ValidationResult result = _validator.Validate(CreateValidCommand());
 
         Assert.That(result.IsValid, Is.True);
     }
@@ -20,7 +21,7 @@ public sealed class UpsertLocaleConfigurationCommandValidatorTests
     [TestCase("english")]
     public void Validate_InvalidLanguageCode_ReturnsFailure(string? value)
     {
-        var result = _validator.Validate(CreateValidCommand() with { LanguageCode = value! });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { LanguageCode = value! });
 
         Assert.That(result.IsValid, Is.False);
     }
@@ -29,7 +30,7 @@ public sealed class UpsertLocaleConfigurationCommandValidatorTests
     [TestCase("")]
     public void Validate_EmptyDateFormats_ReturnsFailure(string? value)
     {
-        var result = _validator.Validate(CreateValidCommand() with { DateFormat = value!, ShortDateFormat = value!, TimeFormat = value!, DateTimeFormat = value! });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { DateFormat = value!, ShortDateFormat = value!, TimeFormat = value!, DateTimeFormat = value! });
 
         Assert.That(result.IsValid, Is.False);
     }
@@ -39,7 +40,7 @@ public sealed class UpsertLocaleConfigurationCommandValidatorTests
     [TestCase("Saturday")]
     public void Validate_ValidFirstDayOfWeek_ReturnsSuccess(string value)
     {
-        var result = _validator.Validate(CreateValidCommand() with { FirstDayOfWeek = value });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { FirstDayOfWeek = value });
 
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(UpsertLocaleConfigurationCommand.FirstDayOfWeek)), Is.False);
     }
@@ -48,7 +49,7 @@ public sealed class UpsertLocaleConfigurationCommandValidatorTests
     [TestCase("Friday")]
     public void Validate_InvalidFirstDayOfWeek_ReturnsFailure(string value)
     {
-        var result = _validator.Validate(CreateValidCommand() with { FirstDayOfWeek = value });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { FirstDayOfWeek = value });
 
         Assert.That(result.IsValid, Is.False);
     }
@@ -56,16 +57,16 @@ public sealed class UpsertLocaleConfigurationCommandValidatorTests
     [Test]
     public void Validate_EqualSeparators_ReturnsFailure()
     {
-        var result = _validator.Validate(CreateValidCommand() with { DecimalSeparator = ".", ThousandsSeparator = "." });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { DecimalSeparator = ".", ThousandsSeparator = "." });
 
         Assert.That(result.IsValid, Is.False);
     }
 
     [TestCase("")]
-    [TestCase("..")] 
+    [TestCase("..")]
     public void Validate_InvalidDecimalSeparator_ReturnsFailure(string value)
     {
-        var result = _validator.Validate(CreateValidCommand() with { DecimalSeparator = value });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { DecimalSeparator = value });
 
         Assert.That(result.IsValid, Is.False);
     }
@@ -74,7 +75,7 @@ public sealed class UpsertLocaleConfigurationCommandValidatorTests
     [TestCase(11)]
     public void Validate_DecimalPlacesOutsideRange_ReturnsFailure(int value)
     {
-        var result = _validator.Validate(CreateValidCommand() with { DecimalPlaces = value });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { DecimalPlaces = value });
 
         Assert.That(result.IsValid, Is.False);
     }
@@ -83,7 +84,7 @@ public sealed class UpsertLocaleConfigurationCommandValidatorTests
     [TestCase(11)]
     public void Validate_CurrencyDecimalPlacesOutsideRange_ReturnsFailure(int value)
     {
-        var result = _validator.Validate(CreateValidCommand() with { CurrencyDecimalPlaces = value });
+        ValidationResult result = _validator.Validate(CreateValidCommand() with { CurrencyDecimalPlaces = value });
 
         Assert.That(result.IsValid, Is.False);
     }

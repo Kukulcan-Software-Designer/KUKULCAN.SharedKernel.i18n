@@ -1,4 +1,6 @@
+using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects.Enums;
+using KUKULCAN.SharedKernel.Results;
 
 namespace KUKULCAN.SharedKernel.i18n.Application.UnitTests;
 
@@ -6,9 +8,11 @@ internal static class ApplicationTestData
 {
     public static Domain.Entities.Language Language(string code = "es-ES", bool isDefault = false, bool active = true)
     {
-        var result = Domain.Entities.Language.Create(Guid.CreateVersion7(), code, "Spanish", "Español", isDefault);
-        var value = result.Value;
-        if (!active && !isDefault) value.Deactivate();
+        Result<Language> result = Domain.Entities.Language.Create(Guid.CreateVersion7(), code, "Spanish", "Español", isDefault);
+        Language value = result.Value;
+
+        if (!active && !isDefault)
+            value.Deactivate();
         return value;
     }
 

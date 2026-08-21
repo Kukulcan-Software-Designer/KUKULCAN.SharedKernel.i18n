@@ -1,3 +1,4 @@
+using FluentValidation.Results;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Languages.Commands.CreateLanguage;
 
 namespace KUKULCAN.SharedKernel.i18n.Application.UnitTests.Features.Languages;
@@ -10,7 +11,7 @@ public sealed class CreateLanguageCommandValidatorTests
     [Test]
     public void Validate_ValidCommand_ReturnsSuccess()
     {
-        var result = _validator.Validate(new CreateLanguageCommand("es-ES", "Spanish", "Español"));
+        ValidationResult result = _validator.Validate(new CreateLanguageCommand("es-ES", "Spanish", "Español"));
 
         Assert.That(result.IsValid, Is.True);
     }
@@ -21,7 +22,7 @@ public sealed class CreateLanguageCommandValidatorTests
     [TestCase("english")]
     public void Validate_InvalidCode_ReturnsFailure(string? code)
     {
-        var result = _validator.Validate(new CreateLanguageCommand(code!, "Spanish", "Español"));
+        ValidationResult result = _validator.Validate(new CreateLanguageCommand(code!, "Spanish", "Español"));
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(CreateLanguageCommand.Code)), Is.True);
@@ -30,7 +31,7 @@ public sealed class CreateLanguageCommandValidatorTests
     [Test]
     public void Validate_NameLongerThanMaximum_ReturnsFailure()
     {
-        var result = _validator.Validate(new CreateLanguageCommand("es-ES", new string('A', 101), "Español"));
+        ValidationResult result = _validator.Validate(new CreateLanguageCommand("es-ES", new string('A', 101), "Español"));
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(CreateLanguageCommand.Name)), Is.True);
@@ -39,7 +40,7 @@ public sealed class CreateLanguageCommandValidatorTests
     [Test]
     public void Validate_NativeNameLongerThanMaximum_ReturnsFailure()
     {
-        var result = _validator.Validate(new CreateLanguageCommand("es-ES", "Spanish", new string('A', 101)));
+        ValidationResult result = _validator.Validate(new CreateLanguageCommand("es-ES", "Spanish", new string('A', 101)));
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Any(e => e.PropertyName == nameof(CreateLanguageCommand.NativeName)), Is.True);
@@ -49,7 +50,7 @@ public sealed class CreateLanguageCommandValidatorTests
     [TestCase(" ")]
     public void Validate_EmptyNames_ReturnsFailure(string value)
     {
-        var result = _validator.Validate(new CreateLanguageCommand("es-ES", value, value));
+        ValidationResult result = _validator.Validate(new CreateLanguageCommand("es-ES", value, value));
 
         Assert.That(result.IsValid, Is.False);
     }

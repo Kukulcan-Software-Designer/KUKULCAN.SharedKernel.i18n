@@ -29,7 +29,7 @@ public sealed class PaginationTests
     [Test]
     public void PagedResult_Create_CalculatesPageMetadata()
     {
-        var page = PagedResult<int>.Create([11, 12], 42, new PaginationRequest(2, 10));
+        PagedResult<int> page = PagedResult<int>.Create([11, 12], 42, new PaginationRequest(2, 10));
 
         Assert.That(page.Items, Is.EqualTo(new[] { 11, 12 }));
         Assert.That(page.TotalCount, Is.EqualTo(42));
@@ -43,7 +43,7 @@ public sealed class PaginationTests
     [Test]
     public void PagedResult_Empty_HasNoItemsAndNoPages()
     {
-        var page = PagedResult<int>.Empty(new PaginationRequest(2, 20));
+        PagedResult<int> page = PagedResult<int>.Empty(new PaginationRequest(2, 20));
 
         Assert.That(page.Items, Is.Empty);
         Assert.That(page.TotalCount, Is.Zero);
@@ -57,9 +57,9 @@ public sealed class PaginationTests
     [Test]
     public void PagedResult_Map_ProjectsItemsAndPreservesMetadata()
     {
-        var page = PagedResult<int>.Create([1, 2, 3], 10, new PaginationRequest(2, 3));
+        PagedResult<int> page = PagedResult<int>.Create([1, 2, 3], 10, new PaginationRequest(2, 3));
 
-        var mapped = page.Map(value => value.ToString());
+        PagedResult<string> mapped = page.Map(value => value.ToString());
 
         Assert.That(mapped.Items, Is.EqualTo(new[] { "1", "2", "3" }));
         Assert.That(mapped.TotalCount, Is.EqualTo(10));

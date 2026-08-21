@@ -15,10 +15,11 @@ public sealed class ApplicationServiceRegistrationTests
     public void AddKukulcanI18NApplication_RegistersApplicationServicesAndPipelineBehaviors()
     {
         var services = new ServiceCollection();
-        var returned = services.AddKukulcanI18NApplication();
+        IServiceCollection returned = services.AddKukulcanI18NApplication();
+
         Assert.That(returned, Is.SameAs(services));
 
-        using var provider = services.BuildServiceProvider();
+        using ServiceProvider provider = services.BuildServiceProvider();
         Assert.That(provider.GetService<ITranslationLookupService>(), Is.Not.Null);
         Assert.That(provider.GetService<ILanguageDomainService>(), Is.Not.Null);
         Assert.That(provider.GetServices<IPipelineBehavior<CreateLanguageCommand, Result<LanguageDto>>>(), Has.Count.EqualTo(3));

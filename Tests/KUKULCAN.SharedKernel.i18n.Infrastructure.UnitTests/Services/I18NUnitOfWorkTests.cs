@@ -22,10 +22,10 @@ public sealed class I18NUnitOfWorkTests
     public async Task SaveChangesAsync_ForwardsCancellationTokenAndResult()
     {
         using var cts = new CancellationTokenSource();
-        var token = cts.Token;
+        CancellationToken token = cts.Token;
         _inner.Setup(x => x.SaveChangesAsync(token)).ReturnsAsync(7);
 
-        var result = await _sut.SaveChangesAsync(token);
+        int result = await _sut.SaveChangesAsync(token);
 
         Assert.That(result, Is.EqualTo(7));
         _inner.Verify(x => x.SaveChangesAsync(token), Times.Once);
@@ -35,7 +35,7 @@ public sealed class I18NUnitOfWorkTests
     public async Task TransactionMethods_ForwardCancellationToken()
     {
         using var cts = new CancellationTokenSource();
-        var token = cts.Token;
+        CancellationToken token = cts.Token;
 
         await _sut.BeginTransactionAsync(token);
         await _sut.CommitTransactionAsync(token);

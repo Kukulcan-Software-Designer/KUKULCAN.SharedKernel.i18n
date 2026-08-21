@@ -1,3 +1,4 @@
+using FluentValidation.Results;
 using KUKULCAN.SharedKernel.i18n.Application.Common.Pagination;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTranslationsPaged;
 
@@ -11,7 +12,7 @@ public sealed class GetTranslationsPagedQueryValidatorTests
     [Test]
     public void Validate_NoFilters_ReturnsSuccess()
     {
-        var result = _validator.Validate(new GetTranslationsPagedQuery(new PaginationRequest()));
+        ValidationResult result = _validator.Validate(new GetTranslationsPagedQuery(new PaginationRequest()));
 
         Assert.That(result.IsValid, Is.True);
     }
@@ -19,7 +20,7 @@ public sealed class GetTranslationsPagedQueryValidatorTests
     [Test]
     public void Validate_ValidFilters_ReturnsSuccess()
     {
-        var result = _validator.Validate(new GetTranslationsPagedQuery(new PaginationRequest(), "CRM", "es-ES"));
+        ValidationResult result = _validator.Validate(new GetTranslationsPagedQuery(new PaginationRequest(), "CRM", "es-ES"));
 
         Assert.That(result.IsValid, Is.True);
     }
@@ -30,7 +31,7 @@ public sealed class GetTranslationsPagedQueryValidatorTests
     [TestCase("CRM-")]
     public void Validate_InvalidModuleFilter_ReturnsFailure(string module)
     {
-        var result = _validator.Validate(new GetTranslationsPagedQuery(new PaginationRequest(), module));
+        ValidationResult result = _validator.Validate(new GetTranslationsPagedQuery(new PaginationRequest(), module));
 
         Assert.That(result.IsValid, Is.False);
     }
@@ -39,7 +40,7 @@ public sealed class GetTranslationsPagedQueryValidatorTests
     [TestCase("spanish")]
     public void Validate_InvalidLanguageFilter_ReturnsFailure(string language)
     {
-        var result = _validator.Validate(new GetTranslationsPagedQuery(new PaginationRequest(), LanguageFilter: language));
+        ValidationResult result = _validator.Validate(new GetTranslationsPagedQuery(new PaginationRequest(), LanguageFilter: language));
 
         Assert.That(result.IsValid, Is.False);
     }
