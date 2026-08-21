@@ -6,6 +6,7 @@ using KUKULCAN.SharedKernel.i18n.Application.Features.Currencies.Queries.GetCurr
 using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Repositories;
 using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Services;
+using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
 using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects.Enums;
 using KUKULCAN.SharedKernel.Results;
 using Moq;
