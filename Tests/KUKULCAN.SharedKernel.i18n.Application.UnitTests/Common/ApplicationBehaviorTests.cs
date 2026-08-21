@@ -12,9 +12,9 @@ namespace KUKULCAN.SharedKernel.i18n.Application.UnitTests.Common;
 [TestFixture]
 public sealed class ApplicationBehaviorTests
 {
-    private sealed record PlainRequest(string Value) : IRequest<Result>;
-    private sealed record GenericRequest(string Value) : IRequest<Result<string>>;
-    private sealed record CacheRequest(string Value) : IRequest<Result<string>>, ICacheableRequest
+    public sealed record PlainRequest(string Value) : IRequest<Result>;
+    public sealed record GenericRequest(string Value) : IRequest<Result<string>>;
+    public sealed record CacheRequest(string Value) : IRequest<Result<string>>, ICacheableRequest
     {
         public string CacheKey => "test:key";
         public TimeSpan? CacheDuration => TimeSpan.FromMinutes(5);
@@ -72,7 +72,7 @@ public sealed class ApplicationBehaviorTests
         var validator = new InlineValidator<PlainRequest>(); validator.RuleFor(x => x.Value).NotEmpty();
         var sut = new ValidationBehavior<PlainRequest, Result>(new[] { validator }); var called = false;
         Result result = await sut.Handle(new PlainRequest(""), _ => { called = true; return Task.FromResult(Result.Success()); }, CancellationToken.None);
-        Assert.That(result.IsFailure, Is.True); Assert.That(called, Is.False); Assert.That(result.Error.Code, Does.Contain("Validation"));
+        Assert.That(result.IsFailure, Is.True); Assert.That(called, Is.False); Assert.That(result.Error.Code, Does.Contain("VALIDATION"));
     }
 
     [Test]
@@ -92,7 +92,7 @@ public sealed class ApplicationBehaviorTests
         Assert.That(async () => await sut.Handle(new NonResultRequest(""), _ => Task.FromResult("ok"), CancellationToken.None), Throws.TypeOf<ValidationException>());
     }
 
-    private sealed record NonResultRequest(string Value) : IRequest<string>;
+    public sealed record NonResultRequest(string Value) : IRequest<string>;
 
     [Test]
     public async Task LoggingBehavior_Success_ReturnsResponse()
