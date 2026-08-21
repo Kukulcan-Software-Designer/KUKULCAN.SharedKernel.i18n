@@ -117,7 +117,9 @@ public sealed class TranslationHandlerTests
     public async Task GetTranslationsByModule_FillsMissingEntriesFromFallback()
     {
         var repo = new Mock<ITranslationRepository>(); var requested = new[] { ApplicationTestData.Translation("CRM0001", "es-ES", "Hola") }; var fallback = new[] { ApplicationTestData.Translation("CRM0002", "en-US", "Hello") };
-        repo.Setup(x => x.GetByModuleAndLanguageAsync("CRM", It.IsAny<LanguageCode>(), It.IsAny<CancellationToken>())).ReturnsAsync((LanguageCode lang) => lang.Value == "es-ES" ? requested : fallback);
+        repo.Setup(x => x.GetByModuleAndLanguageAsync("CRM", It.IsAny<LanguageCode>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string module, LanguageCode languageCode, CancellationToken _) =>
+                languageCode.Value == "es-ES" ? requested : fallback);
         var sut = new GetTranslationsByModuleQueryHandler(repo.Object); var result = await sut.Handle(new GetTranslationsByModuleQuery("CRM", "es-ES"), CancellationToken.None);
         Assert.That(result.IsSuccess, Is.True); Assert.That(result.Value.Translations["CRM0001"], Is.EqualTo("Hola")); Assert.That(result.Value.Translations["CRM0002"], Is.EqualTo("Hello"));
     }
