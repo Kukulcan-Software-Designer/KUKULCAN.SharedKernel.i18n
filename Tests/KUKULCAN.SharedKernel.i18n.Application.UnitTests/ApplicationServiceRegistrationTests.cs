@@ -16,6 +16,7 @@ public sealed class ApplicationServiceRegistrationTests
     public void AddKukulcanI18NApplication_RegistersApplicationServicesAndPipelineBehaviors()
     {
         var services = new ServiceCollection();
+        services.AddLogging();
         services.AddSingleton(new Mock<ITranslationRepository>().Object);
         services.AddSingleton(new Mock<ILanguageRepository>().Object);
         services.AddSingleton(new Mock<ICacheService>().Object);
