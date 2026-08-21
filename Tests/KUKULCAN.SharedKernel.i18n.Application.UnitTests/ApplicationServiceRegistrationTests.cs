@@ -18,6 +18,7 @@ public sealed class ApplicationServiceRegistrationTests
     {
         var services = new ServiceCollection();
         services.AddSingleton(new Mock<ITranslationRepository>().Object);
+        services.AddSingleton(new Mock<ILanguageRepository>().Object);
         IServiceCollection returned = services.AddKukulcanI18NApplication();
 
         Assert.That(returned, Is.SameAs(services));
