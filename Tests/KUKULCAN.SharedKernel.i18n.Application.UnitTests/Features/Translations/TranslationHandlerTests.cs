@@ -1,4 +1,6 @@
+using KUKULCAN.SharedKernel.i18n.Application.Abstractions;
 using KUKULCAN.SharedKernel.i18n.Application.Common;
+using KUKULCAN.SharedKernel.i18n.Application.Common.Pagination;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Commands.BulkUpsertTranslations;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Commands.CreateTranslation;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Commands.DeleteTranslation;
@@ -9,6 +11,9 @@ using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTr
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTranslationsByModule;
 using KUKULCAN.SharedKernel.i18n.Application.Features.Translations.Queries.GetTranslationsPaged;
 using KUKULCAN.SharedKernel.i18n.Domain.DTOs;
+using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Repositories;
+using KUKULCAN.SharedKernel.i18n.Domain.Interfaces.Services;
+using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
 using Moq;
 
 namespace KUKULCAN.SharedKernel.i18n.Application.UnitTests.Features.Translations;
