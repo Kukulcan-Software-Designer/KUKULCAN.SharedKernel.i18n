@@ -15,7 +15,6 @@
     <File Path="API_GUIDELINES.md" />
     <File Path="CHANGELOG.md" />
     <File Path="CODE_OF_CONDUCT.md" />
-    <File Path="CONTRIBUTING.md" />
     <File Path="Directory.Build.props" />
     <File Path="GOVERNANCE.md" />
     <File Path="LICENSE" />
@@ -33,6 +32,7 @@
       <File Path=".github/workflows/application-unit-tests.yml" />
       <File Path=".github/workflows/infrastructure-unit-tests.yml" />
       <File Path=".github/workflows/api-unit-tests.yml" />
+      <File Path=".github/workflows/infrastructure-integration-tests.yml" />
   </Folder>
 
   <Folder Name="/Source/">
@@ -47,9 +47,13 @@
   </Folder>
 
   <Folder Name="/Tests/">
-    <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests.csproj" />
+    <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration.csproj" />
+  </Folder>
+  <Folder Name="/Tests/Integration/" />
+  <Folder Name="/Tests/UnitTests/">
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.API.UnitTests/KUKULCAN.SharedKernel.i18n.API.UnitTests.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Application.UnitTests/KUKULCAN.SharedKernel.i18n.Application.UnitTests.csproj" />
+    <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests/KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests.csproj" />
   </Folder>
 

@@ -1,0 +1,31 @@
+name: Infrastructure Integration Tests
+
+on:
+  push:
+    branches:
+      - main
+      - pruebasintegracion
+  workflow_dispatch:
+
+jobs:
+  infrastructure-integration-tests:
+    name: Build and test Infrastructure.Integration
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration.csproj
+
+      - name: Build
+        run: dotnet build Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration.csproj --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
