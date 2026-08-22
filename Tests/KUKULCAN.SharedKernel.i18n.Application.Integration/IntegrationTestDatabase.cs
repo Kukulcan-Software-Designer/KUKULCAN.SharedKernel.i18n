@@ -5,6 +5,7 @@ using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence;
 using Microsoft.Extensions.Options;
 using Moq;
+using NUnit.Framework;
 using Testcontainers.PostgreSql;
 
 namespace KUKULCAN.SharedKernel.i18n.Application.Integration;

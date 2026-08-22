@@ -33,6 +33,8 @@
       <File Path=".github/workflows/infrastructure-unit-tests.yml" />
       <File Path=".github/workflows/api-unit-tests.yml" />
       <File Path=".github/workflows/infrastructure-integration-tests.yml" />
+      <File Path=".github/workflows/application-integration-tests.yml" />
+      <File Path=".github/workflows/api-integration-tests.yml" />
   </Folder>
 
   <Folder Name="/Source/">
@@ -47,7 +49,9 @@
   </Folder>
 
   <Folder Name="/Tests/">
+    <Project Path="Tests/KUKULCAN.SharedKernel.i18n.API.Integration/KUKULCAN.SharedKernel.i18n.API.Integration.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.API.UnitTests/KUKULCAN.SharedKernel.i18n.API.UnitTests.csproj" />
+    <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Application.Integration/KUKULCAN.SharedKernel.i18n.Application.Integration.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Application.UnitTests/KUKULCAN.SharedKernel.i18n.Application.UnitTests.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration.csproj" />
