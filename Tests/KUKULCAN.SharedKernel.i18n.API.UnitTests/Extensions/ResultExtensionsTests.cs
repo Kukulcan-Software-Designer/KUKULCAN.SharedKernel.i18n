@@ -2,6 +2,7 @@ using KUKULCAN.SharedKernel.i18n.API.Extensions;
 using KUKULCAN.SharedKernel.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.API.UnitTests.Extensions;
 

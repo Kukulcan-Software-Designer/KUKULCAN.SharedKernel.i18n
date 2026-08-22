@@ -4,6 +4,7 @@ using FluentValidation.Results;
 using KUKULCAN.SharedKernel.i18n.API.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
+using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.API.UnitTests.Middleware;
 
