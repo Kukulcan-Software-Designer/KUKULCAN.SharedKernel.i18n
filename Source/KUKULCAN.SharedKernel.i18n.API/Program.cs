@@ -14,7 +14,7 @@ try
 {
     Log.Information("Starting KUKULCAN.SharedKernel.i18n Service…");
 
-    var builder = WebApplication.CreateBuilder(args);
+    WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
     // Serilog
     builder.Host.UseSerilog((ctx, svc, cfg) =>
@@ -35,7 +35,7 @@ try
     AppStartup.ConfigureServices(builder);
 
     //
-    var app = builder.Build();
+    WebApplication app = builder.Build();
 
     // Migration + Seed
     if (app.Configuration.GetValue("Database:AutoMigrate", defaultValue: false))
