@@ -14,6 +14,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="KUKULCAN.SharedKernel.i18n.API.Integration" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\KUKULCAN.SharedKernel.i18n.Application\KUKULCAN.SharedKernel.i18n.Application.csproj" />
         <ProjectReference Include="..\KUKULCAN.SharedKernel.i18n.Infrastructure\KUKULCAN.SharedKernel.i18n.Infrastructure.csproj" />
     </ItemGroup>
