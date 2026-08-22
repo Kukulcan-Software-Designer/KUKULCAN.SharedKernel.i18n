@@ -48,7 +48,7 @@ public sealed class LanguagesApiIntegrationTests
     {
         await using (IServiceScope scope = ApiIntegrationTestHost.Factory.Services.CreateAsyncScope())
         {
-            I18NDbContext context = scope.ServiceProvider.GetRequiredService<I18NDbContext>();
+            var context = scope.ServiceProvider.GetRequiredService<I18NDbContext>();
             context.Languages.Add(Language.Create(
                 Guid.CreateVersion7(), "pt-PT", "Portuguese", "Português").Value);
             await context.SaveChangesAsync();
