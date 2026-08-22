@@ -90,4 +90,7 @@ finally
     await Log.CloseAndFlushAsync();
 }
 
+/// <summary>
+///
+/// </summary>
 public partial class Program { }

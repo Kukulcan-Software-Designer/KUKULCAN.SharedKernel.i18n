@@ -6,6 +6,7 @@ using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.API.Integration;
 
