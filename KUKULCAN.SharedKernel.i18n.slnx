@@ -47,13 +47,10 @@
   </Folder>
 
   <Folder Name="/Tests/">
-    <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration.csproj" />
-  </Folder>
-  <Folder Name="/Tests/Integration/" />
-  <Folder Name="/Tests/UnitTests/">
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.API.UnitTests/KUKULCAN.SharedKernel.i18n.API.UnitTests.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Application.UnitTests/KUKULCAN.SharedKernel.i18n.Application.UnitTests.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests.csproj" />
+    <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests/KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests.csproj" />
   </Folder>
 
