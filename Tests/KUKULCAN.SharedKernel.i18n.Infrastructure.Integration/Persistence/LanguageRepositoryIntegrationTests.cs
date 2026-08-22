@@ -14,8 +14,8 @@ public sealed class LanguageRepositoryIntegrationTests
     {
         await using var context = await IntegrationTestDatabase.CreateContextAsync();
         var repository = new LanguageRepository(context);
-        var spanish = Language.Create(Guid.CreateVersion7(), "es-ES", "Spanish", "Español", true).Value;
-        var english = Language.Create(Guid.CreateVersion7(), "en-US", "English", "English", false).Value;
+        Language spanish = Language.Create(Guid.CreateVersion7(), "es-ES", "Spanish", "Español", true).Value;
+        Language english = Language.Create(Guid.CreateVersion7(), "en-US", "English", "English", false).Value;
 
         await repository.AddAsync(spanish);
         await repository.AddAsync(english);
@@ -35,7 +35,7 @@ public sealed class LanguageRepositoryIntegrationTests
     {
         await using var context = await IntegrationTestDatabase.CreateContextAsync();
         var repository = new LanguageRepository(context);
-        var language = Language.Create(Guid.CreateVersion7(), "es-ES", "Spanish", "Español", false).Value;
+        Language language = Language.Create(Guid.CreateVersion7(), "es-ES", "Spanish", "Español", false).Value;
         await repository.AddAsync(language);
         await context.SaveChangesAsync();
 
@@ -44,7 +44,7 @@ public sealed class LanguageRepositoryIntegrationTests
         await context.SaveChangesAsync();
 
         await using var verification = await IntegrationTestDatabase.CreateContextAsync();
-        var persisted = await new LanguageRepository(verification).GetByCodeAsync("es-ES");
+        Language? persisted = await new LanguageRepository(verification).GetByCodeAsync("es-ES");
         Assert.That(persisted?.IsActive, Is.True);
     }
 }

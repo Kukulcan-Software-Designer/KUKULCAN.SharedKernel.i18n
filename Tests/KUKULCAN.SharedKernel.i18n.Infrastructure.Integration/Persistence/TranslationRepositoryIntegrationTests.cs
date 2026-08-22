@@ -11,7 +11,7 @@ public sealed class TranslationRepositoryIntegrationTests
 
     private static async Task<I18NDbContext> CreateContextWithLanguagesAsync()
     {
-        var context = await IntegrationTestDatabase.CreateContextAsync();
+        I18NDbContext context = await IntegrationTestDatabase.CreateContextAsync();
         context.Languages.AddRange(
             Language.Create(Guid.CreateVersion7(), "es-ES", "Spanish", "Español", true).Value,
             Language.Create(Guid.CreateVersion7(), "en-US", "English", "English", false).Value);
@@ -30,9 +30,9 @@ public sealed class TranslationRepositoryIntegrationTests
     {
         await using var context = await CreateContextWithLanguagesAsync();
         var repository = new TranslationRepository(context);
-        var spanish = Translation.Create(Guid.CreateVersion7(), "CRM0001", "es-ES", "Hola").Value;
-        var english = Translation.Create(Guid.CreateVersion7(), "CRM0001", "en-US", "Hello").Value;
-        var secondModule = Translation.Create(Guid.CreateVersion7(), "API0001", "es-ES", "API").Value;
+        Translation spanish = Translation.Create(Guid.CreateVersion7(), "CRM0001", "es-ES", "Hola").Value;
+        Translation english = Translation.Create(Guid.CreateVersion7(), "CRM0001", "en-US", "Hello").Value;
+        Translation secondModule = Translation.Create(Guid.CreateVersion7(), "API0001", "es-ES", "API").Value;
 
         await repository.AddAsync(spanish);
         await repository.AddAsync(english);
@@ -59,7 +59,7 @@ public sealed class TranslationRepositoryIntegrationTests
         await repository.AddAsync(Translation.Create(Guid.CreateVersion7(), "CRM0003", "es-ES", "Tres").Value);
         await context.SaveChangesAsync();
 
-        var result = await repository.GetPagedAsync(2, 1, "CRM", "es-ES");
+        (IReadOnlyList<Translation> Items, long TotalCount) result = await repository.GetPagedAsync(2, 1, "CRM", "es-ES");
 
         Assert.That(result.TotalCount, Is.EqualTo(3));
         Assert.That(result.Items.Select(x => x.Code.Value), Is.EqualTo(new[] { "CRM0002" }));
@@ -70,7 +70,7 @@ public sealed class TranslationRepositoryIntegrationTests
     {
         await using var context = await CreateContextWithLanguagesAsync();
         var repository = new TranslationRepository(context);
-        var translation = Translation.Create(Guid.CreateVersion7(), "CRM0001", "es-ES", "Hola").Value;
+        Translation translation = Translation.Create(Guid.CreateVersion7(), "CRM0001", "es-ES", "Hola").Value;
         await repository.AddAsync(translation);
         await context.SaveChangesAsync();
 

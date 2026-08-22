@@ -15,8 +15,8 @@ public sealed class LocaleConfigurationRepositoryIntegrationTests
     {
         await using var context = await IntegrationTestDatabase.CreateContextAsync();
         var repository = new LocaleConfigurationRepository(context);
-        var spanish = LocaleConfiguration.Create(Guid.CreateVersion7(), "es-ES", "dd/MM/yyyy", "dd/MM/yyyy", "HH:mm", "dd/MM/yyyy HH:mm", FirstDayOfWeek.Monday, ',', '.', 2, 2).Value;
-        var english = LocaleConfiguration.Create(Guid.CreateVersion7(), "en-US", "MM/dd/yyyy", "MM/dd/yyyy", "HH:mm", "MM/dd/yyyy HH:mm", FirstDayOfWeek.Sunday, '.', ',', 2, 2).Value;
+        LocaleConfiguration spanish = LocaleConfiguration.Create(Guid.CreateVersion7(), "es-ES", "dd/MM/yyyy", "dd/MM/yyyy", "HH:mm", "dd/MM/yyyy HH:mm", FirstDayOfWeek.Monday, ',', '.', 2, 2).Value;
+        LocaleConfiguration english = LocaleConfiguration.Create(Guid.CreateVersion7(), "en-US", "MM/dd/yyyy", "MM/dd/yyyy", "HH:mm", "MM/dd/yyyy HH:mm", FirstDayOfWeek.Sunday, '.', ',', 2, 2).Value;
 
         await repository.AddAsync(spanish);
         await repository.AddAsync(english);
@@ -35,7 +35,7 @@ public sealed class LocaleConfigurationRepositoryIntegrationTests
     {
         await using var context = await IntegrationTestDatabase.CreateContextAsync();
         var repository = new LocaleConfigurationRepository(context);
-        var configuration = LocaleConfiguration.Create(Guid.CreateVersion7(), "es-ES", "dd/MM/yyyy", "dd/MM/yyyy", "HH:mm", "dd/MM/yyyy HH:mm", FirstDayOfWeek.Monday, ',', '.', 2, 2).Value;
+        LocaleConfiguration configuration = LocaleConfiguration.Create(Guid.CreateVersion7(), "es-ES", "dd/MM/yyyy", "dd/MM/yyyy", "HH:mm", "dd/MM/yyyy HH:mm", FirstDayOfWeek.Monday, ',', '.', 2, 2).Value;
         await repository.AddAsync(configuration);
         await context.SaveChangesAsync();
 
