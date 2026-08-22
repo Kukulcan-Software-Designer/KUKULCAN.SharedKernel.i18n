@@ -50,6 +50,7 @@ public sealed class ApiWebApplicationFactory(string connectionString) : WebAppli
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        base.ConfigureWebHost(builder);
         builder.UseEnvironment("Testing");
         builder.ConfigureAppConfiguration((_, configuration) =>
         {
