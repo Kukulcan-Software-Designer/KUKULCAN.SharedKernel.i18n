@@ -1,8 +1,10 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using KUKULCAN.SharedKernel.i18n.Domain.DTOs;
 using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace KUKULCAN.SharedKernel.i18n.API.Integration;
