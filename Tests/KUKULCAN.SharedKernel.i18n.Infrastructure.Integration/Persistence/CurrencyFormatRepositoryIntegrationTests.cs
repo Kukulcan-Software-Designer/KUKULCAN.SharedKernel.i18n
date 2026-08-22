@@ -2,6 +2,7 @@ using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects;
 using KUKULCAN.SharedKernel.i18n.Domain.ValueObjects.Enums;
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence.Repositories;
+using KUKULCAN.SharedKernel.Results;
 
 namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Integration.Persistence;
 
@@ -16,7 +17,7 @@ public sealed class CurrencyFormatRepositoryIntegrationTests
     {
         await using var context = await IntegrationTestDatabase.CreateContextAsync();
 
-        var created = CurrencyFormat.Create(
+        Result<CurrencyFormat> created = CurrencyFormat.Create(
             Guid.CreateVersion7(),
             "es-ES",
             "EUR",
@@ -33,7 +34,7 @@ public sealed class CurrencyFormatRepositoryIntegrationTests
         await context.SaveChangesAsync();
 
         var repository = new CurrencyFormatRepository(context);
-        var result = await repository.FindAsync(
+        CurrencyFormat? result = await repository.FindAsync(
             LanguageCode.Create("es-ES").Value,
             "eur");
 
@@ -47,7 +48,7 @@ public sealed class CurrencyFormatRepositoryIntegrationTests
     {
         await using var context = await IntegrationTestDatabase.CreateContextAsync();
 
-        var created = CurrencyFormat.Create(
+        Result<CurrencyFormat> created = CurrencyFormat.Create(
             Guid.CreateVersion7(),
             "en-US",
             "USD",
@@ -60,7 +61,7 @@ public sealed class CurrencyFormatRepositoryIntegrationTests
             2);
 
         Assert.That(created.IsSuccess, Is.True, created.IsFailure ? created.Error.ToString() : string.Empty);
-        var entity = created.Value;
+        CurrencyFormat entity = created.Value;
         var repository = new CurrencyFormatRepository(context);
 
         await repository.AddAsync(entity);
@@ -68,7 +69,7 @@ public sealed class CurrencyFormatRepositoryIntegrationTests
 
         Assert.That(await repository.ExistsAsync(entity.Id.Value), Is.True);
 
-        var loaded = await repository.GetByIdAsync(entity.Id.Value);
+        CurrencyFormat? loaded = await repository.GetByIdAsync(entity.Id.Value);
         Assert.That(loaded, Is.Not.Null);
 
         loaded!.Update(
@@ -83,7 +84,7 @@ public sealed class CurrencyFormatRepositoryIntegrationTests
         repository.Update(loaded);
         await context.SaveChangesAsync();
 
-        var updated = await repository.GetByIdAsync(entity.Id.Value);
+        CurrencyFormat? updated = await repository.GetByIdAsync(entity.Id.Value);
         Assert.That(updated!.CurrencyName, Is.EqualTo("US Dollar Updated"));
 
         repository.Remove(updated);
