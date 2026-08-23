@@ -14,7 +14,7 @@ The service targets:
 - Redis 6 or newer when distributed caching is enabled.
 - Docker 24 or newer for containerized deployments.
 
-The Infrastructure project currently uses the PostgreSQL EF Core provider and the API project contains PostgreSQL/Redis health-check integrations.
+The Infrastructure project uses the PostgreSQL EF Core provider and the API project contains PostgreSQL/Redis health-check integrations.
 
 ---
 
@@ -24,29 +24,29 @@ The principal configuration areas are:
 
 | Setting | Purpose |
 |---|---|
-| `ConnectionStrings__I18nDb` | PostgreSQL connection string |
-| `ConnectionStrings__Redis` | Redis connection string; empty disables distributed cache |
-| `Jwt__SecretKey` | JWT signing secret |
+| `Kukulcan__Database__ConnectionString` | PostgreSQL connection string |
+| `ConnectionStrings__Redis` | Redis connection string |
+| `Jwt__SecretKey` | JWT signing secret; supplied outside source control |
 | `Jwt__Issuer` | Expected token issuer |
 | `Jwt__Audience` | Expected token audience |
-| `Database__AutoMigrate` | Controls startup migration behavior where enabled |
+| `Kukulcan__Database__Migration__AutoMigrateOnStartup` | Controls automatic migration at startup |
 | `ASPNETCORE_ENVIRONMENT` | ASP.NET Core environment |
 
-Secrets must be supplied through a secure configuration mechanism in production rather than committed to source control.
+Do not commit database passwords, JWT signing keys or other secrets. Local/CI integration tests must inject their own disposable configuration.
+
+Example local database configuration:
+
+```bash
+export KUKULCAN__DATABASE__CONNECTIONSTRING='Host=localhost;Port=5432;Database=itzamna_i18n;Username=itzamna;Password=change-me'
+export CONNECTIONSTRINGS__REDIS='localhost:6379,abortConnect=false'
+export JWT__SECRETKEY='LOCAL_ONLY_SECRET_WITH_AT_LEAST_32_CHARACTERS'
+```
 
 ---
 
 # 3. Local Development
 
-A minimal local setup requires PostgreSQL. Redis is optional because the service contains a memory-cache fallback.
-
-Example environment variables:
-
-```bash
-export ConnectionStrings__I18nDb="Host=localhost;Port=5432;Database=kukulcan_i18n;Username=kukulcan;Password=change-me"
-export ConnectionStrings__Redis=""
-export Jwt__SecretKey="LOCAL_ONLY_SECRET_WITH_AT_LEAST_32_CHARACTERS"
-```
+A complete integration setup requires PostgreSQL and, for tests that exercise distributed caching, Redis.
 
 Run the API project with:
 
@@ -54,29 +54,29 @@ Run the API project with:
 dotnet run --project Source/KUKULCAN.SharedKernel.i18n.API
 ```
 
-Interactive API documentation is available through Scalar at the host's `/scalar/v1` route when enabled by the current environment configuration.
+Interactive API documentation is available through Scalar at `/scalar/v1` when enabled by the current environment configuration.
 
 ---
 
 # 4. Database Migrations
 
-Create a migration:
+Create a migration from the actual Infrastructure model:
 
 ```bash
 dotnet ef migrations add MigrationName \
-  --project Source/KUKULCAN.SharedKernel.i18n.Infrastructure \
-  --startup-project Source/KUKULCAN.SharedKernel.i18n.API
+  --project Source/KUKULCAN.SharedKernel.i18n.Infrastructure/KUKULCAN.SharedKernel.i18n.Infrastructure.csproj \
+  --startup-project Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj
 ```
 
 Apply migrations:
 
 ```bash
 dotnet ef database update \
-  --project Source/KUKULCAN.SharedKernel.i18n.Infrastructure \
-  --startup-project Source/KUKULCAN.SharedKernel.i18n.API
+  --project Source/KUKULCAN.SharedKernel.i18n.Infrastructure/KUKULCAN.SharedKernel.i18n.Infrastructure.csproj \
+  --startup-project Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj
 ```
 
-Schema changes must be tested against a clean database and an upgraded database. Seed behavior should also be verified after migrations.
+The migration and its `ModelSnapshot` are a single schema change and must be reviewed together. Never create a migration manually while omitting or fabricating the corresponding snapshot.
 
 ---
 
@@ -90,21 +90,13 @@ L2: Redis shared cache
 Source: PostgreSQL
 ```
 
-Recommended service lifetimes from the current contract:
-
-| Data | TTL |
-|---|---:|
-| Translation lookup | 1 hour |
-| Locale configuration | 6 hours |
-| Currency formats | 6 hours |
-
-When Redis is unavailable or deliberately not configured, the memory-only implementation can be used. This is suitable for development and single-instance deployments; multi-instance deployments benefit from Redis so that cache state is shared.
+Redis is a performance layer. PostgreSQL remains authoritative. A Redis outage must not corrupt or redefine persisted translation data.
 
 ---
 
 # 6. Health and Readiness
 
-The service exposes three operational probes:
+The service exposes:
 
 | Endpoint | Meaning |
 |---|---|
@@ -112,68 +104,38 @@ The service exposes three operational probes:
 | `/health/live` | Process liveness |
 | `/health/ready` | Dependency readiness |
 
-Readiness should be used by orchestrators to decide whether traffic can be routed to the instance. Liveness should not depend on external databases because a transient database outage should not cause the process to be restarted unnecessarily.
+Readiness is used to verify dependencies required to serve traffic, notably PostgreSQL and Redis when configured as a readiness dependency. Liveness should remain independent of transient external dependency failures.
 
 ---
 
 # 7. Logging
 
-The API uses Serilog with console/file sinks and environment enrichment.
-
-Logs should include enough context to diagnose request and infrastructure failures without recording secrets or sensitive token contents.
-
-Administrative bulk operations should be observable through normal request logging and application behavior logging.
+The API uses Serilog. Logs should provide enough context to diagnose request and infrastructure failures without recording secrets or sensitive token contents.
 
 ---
 
 # 8. Deployment
 
-The recommended production topology is:
-
-```text
-                ┌───────────────┐
-Clients ───────>│ Load Balancer │
-                └───────┬───────┘
-                        |
-              ┌─────────┴─────────┐
-              v                   v
-        i18n API instance   i18n API instance
-              |                   |
-              └─────────┬─────────┘
-                        |
-             ┌──────────┴──────────┐
-             v                     v
-        PostgreSQL              Redis
-```
-
-PostgreSQL is authoritative. Redis is shared acceleration for repeated reads.
+PostgreSQL is authoritative. Redis provides shared acceleration for repeated reads when enabled.
 
 ---
 
 # 9. Testing
 
-Run the complete test suite:
+Run the complete suite:
 
 ```bash
-dotnet test
+dotnet build --configuration Release
+dotnet test --configuration Release --no-build
 ```
 
-Run individual architectural layers:
-
-```bash
-dotnet test Tests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests
-dotnet test Tests/KUKULCAN.SharedKernel.i18n.Application.UnitTests
-dotnet test Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests
-dotnet test Tests/KUKULCAN.SharedKernel.i18n.API.UnitTests
-```
+The repository contains unit and integration test projects. Integration tests that require infrastructure must run against real PostgreSQL/Redis services supplied by the local environment or CI workflow; they must not silently fall back to an in-memory substitute when the test is intended to verify the real provider.
 
 Coverage can be collected with:
 
 ```bash
 dotnet test --collect:"XPlat Code Coverage"
 ```
-
-The CI workflow is split by architectural layer so that failures can be located quickly.
 
 ---
 
@@ -183,20 +145,19 @@ Before releasing a version:
 
 1. Restore and build the complete solution.
 2. Run all unit-test projects.
-3. Validate database migrations from the previous release.
-4. Validate seed data.
-5. Verify translation fallback behavior.
-6. Verify default-language protection.
-7. Verify JWT policies for read and write endpoints.
-8. Verify `/health/live` and `/health/ready`.
-9. Verify Scalar/OpenAPI generation.
-10. Review the documentation for API or architectural changes.
+3. Run all applicable integration-test projects against PostgreSQL/Redis.
+4. Validate database migrations from the previous release.
+5. Validate seed data.
+6. Verify translation fallback behavior.
+7. Verify default-language protection.
+8. Verify JWT policies for read and write endpoints.
+9. Verify `/health/live` and `/health/ready`.
+10. Verify Scalar/OpenAPI generation.
+11. Review the documentation for API or architectural changes.
 
 ---
 
 # 11. Operational Invariants
-
-The following properties must remain true in production:
 
 - PostgreSQL remains the source of truth.
 - A default active language exists.
@@ -210,10 +171,6 @@ The following properties must remain true in production:
 
 # 12. Failure Handling
 
-A translation lookup failure caused by a missing translation is a functional result and should not be treated as an infrastructure crash.
+A missing translation is a functional result, not an infrastructure crash. PostgreSQL connectivity failures are infrastructure failures and must be visible through readiness checks and structured logs. Redis failures should degrade caching rather than invalidate authoritative data.
 
-A PostgreSQL connectivity failure is an infrastructure failure and should be visible through readiness checks and structured logs.
-
-A Redis failure should degrade caching rather than invalidate the service's authoritative data model.
-
-Authorization failures should be returned by the API security middleware/policy pipeline rather than reimplemented inside individual controllers.
+Authorization failures are handled by the API authentication/authorization pipeline rather than reimplemented inside individual controllers.
