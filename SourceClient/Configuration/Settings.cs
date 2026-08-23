@@ -12,7 +12,7 @@ public sealed class ApiSettings
 // ── Database (mirrors Atlas.Kernel.Database AtlasDatabaseOptions) ─────────────
 public sealed class AtlasDatabaseSettings
 {
-    public const string SectionKey = "Atlas:Database";
+    public const string SectionKey = "Itzamna:Database";
 
     public DatabaseProvider Provider              { get; set; } = DatabaseProvider.PostgreSql;
     public string           ConnectionString      { get; set; } = string.Empty;
