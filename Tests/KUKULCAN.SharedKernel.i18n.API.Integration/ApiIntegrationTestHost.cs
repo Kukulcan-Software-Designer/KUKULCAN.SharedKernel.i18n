@@ -48,9 +48,6 @@ public sealed class ApiIntegrationTestHost
             "Kukulcan__Database__ConnectionString",
             postgresqlConnectionString);
         Environment.SetEnvironmentVariable(
-            "ConnectionStrings__Database",
-            postgresqlConnectionString);
-        Environment.SetEnvironmentVariable(
             "ConnectionStrings__Redis",
             redisConnectionString);
 
@@ -65,7 +62,6 @@ public sealed class ApiIntegrationTestHost
         _factory?.Dispose();
 
         Environment.SetEnvironmentVariable("Kukulcan__Database__ConnectionString", null);
-        Environment.SetEnvironmentVariable("ConnectionStrings__Database", null);
         Environment.SetEnvironmentVariable("ConnectionStrings__Redis", null);
 
         if (_redisContainer is not null)
@@ -80,7 +76,7 @@ public sealed class ApiIntegrationTestHost
         using IServiceScope scope = Factory.Services.CreateScope();
         I18NDbContext context = scope.ServiceProvider.GetRequiredService<I18NDbContext>();
         await context.Database.EnsureDeletedAsync();
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.MigrateAsync();
     }
 }
 
@@ -96,13 +92,12 @@ public sealed class ApiWebApplicationFactory(
         {
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:Database"] = postgresqlConnectionString,
                 ["ConnectionStrings:Redis"] = redisConnectionString,
                 ["Kukulcan:Database:Provider"] = "PostgresSql",
                 ["Kukulcan:Database:ConnectionString"] = postgresqlConnectionString,
                 ["Kukulcan:Database:Retry:Enabled"] = "false",
                 ["Kukulcan:Database:Pool:Enabled"] = "false",
-                ["Database:AutoMigrate"] = "false",
+                ["Kukulcan:Database:Migration:AutoMigrateOnStartup"] = "false",
                 ["Jwt:SecretKey"] = "KUKULCAN_INTEGRATION_TEST_SECRET_KEY_MINIMUM_32_CHARS",
                 ["Jwt:Issuer"] = "KUKULCAN.IntegrationTests",
                 ["Jwt:Audience"] = "KUKULCAN.SharedKernel.i18n.IntegrationTests",
