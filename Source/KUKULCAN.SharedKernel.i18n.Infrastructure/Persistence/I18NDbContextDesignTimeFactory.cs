@@ -1,3 +1,4 @@
+using KUKULCAN.SharedKernel.i18n.Infrastructure;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
