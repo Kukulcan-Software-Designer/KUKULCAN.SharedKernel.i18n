@@ -12,13 +12,16 @@ using Testcontainers.Redis;
 
 namespace KUKULCAN.SharedKernel.i18n.API.Integration;
 
+internal static class IntegrationJwtConfiguration
+{
+    public const string SecretKey = "KUKULCAN_INTEGRATION_TEST_SECRET_KEY_MINIMUM_32_CHARS";
+    public const string Issuer = "KUKULCAN.IntegrationTests";
+    public const string Audience = "KUKULCAN.SharedKernel.i18n.IntegrationTests";
+}
+
 [SetUpFixture]
 public sealed class ApiIntegrationTestHost
 {
-    private const string IntegrationJwtSecret = "KUKULCAN_INTEGRATION_TEST_SECRET_KEY_MINIMUM_32_CHARS";
-    private const string IntegrationJwtIssuer = "KUKULCAN.IntegrationTests";
-    private const string IntegrationJwtAudience = "KUKULCAN.SharedKernel.i18n.IntegrationTests";
-
     private static PostgreSqlContainer? _postgresqlContainer;
     private static RedisContainer? _redisContainer;
     private static ApiWebApplicationFactory? _factory;
@@ -46,26 +49,13 @@ public sealed class ApiIntegrationTestHost
         string postgresqlConnectionString = _postgresqlContainer.GetConnectionString();
         string redisConnectionString = _redisContainer.GetConnectionString();
 
-        // Testcontainers exposes dynamically mapped host ports. The application
-        // must receive those values before WebApplication is built so that both
-        // EF Core and the readiness health checks use the same real containers.
-        Environment.SetEnvironmentVariable(
-            "Kukulcan__Database__ConnectionString",
-            postgresqlConnectionString);
-        Environment.SetEnvironmentVariable(
-            "ConnectionStrings__Redis",
-            redisConnectionString);
+        Environment.SetEnvironmentVariable("Kukulcan__Database__ConnectionString", postgresqlConnectionString);
+        Environment.SetEnvironmentVariable("ConnectionStrings__Redis", redisConnectionString);
+        Environment.SetEnvironmentVariable("Jwt__SecretKey", IntegrationJwtConfiguration.SecretKey);
+        Environment.SetEnvironmentVariable("Jwt__Issuer", IntegrationJwtConfiguration.Issuer);
+        Environment.SetEnvironmentVariable("Jwt__Audience", IntegrationJwtConfiguration.Audience);
 
-        // The API requires a JWT signing key during service registration. These
-        // values exist only for the integration-test process and are never read
-        // from production configuration or committed application settings.
-        Environment.SetEnvironmentVariable("Jwt__SecretKey", IntegrationJwtSecret);
-        Environment.SetEnvironmentVariable("Jwt__Issuer", IntegrationJwtIssuer);
-        Environment.SetEnvironmentVariable("Jwt__Audience", IntegrationJwtAudience);
-
-        _factory = new ApiWebApplicationFactory(
-            postgresqlConnectionString,
-            redisConnectionString);
+        _factory = new ApiWebApplicationFactory(postgresqlConnectionString, redisConnectionString);
     }
 
     [OneTimeTearDown]
@@ -113,9 +103,9 @@ public sealed class ApiWebApplicationFactory(
                 ["Kukulcan:Database:Retry:Enabled"] = "false",
                 ["Kukulcan:Database:Pool:Enabled"] = "false",
                 ["Kukulcan:Database:Migration:AutoMigrateOnStartup"] = "false",
-                ["Jwt:SecretKey"] = IntegrationJwtSecret,
-                ["Jwt:Issuer"] = IntegrationJwtIssuer,
-                ["Jwt:Audience"] = IntegrationJwtAudience,
+                ["Jwt:SecretKey"] = IntegrationJwtConfiguration.SecretKey,
+                ["Jwt:Issuer"] = IntegrationJwtConfiguration.Issuer,
+                ["Jwt:Audience"] = IntegrationJwtConfiguration.Audience,
             });
         });
 
