@@ -2,6 +2,7 @@ using KUKULCAN.SharedKernel.Abstractions;
 using KUKULCAN.SharedKernel.Database.Abstractions;
 using KUKULCAN.SharedKernel.Database.Configuration;
 using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Moq;
 using Testcontainers.PostgreSql;
