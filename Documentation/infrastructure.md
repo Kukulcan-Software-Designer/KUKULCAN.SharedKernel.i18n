@@ -7,7 +7,7 @@
 
 # 1. Purpose
 
-The Infrastructure project contains the technical implementations required to run the i18n service. It is the only production project that owns the database provider and concrete caching implementations.
+The Infrastructure project contains the technical implementations required to run the i18n service. It owns the concrete database provider and caching implementations.
 
 The project consumes `KUKULCAN.SharedKernel.Database` as its shared EF Core persistence foundation.
 
@@ -22,7 +22,7 @@ Infrastructure/
 │   ├── Configurations/
 │   ├── Repositories/
 │   ├── Seeds/
-│   └── I18nDbContext.cs
+│   └── I18NDbContext.cs
 ├── Primitives/
 ├── Services/
 └── InfrastructureServiceRegistration.cs
@@ -32,164 +32,87 @@ Infrastructure/
 
 # 3. Database Context
 
-`I18nDbContext` is the module-specific EF Core context. It exposes the persistence model for languages, translations, locale configurations and currency formats and applies the entity configurations from the `Persistence/Configurations` directory.
+`I18NDbContext` is the module-specific EF Core context. It exposes the persistence model for languages, translations, locale configurations and currency formats and applies the entity configurations from `Persistence/Configurations`.
 
 The context is infrastructure-owned. Domain entities do not inherit from EF Core types and do not contain provider-specific mapping configuration.
+
+The context is registered through the infrastructure composition root and receives `KukulcanDatabaseOptions` from configuration. Design-time EF Core operations therefore require a valid `Kukulcan__Database__ConnectionString` configuration value when the startup project is used.
 
 ---
 
 # 4. Entity Configurations
 
-EF Core configuration is separated from the domain model using `IEntityTypeConfiguration<T>` implementations.
+EF Core configuration is separated from the domain model using `IEntityTypeConfiguration<T>` implementations. This keeps table names, column sizes, keys, indexes, unique constraints, relationships and value-object conversions outside domain entities.
 
-This keeps concerns such as:
-
-- Table names.
-- Column sizes.
-- Keys and indexes.
-- Unique constraints.
-- Relationships.
-- Value-object conversion.
-
-outside the domain entities.
-
-The database schema should enforce the same fundamental uniqueness guarantees that the domain assumes, particularly around translation code/language combinations.
+The database schema should enforce the same fundamental uniqueness guarantees that the domain assumes, particularly around translation code/language combinations and the single default-language invariant.
 
 ---
 
 # 5. PostgreSQL
 
-PostgreSQL is the default database provider for this module. The provider package is referenced only by Infrastructure, not by Domain or Application.
-
-This preserves the architectural boundary:
+PostgreSQL is the default database provider for this module. The provider package is referenced by Infrastructure, not by Domain or Application.
 
 ```text
-Domain       -> no PostgreSQL knowledge
-Application  -> no PostgreSQL knowledge
-Infrastructure -> Npgsql / EF Core
+Domain          -> no PostgreSQL knowledge
+Application     -> no PostgreSQL knowledge
+Infrastructure  -> Npgsql / EF Core
 ```
-
-The module therefore remains independent of provider-specific SQL in its business model.
 
 ---
 
 # 6. Repositories
 
-Repository implementations live under `Persistence/Repositories` and implement contracts declared by the inner layer.
-
-Repositories are responsible for persistence-oriented operations such as:
-
-- Loading a language.
-- Loading a translation by code/language.
-- Loading all translations for a module.
-- Loading variants.
-- Reading/writing locale configuration.
-- Reading/writing currency formats.
-
-Repositories should not become generic business services. Fallback rules and state-transition rules belong to domain/application services.
+Repository implementations live under `Persistence/Repositories` and implement contracts declared by the inner layer. Repositories perform persistence-oriented operations and must not become generic business services.
 
 ---
 
 # 7. Seed Data
 
-Seed configuration lives under `Persistence/Seeds`.
-
-The seed process establishes the initial platform languages and their locale/currency configuration. Translation seed data should preserve the default-language requirement so that fallback has a valid base.
-
-Seed changes must be reviewed as data-contract changes because consuming applications may rely on the availability of core language records.
+Seed configuration lives under `Persistence/Seeds`. Seed changes must be reviewed as data-contract changes because consuming applications may rely on core language records.
 
 ---
 
 # 8. Caching
 
-The service uses a two-level cache strategy.
+The service uses process-local memory caching and an optional Redis-backed distributed cache. PostgreSQL remains the authoritative persistence store.
 
-| Level | Implementation | Purpose |
-|---|---|---|
-| L1 | `MemoryOnlyCacheService` / memory cache | Fast local reads per application instance |
-| L2 | Redis-backed distributed cache | Shared cache across service replicas |
-| Source | PostgreSQL | Authoritative persistence |
-
-Recommended default lifetimes in the current service contract are:
-
-- Translations: 1 hour.
-- Locale configuration: 6 hours.
-- Currency configuration: 6 hours.
-
-The exact implementation should remain centralized in the infrastructure cache services rather than in controllers or repositories.
+Redis is an optimization layer. Its failure may reduce cache efficiency but must not change persisted data correctness.
 
 ---
 
-# 9. Cache Failure Strategy
+# 9. Dependency Injection
 
-Redis is an optimization, not the source of truth. If no Redis connection is configured, the service can fall back to memory-only caching.
-
-A Redis outage must therefore not change the correctness of translation data. It may reduce cache efficiency, but PostgreSQL remains authoritative.
-
-Cache invalidation is coupled to successful write operations. Stale data should never be intentionally served after a successful administrative update when the infrastructure can invalidate the relevant key.
+`InfrastructureServiceRegistration` is the infrastructure composition entry point. It registers the `I18NDbContext`, repositories, cache services, PostgreSQL provider configuration and Redis/memory-cache implementations.
 
 ---
 
-# 10. Dependency Injection
+# 10. Relationship With SharedKernel.Database
 
-`InfrastructureServiceRegistration` is the infrastructure composition entry point.
-
-It registers:
-
-- `I18nDbContext`.
-- Domain repository implementations.
-- Cache services.
-- PostgreSQL provider configuration.
-- Redis or memory-cache implementation.
-- Supporting logging/configuration services.
-
-The host should call the registration methods rather than constructing infrastructure objects manually.
+`KUKULCAN.SharedKernel.Database` provides common persistence concerns such as EF Core base infrastructure, unit-of-work support, audit behavior and other cross-cutting persistence capabilities. The i18n module reuses those capabilities rather than duplicating them.
 
 ---
 
-# 11. Relationship With SharedKernel.Database
+# 11. Migrations
 
-`KUKULCAN.SharedKernel.Database` provides common persistence concerns such as EF Core base infrastructure, unit-of-work support, audit behavior and other cross-cutting persistence capabilities.
+EF Core migrations belong to the Infrastructure project. A migration consists of the migration files **and the corresponding `ModelSnapshot`**. Both must be generated from the same real model state.
 
-The i18n module should use those capabilities rather than duplicating them.
-
-The boundary is:
-
-```text
-KUKULCAN.SharedKernel
-        ^
-        |
-KUKULCAN.SharedKernel.Database
-        ^
-        |
-KUKULCAN.SharedKernel.i18n.Infrastructure
-```
-
-The module-specific infrastructure remains responsible for its own entity mappings, repositories, provider configuration, seeds and cache implementation.
-
----
-
-# 12. Migrations
-
-EF Core migrations belong to the Infrastructure project because the database schema is an infrastructure artifact.
-
-Typical commands are:
+Typical commands:
 
 ```bash
 dotnet ef migrations add MigrationName \
-  --project Source/KUKULCAN.SharedKernel.i18n.Infrastructure \
-  --startup-project Source/KUKULCAN.SharedKernel.i18n.API
+  --project Source/KUKULCAN.SharedKernel.i18n.Infrastructure/KUKULCAN.SharedKernel.i18n.Infrastructure.csproj \
+  --startup-project Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj
 
 dotnet ef database update \
-  --project Source/KUKULCAN.SharedKernel.i18n.Infrastructure \
-  --startup-project Source/KUKULCAN.SharedKernel.i18n.API
+  --project Source/KUKULCAN.SharedKernel.i18n.Infrastructure/KUKULCAN.SharedKernel.i18n.Infrastructure.csproj \
+  --startup-project Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj
 ```
 
-Migrations should be reviewed for accidental schema changes before deployment.
+Review migrations for accidental schema changes before deployment and keep the snapshot synchronized with the model.
 
 ---
 
-# 13. Infrastructure Design Rules
+# 12. Infrastructure Design Rules
 
 1. Do not move business invariants into EF configurations.
 2. Do not expose EF Core types through domain contracts.
