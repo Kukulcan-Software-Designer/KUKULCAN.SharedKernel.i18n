@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace KUKULCAN.SharedKernel.i18n.API.Extensions;
 
 /// <summary>
-/// Extension methods for configuring the ATLAS i18n API services.
+/// Extension methods for configuring the KUKULCAN.SharedKernel.i18n API services.
 /// </summary>
 public static class ApiServiceExtensions
 {
@@ -27,6 +27,7 @@ public static class ApiServiceExtensions
                     System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
                 opts.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
             });
+
         // ── OpenAPI / Scalar ──────────────────────────────────────────────────
         services.AddOpenApi(opts =>
         {
@@ -43,10 +44,19 @@ public static class ApiServiceExtensions
             });
         });
 
-        // ── JWT Bearer (shared with the rest of ATLAS) ────────────────────────
+        // ── JWT Bearer ─────────────────────────────────────────────────────────
         IConfigurationSection jwtSection = configuration.GetSection("Jwt");
-        byte[] key = Encoding.UTF8.GetBytes(
-            jwtSection["SecretKey"] ?? "KUKULCAN_DEFAULT_DEV_KEY_CHANGE_IN_PROD_MIN_32CH");
+        string secretKey = jwtSection["SecretKey"]
+            ?? throw new InvalidOperationException(
+                "Jwt:SecretKey must be configured. Store the signing key outside source control in production.");
+
+        if (secretKey.Length < 32)
+        {
+            throw new InvalidOperationException(
+                "Jwt:SecretKey must contain at least 32 characters.");
+        }
+
+        byte[] key = Encoding.UTF8.GetBytes(secretKey);
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -64,12 +74,13 @@ public static class ApiServiceExtensions
                     ClockSkew = TimeSpan.FromMinutes(5),
                 };
             });
+
         // ── Authorization policies ────────────────────────────────────────────
         services.AddAuthorization(opts =>
         {
-            // Any authenticated ATLAS user may read translations
+            // Any authenticated ATLAS user may read translations.
             opts.AddPolicy("i18n.read", policy => policy.RequireAuthenticatedUser());
-            // Only ATLAS admins may write (create/update/delete)
+            // Only ATLAS admins may write (create/update/delete).
             opts.AddPolicy("i18n.write", policy =>
                 policy.RequireRole("KUKULCAN.Admin", "KUKULCAN.i18n.Admin"));
         });
