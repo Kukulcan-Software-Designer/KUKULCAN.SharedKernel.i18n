@@ -12,6 +12,13 @@ using Testcontainers.Redis;
 
 namespace KUKULCAN.SharedKernel.i18n.API.Integration;
 
+internal static class IntegrationJwtConfiguration
+{
+    public const string SecretKey = "KUKULCAN_INTEGRATION_TEST_SECRET_KEY_MINIMUM_32_CHARS";
+    public const string Issuer = "KUKULCAN.IntegrationTests";
+    public const string Audience = "KUKULCAN.SharedKernel.i18n.IntegrationTests";
+}
+
 [SetUpFixture]
 public sealed class ApiIntegrationTestHost
 {
@@ -42,19 +49,13 @@ public sealed class ApiIntegrationTestHost
         string postgresqlConnectionString = _postgresqlContainer.GetConnectionString();
         string redisConnectionString = _redisContainer.GetConnectionString();
 
-        // Testcontainers exposes dynamically mapped host ports. The application
-        // must receive those values before WebApplication is built so that both
-        // EF Core and the readiness health checks use the same real containers.
-        Environment.SetEnvironmentVariable(
-            "Kukulcan__Database__ConnectionString",
-            postgresqlConnectionString);
-        Environment.SetEnvironmentVariable(
-            "ConnectionStrings__Redis",
-            redisConnectionString);
+        Environment.SetEnvironmentVariable("Kukulcan__Database__ConnectionString", postgresqlConnectionString);
+        Environment.SetEnvironmentVariable("ConnectionStrings__Redis", redisConnectionString);
+        Environment.SetEnvironmentVariable("Jwt__SecretKey", IntegrationJwtConfiguration.SecretKey);
+        Environment.SetEnvironmentVariable("Jwt__Issuer", IntegrationJwtConfiguration.Issuer);
+        Environment.SetEnvironmentVariable("Jwt__Audience", IntegrationJwtConfiguration.Audience);
 
-        _factory = new ApiWebApplicationFactory(
-            postgresqlConnectionString,
-            redisConnectionString);
+        _factory = new ApiWebApplicationFactory(postgresqlConnectionString, redisConnectionString);
     }
 
     [OneTimeTearDown]
@@ -64,6 +65,9 @@ public sealed class ApiIntegrationTestHost
 
         Environment.SetEnvironmentVariable("Kukulcan__Database__ConnectionString", null);
         Environment.SetEnvironmentVariable("ConnectionStrings__Redis", null);
+        Environment.SetEnvironmentVariable("Jwt__SecretKey", null);
+        Environment.SetEnvironmentVariable("Jwt__Issuer", null);
+        Environment.SetEnvironmentVariable("Jwt__Audience", null);
 
         if (_redisContainer is not null)
             await _redisContainer.DisposeAsync();
@@ -99,9 +103,9 @@ public sealed class ApiWebApplicationFactory(
                 ["Kukulcan:Database:Retry:Enabled"] = "false",
                 ["Kukulcan:Database:Pool:Enabled"] = "false",
                 ["Kukulcan:Database:Migration:AutoMigrateOnStartup"] = "false",
-                ["Jwt:SecretKey"] = "KUKULCAN_INTEGRATION_TEST_SECRET_KEY_MINIMUM_32_CHARS",
-                ["Jwt:Issuer"] = "KUKULCAN.IntegrationTests",
-                ["Jwt:Audience"] = "KUKULCAN.SharedKernel.i18n.IntegrationTests",
+                ["Jwt:SecretKey"] = IntegrationJwtConfiguration.SecretKey,
+                ["Jwt:Issuer"] = IntegrationJwtConfiguration.Issuer,
+                ["Jwt:Audience"] = IntegrationJwtConfiguration.Audience,
             });
         });
 
