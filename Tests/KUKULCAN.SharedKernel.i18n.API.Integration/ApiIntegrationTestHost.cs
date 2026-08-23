@@ -7,13 +7,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Testcontainers.PostgreSql;
+using Testcontainers.Redis;
 
 namespace KUKULCAN.SharedKernel.i18n.API.Integration;
 
 [SetUpFixture]
 public sealed class ApiIntegrationTestHost
 {
-    private static PostgreSqlContainer? _container;
+    private static PostgreSqlContainer? _postgresqlContainer;
+    private static RedisContainer? _redisContainer;
     private static ApiWebApplicationFactory? _factory;
 
     public static ApiWebApplicationFactory Factory =>
@@ -22,23 +24,35 @@ public sealed class ApiIntegrationTestHost
     [OneTimeSetUp]
     public async Task SetUpAsync()
     {
-        _container = new PostgreSqlBuilder()
+        _postgresqlContainer = new PostgreSqlBuilder()
             .WithImage("postgres:16-alpine")
             .WithDatabase("i18n_api_integration_tests")
             .WithUsername("postgres")
             .WithPassword("postgres")
             .Build();
 
-        await _container.StartAsync();
-        _factory = new ApiWebApplicationFactory(_container.GetConnectionString());
+        _redisContainer = new RedisBuilder()
+            .WithImage("redis:7-alpine")
+            .Build();
+
+        await _postgresqlContainer.StartAsync();
+        await _redisContainer.StartAsync();
+
+        _factory = new ApiWebApplicationFactory(
+            _postgresqlContainer.GetConnectionString(),
+            _redisContainer.GetConnectionString());
     }
 
     [OneTimeTearDown]
     public async Task TearDownAsync()
     {
         _factory?.Dispose();
-        if (_container is not null)
-            await _container.DisposeAsync();
+
+        if (_redisContainer is not null)
+            await _redisContainer.DisposeAsync();
+
+        if (_postgresqlContainer is not null)
+            await _postgresqlContainer.DisposeAsync();
     }
 
     public static async Task ResetDatabaseAsync()
@@ -50,7 +64,9 @@ public sealed class ApiIntegrationTestHost
     }
 }
 
-public sealed class ApiWebApplicationFactory(string connectionString) : WebApplicationFactory<Program>
+public sealed class ApiWebApplicationFactory(
+    string postgresqlConnectionString,
+    string redisConnectionString) : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -60,10 +76,10 @@ public sealed class ApiWebApplicationFactory(string connectionString) : WebAppli
         {
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:Database"] = connectionString,
-                ["ConnectionStrings:Redis"] = string.Empty,
+                ["ConnectionStrings:Database"] = postgresqlConnectionString,
+                ["ConnectionStrings:Redis"] = redisConnectionString,
                 ["Kukulcan:Database:Provider"] = "PostgresSql",
-                ["Kukulcan:Database:ConnectionString"] = connectionString,
+                ["Kukulcan:Database:ConnectionString"] = postgresqlConnectionString,
                 ["Kukulcan:Database:Retry:Enabled"] = "false",
                 ["Kukulcan:Database:Pool:Enabled"] = "false",
                 ["Database:AutoMigrate"] = "false",
