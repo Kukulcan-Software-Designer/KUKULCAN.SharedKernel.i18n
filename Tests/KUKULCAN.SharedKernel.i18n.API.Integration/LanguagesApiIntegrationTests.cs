@@ -46,13 +46,11 @@ public sealed class LanguagesApiIntegrationTests
     [Test]
     public async Task GetLanguage_ReadsDataFromRealDatabase()
     {
-        await using (IServiceScope scope = ApiIntegrationTestHost.Factory.Services.CreateAsyncScope())
-        {
-            var context = scope.ServiceProvider.GetRequiredService<I18NDbContext>();
-            context.Languages.Add(Language.Create(
-                Guid.CreateVersion7(), "pt-PT", "Portuguese", "Português").Value);
-            await context.SaveChangesAsync();
-        }
+        await using var scope = ApiIntegrationTestHost.Factory.Services.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<I18NDbContext>();
+        context.Languages.Add(Language.Create(
+            Guid.CreateVersion7(), "pt-PT", "Portuguese", "Português").Value);
+        await context.SaveChangesAsync();
 
         HttpResponseMessage response = await _client.GetAsync("/api/v1/languages/pt-PT");
         LanguageDto? dto = await response.Content.ReadFromJsonAsync<LanguageDto>();
