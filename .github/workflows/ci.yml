@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - CI/CD/Auditoria
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and test solution
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore solution
+        run: dotnet restore KUKULCAN.SharedKernel.i18n.slnx
+
+      - name: Build solution
+        run: dotnet build KUKULCAN.SharedKernel.i18n.slnx --no-restore --configuration Release
+
+      - name: Run unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for project in \
+            Tests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests.csproj \
+            Tests/KUKULCAN.SharedKernel.i18n.Application.UnitTests/KUKULCAN.SharedKernel.i18n.Application.UnitTests.csproj \
+            Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests/KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests.csproj \
+            Tests/KUKULCAN.SharedKernel.i18n.API.UnitTests/KUKULCAN.SharedKernel.i18n.API.UnitTests.csproj
+          do
+            echo "Running unit tests: ${project}"
+            dotnet test "${project}" --no-build --configuration Release --logger "console;verbosity=normal"
+          done
+
+      - name: Verify Docker runtime for integration tests
+        run: docker info
+
+      - name: Run integration tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for project in \
+            Tests/KUKULCAN.SharedKernel.i18n.Application.Integration/KUKULCAN.SharedKernel.i18n.Application.Integration.csproj \
+            Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration.csproj \
+            Tests/KUKULCAN.SharedKernel.i18n.API.Integration/KUKULCAN.SharedKernel.i18n.API.Integration.csproj
+          do
+            echo "Running integration tests: ${project}"
+            dotnet test "${project}" --no-build --configuration Release --logger "console;verbosity=normal"
+          done
