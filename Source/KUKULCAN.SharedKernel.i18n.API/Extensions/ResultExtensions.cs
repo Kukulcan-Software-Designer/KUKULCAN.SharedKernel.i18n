@@ -45,7 +45,8 @@ public static class ResultExtensions
         if (code.Contains("Duplicate", StringComparison.OrdinalIgnoreCase) ||
             code.Contains("Conflict", StringComparison.OrdinalIgnoreCase) ||
             code.Contains("Inactive", StringComparison.OrdinalIgnoreCase) ||
-            code.Contains("ProtectedDelete", StringComparison.OrdinalIgnoreCase))
+            code.Contains("ProtectedDelete", StringComparison.OrdinalIgnoreCase) ||
+            code.Contains("CannotDeactivate", StringComparison.OrdinalIgnoreCase))
             return StatusCodes.Status409Conflict;
         if (code.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase))
             return StatusCodes.Status401Unauthorized;
