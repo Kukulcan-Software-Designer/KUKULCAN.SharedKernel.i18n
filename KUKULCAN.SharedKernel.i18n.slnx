@@ -35,6 +35,7 @@
       <File Path=".github/workflows/infrastructure-integration-tests.yml" />
       <File Path=".github/workflows/application-integration-tests.yml" />
       <File Path=".github/workflows/api-integration-tests.yml" />
+    <File Path=".github\workflows\ci.yml" />
   </Folder>
 
   <Folder Name="/Source/">
