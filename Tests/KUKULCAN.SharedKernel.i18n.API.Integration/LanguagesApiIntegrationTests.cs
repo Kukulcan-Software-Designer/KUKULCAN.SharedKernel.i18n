@@ -21,7 +21,7 @@ public sealed class LanguagesApiIntegrationTests
         await ApiIntegrationTestHost.ResetDatabaseAsync();
         _client = ApiIntegrationTestHost.Factory.CreateClient();
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue(TestAuthenticationHandler.Scheme);
+            new AuthenticationHeaderValue(TestAuthenticationHandler.SchemeName);
     }
 
     [TearDown]
@@ -78,7 +78,7 @@ public sealed class LanguagesApiIntegrationTests
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
 
-        await using IServiceScope scope = ApiIntegrationTestHost.Factory.Services.CreateAsyncScope();
+        using IServiceScope scope = ApiIntegrationTestHost.Factory.Services.CreateScope();
         I18NDbContext context = scope.ServiceProvider.GetRequiredService<I18NDbContext>();
         Language? language = await context.Languages.SingleOrDefaultAsync(x => x.Code == "nl-NL");
 
