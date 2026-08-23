@@ -132,7 +132,8 @@ namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Migrations
                         .HasDatabaseName("UX_Languages_Code");
 
                     b.HasIndex("IsDefault")
-                        .HasDatabaseName("IX_Languages_Default")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Languages_Default")
                         .HasFilter("\"IsDefault\" = true");
 
                     b.ToTable("Languages", "i18n");
