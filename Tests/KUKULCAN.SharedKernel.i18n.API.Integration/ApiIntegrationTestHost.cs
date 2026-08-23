@@ -77,10 +77,10 @@ public sealed class ApiWebApplicationFactory(string connectionString) : WebAppli
         {
             services.AddAuthentication(options =>
             {
-                options.DefaultAuthenticateScheme = TestAuthenticationHandler.Scheme;
-                options.DefaultChallengeScheme = TestAuthenticationHandler.Scheme;
+                options.DefaultAuthenticateScheme = TestAuthenticationHandler.SchemeName;
+                options.DefaultChallengeScheme = TestAuthenticationHandler.SchemeName;
             }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                TestAuthenticationHandler.Scheme, _ => { });
+                TestAuthenticationHandler.SchemeName, _ => { });
         });
     }
 }
