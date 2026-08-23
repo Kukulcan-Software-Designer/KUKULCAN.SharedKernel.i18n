@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Migrations;
 
 /// <inheritdoc />
+[Migration("20260823143000_MakeDefaultLanguageIndexUnique")]
 public partial class MakeDefaultLanguageIndexUnique : Migration
 {
     /// <inheritdoc />
