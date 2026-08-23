@@ -38,15 +38,35 @@ public sealed class ApiIntegrationTestHost
         await _postgresqlContainer.StartAsync();
         await _redisContainer.StartAsync();
 
+        string postgresqlConnectionString = _postgresqlContainer.GetConnectionString();
+        string redisConnectionString = _redisContainer.GetConnectionString();
+
+        // Testcontainers exposes dynamically mapped host ports. The application
+        // must receive those values before WebApplication is built so that both
+        // EF Core and the readiness health checks use the same real containers.
+        Environment.SetEnvironmentVariable(
+            "Kukulcan__Database__ConnectionString",
+            postgresqlConnectionString);
+        Environment.SetEnvironmentVariable(
+            "ConnectionStrings__Database",
+            postgresqlConnectionString);
+        Environment.SetEnvironmentVariable(
+            "ConnectionStrings__Redis",
+            redisConnectionString);
+
         _factory = new ApiWebApplicationFactory(
-            _postgresqlContainer.GetConnectionString(),
-            _redisContainer.GetConnectionString());
+            postgresqlConnectionString,
+            redisConnectionString);
     }
 
     [OneTimeTearDown]
     public async Task TearDownAsync()
     {
         _factory?.Dispose();
+
+        Environment.SetEnvironmentVariable("Kukulcan__Database__ConnectionString", null);
+        Environment.SetEnvironmentVariable("ConnectionStrings__Database", null);
+        Environment.SetEnvironmentVariable("ConnectionStrings__Redis", null);
 
         if (_redisContainer is not null)
             await _redisContainer.DisposeAsync();
