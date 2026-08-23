@@ -15,6 +15,10 @@ namespace KUKULCAN.SharedKernel.i18n.API.Integration;
 [SetUpFixture]
 public sealed class ApiIntegrationTestHost
 {
+    private const string IntegrationJwtSecret = "KUKULCAN_INTEGRATION_TEST_SECRET_KEY_MINIMUM_32_CHARS";
+    private const string IntegrationJwtIssuer = "KUKULCAN.IntegrationTests";
+    private const string IntegrationJwtAudience = "KUKULCAN.SharedKernel.i18n.IntegrationTests";
+
     private static PostgreSqlContainer? _postgresqlContainer;
     private static RedisContainer? _redisContainer;
     private static ApiWebApplicationFactory? _factory;
@@ -52,6 +56,13 @@ public sealed class ApiIntegrationTestHost
             "ConnectionStrings__Redis",
             redisConnectionString);
 
+        // The API requires a JWT signing key during service registration. These
+        // values exist only for the integration-test process and are never read
+        // from production configuration or committed application settings.
+        Environment.SetEnvironmentVariable("Jwt__SecretKey", IntegrationJwtSecret);
+        Environment.SetEnvironmentVariable("Jwt__Issuer", IntegrationJwtIssuer);
+        Environment.SetEnvironmentVariable("Jwt__Audience", IntegrationJwtAudience);
+
         _factory = new ApiWebApplicationFactory(
             postgresqlConnectionString,
             redisConnectionString);
@@ -64,6 +75,9 @@ public sealed class ApiIntegrationTestHost
 
         Environment.SetEnvironmentVariable("Kukulcan__Database__ConnectionString", null);
         Environment.SetEnvironmentVariable("ConnectionStrings__Redis", null);
+        Environment.SetEnvironmentVariable("Jwt__SecretKey", null);
+        Environment.SetEnvironmentVariable("Jwt__Issuer", null);
+        Environment.SetEnvironmentVariable("Jwt__Audience", null);
 
         if (_redisContainer is not null)
             await _redisContainer.DisposeAsync();
@@ -99,9 +113,9 @@ public sealed class ApiWebApplicationFactory(
                 ["Kukulcan:Database:Retry:Enabled"] = "false",
                 ["Kukulcan:Database:Pool:Enabled"] = "false",
                 ["Kukulcan:Database:Migration:AutoMigrateOnStartup"] = "false",
-                ["Jwt:SecretKey"] = "KUKULCAN_INTEGRATION_TEST_SECRET_KEY_MINIMUM_32_CHARS",
-                ["Jwt:Issuer"] = "KUKULCAN.IntegrationTests",
-                ["Jwt:Audience"] = "KUKULCAN.SharedKernel.i18n.IntegrationTests",
+                ["Jwt:SecretKey"] = IntegrationJwtSecret,
+                ["Jwt:Issuer"] = IntegrationJwtIssuer,
+                ["Jwt:Audience"] = IntegrationJwtAudience,
             });
         });
 
