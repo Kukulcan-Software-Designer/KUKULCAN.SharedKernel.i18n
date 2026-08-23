@@ -50,7 +50,7 @@ public sealed class IntegrationTestDatabase
         var dispatcher = new Mock<IDomainEventDispatcher>();
         var context = new I18NDbContext(options, tenantContext.Object, clock.Object, dispatcher.Object);
 
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.MigrateAsync();
         return context;
     }
 
@@ -58,6 +58,6 @@ public sealed class IntegrationTestDatabase
     {
         await using var context = await CreateContextAsync();
         await context.Database.EnsureDeletedAsync();
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.MigrateAsync();
     }
 }
