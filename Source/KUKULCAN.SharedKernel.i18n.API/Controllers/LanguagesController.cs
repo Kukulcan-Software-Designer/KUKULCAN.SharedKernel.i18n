@@ -15,7 +15,7 @@ namespace KUKULCAN.SharedKernel.i18n.API.Controllers;
 
 /// <summary>
 /// Language management endpoints.
-/// /// </summary>
+/// </summary>
 /// <param name="mediator">The mediator instance for handling requests.</param>
 [ApiController]
 [Route("api/v1/languages")]
@@ -32,7 +32,10 @@ public sealed class LanguagesController(IMediator mediator) : ControllerBase
     [HttpPost]
     [Authorize(Policy = "i18n.write")]
     [ProducesResponseType(typeof(LanguageDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> Create([FromBody] CreateLanguageCommand command, CancellationToken ct) =>
         (await mediator.Send(command, ct)).ToCreatedResult(this, nameof(GetByCode), new { code = command.Code });
 
@@ -46,6 +49,10 @@ public sealed class LanguagesController(IMediator mediator) : ControllerBase
     [HttpPut("{code}")]
     [Authorize(Policy = "i18n.write")]
     [ProducesResponseType(typeof(LanguageDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> Update([FromRoute] string code, [FromBody] UpdateLanguageRequest body, CancellationToken ct) =>
         (await mediator.Send(new UpdateLanguageCommand(code, body.Name, body.NativeName), ct)).ToActionResult(this);
 
@@ -59,6 +66,9 @@ public sealed class LanguagesController(IMediator mediator) : ControllerBase
     [HttpPatch("{code}/active")]
     [Authorize(Policy = "i18n.write")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> SetActive([FromRoute] string code, [FromBody] SetActiveRequest body, CancellationToken ct) =>
         (await mediator.Send(new SetLanguageActiveCommand(code, body.IsActive), ct)).ToNoContentResult(this);
@@ -73,6 +83,10 @@ public sealed class LanguagesController(IMediator mediator) : ControllerBase
     [HttpPatch("{code}/default")]
     [Authorize(Policy = "i18n.write")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> SetDefault([FromRoute] string code, CancellationToken ct) =>
         (await mediator.Send(new SetDefaultLanguageCommand(code), ct)).ToNoContentResult(this);
     #endregion
@@ -87,6 +101,8 @@ public sealed class LanguagesController(IMediator mediator) : ControllerBase
     [HttpGet]
     [Authorize(Policy = "i18n.read")]
     [ProducesResponseType(typeof(IReadOnlyList<LanguageDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAll([FromQuery] bool activeOnly = true, CancellationToken ct = default) =>
         (await mediator.Send(new GetAllLanguagesQuery(activeOnly), ct)).ToActionResult(this);
 
@@ -99,6 +115,8 @@ public sealed class LanguagesController(IMediator mediator) : ControllerBase
     [HttpGet("{code}")]
     [Authorize(Policy = "i18n.read")]
     [ProducesResponseType(typeof(LanguageDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetByCode([FromRoute] string code, CancellationToken ct) =>
         (await mediator.Send(new GetLanguageQuery(code), ct)).ToActionResult(this);
