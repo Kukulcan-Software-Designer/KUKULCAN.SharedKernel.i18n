@@ -41,7 +41,7 @@ public sealed class LanguagesApiIntegrationTests
         const int maxAttempts = 10;
         const int retryDelayMilliseconds = 250;
 
-        HttpStatusCode statusCode = HttpStatusCode.ServiceUnavailable;
+        var statusCode = HttpStatusCode.ServiceUnavailable;
         string responseBody = string.Empty;
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++)
