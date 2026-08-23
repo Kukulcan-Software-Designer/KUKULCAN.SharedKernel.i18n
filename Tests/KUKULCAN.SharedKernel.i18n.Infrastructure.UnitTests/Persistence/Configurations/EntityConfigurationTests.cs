@@ -48,6 +48,49 @@ public sealed class EntityConfigurationTests
     }
 
     [Test]
+    public void Language_DefaultIndex_IsUniqueAndFilteredToDefaultLanguages()
+    {
+        var modelBuilder = new ModelBuilder();
+
+        new LanguageConfiguration().Configure(modelBuilder.Entity<Language>());
+
+        IMutableEntityType entity = modelBuilder.Model.FindEntityType(typeof(Language))!;
+        IMutableIndex index = entity.GetIndexes()
+            .Single(index => index.Properties.Select(property => property.Name).SequenceEqual(new[] { nameof(Language.IsDefault) }));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(index.IsUnique, Is.True);
+            Assert.That(index.GetDatabaseName(), Is.EqualTo("UX_Languages_Default"));
+            Assert.That(index.GetFilter(), Is.EqualTo("\"IsDefault\" = true"));
+        });
+    }
+
+    [Test]
+    public void Language_Relationships_AreNormalRelationshipsWithCascadeDelete()
+    {
+        var modelBuilder = new ModelBuilder();
+
+        new LanguageConfiguration().Configure(modelBuilder.Entity<Language>());
+
+        IMutableEntityType language = modelBuilder.Model.FindEntityType(typeof(Language))!;
+        IMutableForeignKey localeForeignKey = modelBuilder.Model.FindEntityType(typeof(LocaleConfiguration))!
+            .GetForeignKeys()
+            .Single(foreignKey => foreignKey.PrincipalEntityType.ClrType == typeof(Language));
+        IMutableForeignKey currencyForeignKey = modelBuilder.Model.FindEntityType(typeof(CurrencyFormat))!
+            .GetForeignKeys()
+            .Single(foreignKey => foreignKey.PrincipalEntityType.ClrType == typeof(Language));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(language.FindNavigation(nameof(Language.LocaleConfiguration)), Is.Not.Null);
+            Assert.That(language.FindNavigation(nameof(Language.CurrencyFormats)), Is.Not.Null);
+            Assert.That(localeForeignKey.DeleteBehavior, Is.EqualTo(DeleteBehavior.Cascade));
+            Assert.That(currencyForeignKey.DeleteBehavior, Is.EqualTo(DeleteBehavior.Cascade));
+        });
+    }
+
+    [Test]
     public void LocaleConfiguration_MapsExpectedTableAndRequiredProperties()
     {
         var modelBuilder = new ModelBuilder();
