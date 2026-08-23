@@ -34,18 +34,19 @@ try
     // Application + Infrastructure layers
     AppStartup.ConfigureServices(builder);
 
-    //
     var app = builder.Build();
 
     // Migration + Seed
-    if (app.Configuration.GetValue("Database:AutoMigrate", defaultValue: false))
+    if (app.Configuration.GetValue(
+            "Kukulcan:Database:Migration:AutoMigrateOnStartup",
+            defaultValue: false))
     {
         Log.Information("Applying database migrations…");
         await InfrastructureServiceRegistration.MigrateAndSeedAsync(app.Services);
         Log.Information("Migrations applied.");
     }
 
-    //  Middleware pipeline
+    // Middleware pipeline
     app.UseMiddleware<ExceptionHandlingMiddleware>();
 
     app.UseSerilogRequestLogging(opts =>
@@ -59,7 +60,7 @@ try
         {
             opts.Title = "KUKULCAN.SharedKernel.i18n";
             opts.Theme = ScalarTheme.Purple;
-            opts.DefaultHttpClient = new KeyValuePair<ScalarTarget, ScalarClient> (
+            opts.DefaultHttpClient = new KeyValuePair<ScalarTarget, ScalarClient>(
                 ScalarTarget.CSharp,
                 ScalarClient.HttpClient);
         });
