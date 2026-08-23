@@ -87,6 +87,96 @@ public sealed class LanguagesApiIntegrationTests
     }
 
     [Test]
+    public async Task GetLanguage_WhenLanguageDoesNotExist_ReturnsNotFound()
+    {
+        HttpResponseMessage response = await _client.GetAsync("/api/v1/languages/xx-XX");
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
+    [Test]
+    public async Task CreateLanguage_WhenNameIsEmpty_ReturnsUnprocessableEntity()
+    {
+        HttpResponseMessage response = await _client.PostAsJsonAsync(
+            "/api/v1/languages",
+            new
+            {
+                code = "fr-FR",
+                name = "",
+                nativeName = "Français",
+                isDefault = false,
+            });
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.UnprocessableEntity));
+    }
+
+    [Test]
+    public async Task CreateLanguage_WhenNativeNameIsEmpty_ReturnsUnprocessableEntity()
+    {
+        HttpResponseMessage response = await _client.PostAsJsonAsync(
+            "/api/v1/languages",
+            new
+            {
+                code = "de-DE",
+                name = "German",
+                nativeName = "",
+                isDefault = false,
+            });
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.UnprocessableEntity));
+    }
+
+    [Test]
+    public async Task CreateLanguage_WhenCodeAlreadyExists_ReturnsConflict()
+    {
+        const string code = "it-IT";
+
+        HttpResponseMessage firstResponse = await _client.PostAsJsonAsync(
+            "/api/v1/languages",
+            new
+            {
+                code,
+                name = "Italian",
+                nativeName = "Italiano",
+                isDefault = false,
+            });
+
+        HttpResponseMessage duplicateResponse = await _client.PostAsJsonAsync(
+            "/api/v1/languages",
+            new
+            {
+                code,
+                name = "Italian",
+                nativeName = "Italiano",
+                isDefault = false,
+            });
+
+        Assert.That(firstResponse.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+        Assert.That(duplicateResponse.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
+    }
+
+    [Test]
+    public async Task SetActive_WhenDeactivatingDefaultLanguage_ReturnsConflict()
+    {
+        HttpResponseMessage createResponse = await _client.PostAsJsonAsync(
+            "/api/v1/languages",
+            new
+            {
+                code = "en-US",
+                name = "English",
+                nativeName = "English",
+                isDefault = true,
+            });
+
+        HttpResponseMessage response = await _client.PatchAsJsonAsync(
+            "/api/v1/languages/en-US/active",
+            new { isActive = false });
+
+        Assert.That(createResponse.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
+    }
+
+    [Test]
     public async Task CreateLanguage_WritesThroughApplicationAndPersistsToRealDatabase()
     {
         HttpResponseMessage response = await _client.PostAsJsonAsync(
