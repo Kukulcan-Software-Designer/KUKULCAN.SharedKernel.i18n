@@ -39,18 +39,19 @@ public sealed class LanguageConfiguration : IEntityTypeConfiguration<Language>
         builder.Property(x => x.CreatedOn).IsRequired();
         builder.Property(x => x.ModifiedOn);
 
-        // Partial index: quickly find the single default language
+        // Partial unique index: the database permits at most one default language.
         builder.HasIndex(l => l.IsDefault)
+            .IsUnique()
             .HasFilter("\"IsDefault\" = true")
-            .HasDatabaseName("IX_Languages_Default");
+            .HasDatabaseName("UX_Languages_Default");
 
-        // Navigation — owned LocaleConfiguration (one-to-one)
+        // Navigation — one-to-one LocaleConfiguration relationship.
         builder.HasOne(l => l.LocaleConfiguration)
             .WithOne()
             .HasForeignKey<LocaleConfiguration>("LanguageId")
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Navigation — owned CurrencyFormats (one-to-many)
+        // Navigation — one-to-many CurrencyFormats relationship.
         builder.HasMany(l => l.CurrencyFormats)
             .WithOne()
             .HasForeignKey("LanguageId")
