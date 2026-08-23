@@ -75,7 +75,10 @@ public static class ApiServiceExtensions
         });
 
         // ── Health checks ─────────────────────────────────────────────────────
-        string connStr = configuration.GetConnectionString("Database") ?? string.Empty;
+        // PostgreSQL uses the same configuration section as EF Core:
+        // Kukulcan:Database:ConnectionString.
+        // The legacy ConnectionStrings:Database key is intentionally not used.
+        string connStr = configuration["Kukulcan:Database:ConnectionString"] ?? string.Empty;
         string redis = configuration.GetConnectionString("Redis") ?? string.Empty;
         IHealthChecksBuilder hc = services.AddHealthChecks()
             .AddCheck("self",
