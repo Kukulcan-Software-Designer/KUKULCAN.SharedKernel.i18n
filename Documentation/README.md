@@ -1,11 +1,10 @@
 # Documentation
 
-> **KUKULCAN.SharedKernel.i18n**
->
+> **KUKULCAN.SharedKernel.i18n**  
 > **Internationalization Service — Documentation Handbook**
->
-> Status: **Stable**  
-> Target: **.NET 10**
+
+Status: **Stable**  
+Target: **.NET 10**
 
 ---
 
@@ -15,7 +14,7 @@ This directory is the authoritative technical documentation for `KUKULCAN.Shared
 
 The documentation follows the same separation used by `KUKULCAN.SharedKernel`: architecture explains structural decisions, while module documents explain responsibilities, contracts and usage. It also follows the infrastructure boundary established by `KUKULCAN.SharedKernel.Database`.
 
-The repository is organized as a Clean Architecture solution with four production projects and four dedicated test projects.
+The repository is organized as a Clean Architecture solution with five production projects and dedicated unit/integration test projects.
 
 ## Documentation Map
 
@@ -32,30 +31,22 @@ The repository is organized as a Clean Architecture solution with four productio
 
 ```text
 KUKULCAN.SharedKernel.i18n/
-│
 ├── Documentation/
-│   ├── README.md
-│   ├── architecture.md
-│   ├── domain.md
-│   ├── application.md
-│   ├── infrastructure.md
-│   ├── api.md
-│   └── operations.md
-│
 ├── Source/
 │   ├── KUKULCAN.SharedKernel.i18n.Domain/
 │   ├── KUKULCAN.SharedKernel.i18n.Application/
 │   ├── KUKULCAN.SharedKernel.i18n.Infrastructure/
 │   └── KUKULCAN.SharedKernel.i18n.API/
-│
 ├── SourceClient/
 │   └── KUKULCAN.SharedKernel.i18n.Client/
-│
 └── Tests/
     ├── KUKULCAN.SharedKernel.i18n.Domain.UnitTests/
     ├── KUKULCAN.SharedKernel.i18n.Application.UnitTests/
     ├── KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests/
-    └── KUKULCAN.SharedKernel.i18n.API.UnitTests/
+    ├── KUKULCAN.SharedKernel.i18n.Infrastructure.Integration/
+    ├── KUKULCAN.SharedKernel.i18n.Application.Integration/
+    ├── KUKULCAN.SharedKernel.i18n.API.UnitTests/
+    └── KUKULCAN.SharedKernel.i18n.API.Integration/
 ```
 
 ## Documentation Principles
@@ -64,7 +55,7 @@ KUKULCAN.SharedKernel.i18n/
 - Public API behavior is documented from the controller, application and domain contracts.
 - Infrastructure details remain separate from domain rules.
 - Examples use the repository's actual route and naming conventions.
-- Architectural constraints are treated as part of the project's contract.
+- Configuration examples must use the actual configuration keys consumed by the application.
 
 ## Relationship With the Shared Kernel
 
@@ -74,4 +65,4 @@ Persistence is delegated to `KUKULCAN.SharedKernel.Database`; PostgreSQL and Red
 
 ## Documentation Status
 
-The handbook is intended to evolve with the source code. When a public endpoint, domain rule, dependency boundary or persistence strategy changes, the corresponding document must be reviewed in the same change.
+The handbook is intended to evolve with the source code. When a public endpoint, domain rule, dependency boundary, persistence strategy or CI/CD behavior changes, the corresponding document must be reviewed in the same change.
