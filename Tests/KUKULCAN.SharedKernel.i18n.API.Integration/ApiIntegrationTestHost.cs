@@ -22,7 +22,8 @@ public sealed class ApiIntegrationTestHost
     [OneTimeSetUp]
     public async Task SetUpAsync()
     {
-        _container = new PostgreSqlBuilder("postgres:16-alpine")
+        _container = new PostgreSqlBuilder()
+            .WithImage("postgres:16-alpine")
             .WithDatabase("i18n_api_integration_tests")
             .WithUsername("postgres")
             .WithPassword("postgres")
