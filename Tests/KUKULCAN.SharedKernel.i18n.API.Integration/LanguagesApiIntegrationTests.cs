@@ -6,6 +6,7 @@ using KUKULCAN.SharedKernel.i18n.Domain.Entities;
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.API.Integration;
@@ -58,10 +59,13 @@ public sealed class LanguagesApiIntegrationTests
                 await Task.Delay(retryDelayMilliseconds);
         }
 
+        string healthDetails = await GetReadyHealthDetailsAsync();
+
         Assert.That(
             statusCode,
             Is.EqualTo(HttpStatusCode.OK),
-            $"The PostgreSQL readiness check did not become healthy after {maxAttempts} attempts. Response: {responseBody}");
+            $"The PostgreSQL/Redis readiness check did not become healthy after {maxAttempts} attempts. " +
+            $"Endpoint response: {responseBody}. Health checks: {healthDetails}");
     }
 
     [Test]
@@ -104,5 +108,24 @@ public sealed class LanguagesApiIntegrationTests
         Assert.That(language, Is.Not.Null);
         Assert.That(language!.Name, Is.EqualTo("Dutch"));
         Assert.That(language.NativeName, Is.EqualTo("Nederlands"));
+    }
+
+    private static async Task<string> GetReadyHealthDetailsAsync()
+    {
+        using IServiceScope scope = ApiIntegrationTestHost.Factory.Services.CreateScope();
+        var healthCheckService = scope.ServiceProvider.GetRequiredService<HealthCheckService>();
+        HealthReport report = await healthCheckService.CheckHealthAsync(
+            registration => registration.Tags.Contains("ready"));
+
+        return string.Join(
+            "; ",
+            report.Entries.Select(entry =>
+                $"{entry.Key}={entry.Value}" +
+                (string.IsNullOrWhiteSpace(entry.Value.Description)
+                    ? string.Empty
+                    : $" ({entry.Value.Description})") +
+                (entry.Value.Exception is null
+                    ? string.Empty
+                    : $" [{entry.Value.Exception.GetType().Name}: {entry.Value.Exception.Message}]")));
     }
 }
