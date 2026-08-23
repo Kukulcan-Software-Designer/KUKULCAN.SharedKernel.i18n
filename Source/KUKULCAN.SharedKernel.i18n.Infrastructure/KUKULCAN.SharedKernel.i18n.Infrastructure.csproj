@@ -21,8 +21,8 @@
 	  Database Provider: PostgreSQL is the default database for applications in Kukulcan Software Designer.
       This package is intentionally referenced only here (per-module), never in Kernel.
     -->
-    <PackageReference Include="KUKULCAN.SharedKernel.Database" Version="1.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.10" />
+    <PackageReference Include="KUKULCAN.SharedKernel.Database" Version="1.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.12" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.*" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.*" />
