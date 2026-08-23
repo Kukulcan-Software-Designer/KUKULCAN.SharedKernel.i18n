@@ -38,9 +38,30 @@ public sealed class LanguagesApiIntegrationTests
     [Test]
     public async Task GetReadyHealth_UsesRealPostgreSql_ReturnsOk()
     {
-        HttpResponseMessage response = await _client.GetAsync("/health/ready");
+        const int maxAttempts = 10;
+        const int retryDelayMilliseconds = 250;
 
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        HttpStatusCode statusCode = HttpStatusCode.ServiceUnavailable;
+        string responseBody = string.Empty;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            using HttpResponseMessage response = await _client.GetAsync("/health/ready");
+            statusCode = response.StatusCode;
+
+            if (response.IsSuccessStatusCode)
+                return;
+
+            responseBody = await response.Content.ReadAsStringAsync();
+
+            if (attempt < maxAttempts)
+                await Task.Delay(retryDelayMilliseconds);
+        }
+
+        Assert.That(
+            statusCode,
+            Is.EqualTo(HttpStatusCode.OK),
+            $"The PostgreSQL readiness check did not become healthy after {maxAttempts} attempts. Response: {responseBody}");
     }
 
     [Test]
