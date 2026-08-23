@@ -1,8 +1,8 @@
 using KUKULCAN.SharedKernel.i18n.API.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Authorization;
 using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.i18n.API.UnitTests.Extensions;
@@ -70,7 +70,7 @@ public sealed class ApiServiceExtensionsSecurityTests
         AuthorizationPolicy? writePolicy = options.GetPolicy("i18n.write");
 
         Assert.That(readPolicy, Is.Not.Null);
-        Assert.That(readPolicy!.Requirements, Has.Exactly(1).TypeOf<ClaimsAuthorizationRequirement>());
+        Assert.That(readPolicy!.Requirements, Has.Exactly(1).TypeOf<DenyAnonymousAuthorizationRequirement>());
         Assert.That(writePolicy, Is.Not.Null);
         Assert.That(writePolicy!.Requirements, Has.Exactly(1).TypeOf<RolesAuthorizationRequirement>());
         Assert.That(
