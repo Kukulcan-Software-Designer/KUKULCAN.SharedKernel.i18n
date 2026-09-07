@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Migrations
+namespace KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql
 {
     [DbContext(typeof(I18NDbContext))]
     [Migration("20260823143457_EnsureSingleDefaultLanguage")]
