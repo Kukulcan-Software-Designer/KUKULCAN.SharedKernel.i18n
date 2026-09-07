@@ -1,6 +1,3 @@
-using KUKULCAN.SharedKernel.Database;
-using KUKULCAN.SharedKernel.Database.Configuration;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Options;
 
@@ -25,7 +22,7 @@ public sealed class I18NDbContext(
 
     protected override void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
     {
-        var databaseOptions = _databaseOptions.Value;
+        KukulcanDatabaseOptions databaseOptions = _databaseOptions.Value;
 
         if (databaseOptions.Provider == DatabaseProvider.PostgresSql)
         {
