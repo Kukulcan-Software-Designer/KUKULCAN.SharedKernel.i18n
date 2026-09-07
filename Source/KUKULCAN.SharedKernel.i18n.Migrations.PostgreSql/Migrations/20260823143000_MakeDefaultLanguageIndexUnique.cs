@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Migrations;
+namespace KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql;
 
 /// <inheritdoc />
 [Migration("20260823143000_MakeDefaultLanguageIndexUnique")]
