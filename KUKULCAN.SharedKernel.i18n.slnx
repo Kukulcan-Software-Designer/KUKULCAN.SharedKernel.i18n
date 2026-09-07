@@ -43,6 +43,9 @@
     <Project Path="Source/KUKULCAN.SharedKernel.i18n.Application/KUKULCAN.SharedKernel.i18n.Application.csproj" />
     <Project Path="Source/KUKULCAN.SharedKernel.i18n.Domain/KUKULCAN.SharedKernel.i18n.Domain.csproj" />
     <Project Path="Source/KUKULCAN.SharedKernel.i18n.Infrastructure/KUKULCAN.SharedKernel.i18n.Infrastructure.csproj" />
+    <Project Path="Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj" />
+    <Project Path="Source/KUKULCAN.SharedKernel.i18n.Migrations.SqlServer/KUKULCAN.SharedKernel.i18n.Migrations.SqlServer.csproj" />
+    <Project Path="Source/KUKULCAN.SharedKernel.i18n.Migrations.MySql/KUKULCAN.SharedKernel.i18n.Migrations.MySql.csproj" />
   </Folder>
 
   <Folder Name="/Source Client/">
