@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KUKULCAN.SharedKernel.i18n.Migrations.SqlServer.Migrations
 {
     [DbContext(typeof(I18NDbContext))]
-    [Migration("20260907231455_InitialCreation")]
+    [Migration("20260907235213_InitialCreation")]
     partial class InitialCreation
     {
         /// <inheritdoc />
