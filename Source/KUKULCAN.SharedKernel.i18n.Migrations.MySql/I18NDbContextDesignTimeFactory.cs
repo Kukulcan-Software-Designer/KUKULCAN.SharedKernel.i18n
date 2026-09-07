@@ -7,23 +7,31 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace KUKULCAN.SharedKernel.i18n.Migrations.MySql;
 
+/// <summary>
+/// Creates <see cref="I18NDbContext"/> for MySQL EF Core design-time operations.
+/// </summary>
 public sealed class I18NDbContextDesignTimeFactory : IDesignTimeDbContextFactory<I18NDbContext>
 {
+    /// <inheritdoc />
     public I18NDbContext CreateDbContext(string[] args)
     {
-        IConfiguration configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: true)
-            .AddJsonFile("appsettings.Development.json", optional: true)
-            .AddEnvironmentVariables()
-            .Build();
+        string? connectionString = Environment.GetEnvironmentVariable(
+            "KUKULCAN__DATABASE__CONNECTIONSTRING");
 
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "KUKULCAN__DATABASE__CONNECTIONSTRING must be configured for EF Core design-time operations.");
+        }
+
+        var configuration = new ConfigurationManager();
         configuration["Kukulcan:Database:Provider"] = nameof(DatabaseProvider.MySql);
+        configuration["Kukulcan:Database:ConnectionString"] = connectionString;
 
-        ServiceCollection services = new();
-        services.AddKukulcanI18NInfrastructure(configuration);
+        ServiceProvider serviceProvider = new ServiceCollection()
+            .AddKukulcanI18NInfrastructure(configuration)
+            .BuildServiceProvider();
 
-        using ServiceProvider provider = services.BuildServiceProvider();
-        return provider.GetRequiredService<I18NDbContext>();
+        return serviceProvider.GetRequiredService<I18NDbContext>();
     }
 }
