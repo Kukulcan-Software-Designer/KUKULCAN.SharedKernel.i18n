@@ -39,11 +39,9 @@ public sealed class LanguageConfiguration : IEntityTypeConfiguration<Language>
         builder.Property(x => x.CreatedOn).IsRequired();
         builder.Property(x => x.ModifiedOn);
 
-        // Partial unique index: the database permits at most one default language.
-        builder.HasIndex(l => l.IsDefault)
-            .IsUnique()
-            .HasFilter("\"IsDefault\" = true")
-            .HasDatabaseName("UX_Languages_Default");
+        // The provider-specific implementation of the "single default language"
+        // invariant is configured by I18NDbContext because filtered/functional
+        // indexes are database-provider-specific.
 
         // Navigation — one-to-one LocaleConfiguration relationship.
         builder.HasOne(l => l.LocaleConfiguration)

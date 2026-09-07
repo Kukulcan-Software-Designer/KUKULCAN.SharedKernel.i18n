@@ -76,6 +76,60 @@ public sealed class I18NDbContext(
     {
         modelBuilder.HasDefaultSchema("i18n");
         base.OnModelCreating(modelBuilder);
+        ConfigureDefaultLanguageInvariant(modelBuilder, _databaseOptions.Value.Provider);
+    }
+
+    /// <summary>
+    /// Configures the database-specific representation of the invariant that
+    /// at most one language can be marked as the default language.
+    /// </summary>
+    /// <param name="modelBuilder">The model builder used to configure the entity model.</param>
+    /// <param name="provider">The configured database provider.</param>
+    private static void ConfigureDefaultLanguageInvariant(
+        ModelBuilder modelBuilder,
+        DatabaseProvider provider)
+    {
+        IndexBuilder indexBuilder;
+
+        switch (provider)
+        {
+            case DatabaseProvider.PostgresSql:
+                indexBuilder = modelBuilder.Entity<Language>()
+                    .HasIndex(l => l.IsDefault)
+                    .IsUnique()
+                    .HasDatabaseName("UX_Languages_Default");
+                indexBuilder.HasFilter("\"IsDefault\" = true");
+                break;
+
+            case DatabaseProvider.SqlServer:
+                indexBuilder = modelBuilder.Entity<Language>()
+                    .HasIndex(l => l.IsDefault)
+                    .IsUnique()
+                    .HasDatabaseName("UX_Languages_Default");
+                indexBuilder.HasFilter("[IsDefault] = 1");
+                break;
+
+            case DatabaseProvider.MySql:
+                // MySQL does not implement SQL Server/PostgreSQL-style filtered
+                // indexes. A nullable generated marker produces the same invariant:
+                // TRUE -> 1, FALSE -> NULL, and MySQL UNIQUE indexes permit multiple
+                // NULL values while allowing only one 1.
+                modelBuilder.Entity<Language>()
+                    .Property<int?>("DefaultLanguageMarker")
+                    .HasColumnName("DefaultLanguageMarker")
+                    .HasComputedColumnSql(
+                        "CASE WHEN `IsDefault` = 1 THEN 1 ELSE NULL END");
+
+                modelBuilder.Entity<Language>()
+                    .HasIndex("DefaultLanguageMarker")
+                    .IsUnique()
+                    .HasDatabaseName("UX_Languages_Default");
+                break;
+
+            default:
+                throw new InvalidOperationException(
+                    $"Database provider '{provider}' is not supported by the i18n default language configuration.");
+        }
     }
 
     private static void ConfigureMigrationsAssembly(
