@@ -15,11 +15,30 @@ public sealed class I18NDbContext(
 {
     private readonly IOptions<KukulcanDatabaseOptions> _databaseOptions = options;
 
+    /// <summary>
+    /// Gets the language entities managed by the context.
+    /// </summary>
     public DbSet<Language> Languages => Set<Language>();
+
+    /// <summary>
+    /// Gets the translation entities managed by the context.
+    /// </summary>
     public DbSet<Translation> Translations => Set<Translation>();
+
+    /// <summary>
+    /// Gets the locale configuration entities managed by the context.
+    /// </summary>
     public DbSet<LocaleConfiguration> LocaleConfigurations => Set<LocaleConfiguration>();
+
+    /// <summary>
+    /// Gets the currency format entities managed by the context.
+    /// </summary>
     public DbSet<CurrencyFormat> CurrencyFormats => Set<CurrencyFormat>();
 
+    /// <summary>
+    /// Configures the EF Core database provider and its provider-specific options.
+    /// </summary>
+    /// <param name="optionsBuilder">The options builder used to configure the database context.</param>
     protected override void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
     {
         KukulcanDatabaseOptions databaseOptions = _databaseOptions.Value;
@@ -49,6 +68,10 @@ public sealed class I18NDbContext(
         ConfigureMigrationsAssembly(optionsBuilder, databaseOptions.Provider);
     }
 
+    /// <summary>
+    /// Configures the entity model and applies the i18n default schema.
+    /// </summary>
+    /// <param name="modelBuilder">The model builder used to configure the entity model.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("i18n");
