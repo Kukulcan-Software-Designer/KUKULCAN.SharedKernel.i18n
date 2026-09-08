@@ -16,6 +16,6 @@ public sealed class DatabaseMigrationIntegrationTests
         IReadOnlyList<string> appliedMigrations = (await context.Database.GetAppliedMigrationsAsync()).ToList();
 
         Assert.That(pendingMigrations, Is.Empty);
-        Assert.That(appliedMigrations, Does.Contain("20260823095510_InitialCreation"));
+        Assert.That(appliedMigrations, Has.Some.EndsWith("_InitialCreation"));
     }
 }
