@@ -3,84 +3,83 @@ using System;
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Migrations
+namespace KUKULCAN.SharedKernel.i18n.Migrations.MySql.Migrations
 {
     [DbContext(typeof(I18NDbContext))]
-    partial class I18NDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260908013012_InitialCreation")]
+    partial class InitialCreation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("i18n")
                 .HasAnnotation("ProductVersion", "10.0.11")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
-
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+                .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("KUKULCAN.SharedKernel.i18n.Domain.Entities.CurrencyFormat", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTimeOffset>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("CurrencyCode")
                         .IsRequired()
                         .HasMaxLength(3)
-                        .HasColumnType("character varying(3)");
+                        .HasColumnType("varchar(3)");
 
                     b.Property<string>("CurrencyName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<int>("DecimalPlaces")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("DecimalSeparator")
                         .IsRequired()
                         .HasMaxLength(1)
-                        .HasColumnType("character varying(1)");
+                        .HasColumnType("varchar(1)");
 
                     b.Property<string>("LanguageCode")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
+                        .HasColumnType("varchar(10)")
                         .HasColumnName("LanguageCode");
 
                     b.Property<Guid?>("LanguageId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTimeOffset?>("ModifiedOn")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("NegativePattern")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<bool>("SpaceBetweenSymbolAndAmount")
-                        .HasColumnType("boolean");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Symbol")
                         .IsRequired()
                         .HasMaxLength(5)
-                        .HasColumnType("character varying(5)");
+                        .HasColumnType("varchar(5)");
 
                     b.Property<int>("SymbolPosition")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("ThousandsSeparator")
                         .IsRequired()
                         .HasMaxLength(1)
-                        .HasColumnType("character varying(1)");
+                        .HasColumnType("varchar(1)");
 
                     b.HasKey("Id");
 
@@ -90,40 +89,46 @@ namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("UX_CurrencyFormats_Language_Currency");
 
-                    b.ToTable("CurrencyFormats", "i18n");
+                    b.ToTable("CurrencyFormats", (string)null);
                 });
 
             modelBuilder.Entity("KUKULCAN.SharedKernel.i18n.Domain.Entities.Language", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                        .HasColumnType("varchar(10)");
 
                     b.Property<DateTimeOffset>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
+
+                    b.Property<int?>("DefaultLanguageMarker")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("int")
+                        .HasColumnName("DefaultLanguageMarker")
+                        .HasComputedColumnSql("CASE WHEN `IsDefault` = 1 THEN 1 ELSE NULL END");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsDefault")
-                        .HasColumnType("boolean");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<DateTimeOffset?>("ModifiedOn")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("NativeName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("varchar(100)");
 
                     b.HasKey("Id");
 
@@ -131,72 +136,71 @@ namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("UX_Languages_Code");
 
-                    b.HasIndex("IsDefault")
+                    b.HasIndex("DefaultLanguageMarker")
                         .IsUnique()
-                        .HasDatabaseName("UX_Languages_Default")
-                        .HasFilter("\"IsDefault\" = true");
+                        .HasDatabaseName("UX_Languages_Default");
 
-                    b.ToTable("Languages", "i18n");
+                    b.ToTable("Languages", (string)null);
                 });
 
             modelBuilder.Entity("KUKULCAN.SharedKernel.i18n.Domain.Entities.LocaleConfiguration", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTimeOffset>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<int>("CurrencyDecimalPlaces")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("DateFormat")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("DateTimeFormat")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<int>("DecimalPlaces")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("DecimalSeparator")
                         .IsRequired()
                         .HasMaxLength(1)
-                        .HasColumnType("character varying(1)");
+                        .HasColumnType("varchar(1)");
 
                     b.Property<int>("FirstDayOfWeek")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("LanguageCode")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
+                        .HasColumnType("varchar(10)")
                         .HasColumnName("LanguageCode");
 
                     b.Property<Guid?>("LanguageId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTimeOffset?>("ModifiedOn")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("ShortDateFormat")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("ThousandsSeparator")
                         .IsRequired()
                         .HasMaxLength(1)
-                        .HasColumnType("character varying(1)");
+                        .HasColumnType("varchar(1)");
 
                     b.Property<string>("TimeFormat")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("varchar(50)");
 
                     b.HasKey("Id");
 
@@ -207,46 +211,46 @@ namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Migrations
                     b.HasIndex("LanguageId")
                         .IsUnique();
 
-                    b.ToTable("LocaleConfigurations", "i18n");
+                    b.ToTable("LocaleConfigurations", (string)null);
                 });
 
             modelBuilder.Entity("KUKULCAN.SharedKernel.i18n.Domain.Entities.Translation", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(9)
-                        .HasColumnType("character varying(9)")
+                        .HasColumnType("varchar(9)")
                         .HasColumnName("Code");
 
                     b.Property<string>("Context")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("varchar(500)");
 
                     b.Property<DateTimeOffset>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<bool>("IsReviewed")
-                        .HasColumnType("boolean");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("LanguageCode")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
+                        .HasColumnType("varchar(10)")
                         .HasColumnName("LanguageCode");
 
                     b.Property<int?>("MaxLength")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTimeOffset?>("ModifiedOn")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("varchar(4000)");
 
                     b.HasKey("Id");
 
@@ -257,7 +261,7 @@ namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("UX_Translations_Code_Language");
 
-                    b.ToTable("Translations", "i18n");
+                    b.ToTable("Translations", (string)null);
                 });
 
             modelBuilder.Entity("KUKULCAN.SharedKernel.i18n.Domain.Entities.CurrencyFormat", b =>

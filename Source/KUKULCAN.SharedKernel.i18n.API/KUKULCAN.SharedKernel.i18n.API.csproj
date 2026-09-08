@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -20,6 +20,9 @@
     <ItemGroup>
         <ProjectReference Include="..\KUKULCAN.SharedKernel.i18n.Application\KUKULCAN.SharedKernel.i18n.Application.csproj" />
         <ProjectReference Include="..\KUKULCAN.SharedKernel.i18n.Infrastructure\KUKULCAN.SharedKernel.i18n.Infrastructure.csproj" />
+        <ProjectReference Include="..\KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql\KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj" />
+        <ProjectReference Include="..\KUKULCAN.SharedKernel.i18n.Migrations.SqlServer\KUKULCAN.SharedKernel.i18n.Migrations.SqlServer.csproj" />
+        <ProjectReference Include="..\KUKULCAN.SharedKernel.i18n.Migrations.MySql\KUKULCAN.SharedKernel.i18n.Migrations.MySql.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Migrations
+namespace KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreation : Migration
@@ -131,18 +131,19 @@ namespace KUKULCAN.SharedKernel.i18n.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Languages_Default",
-                schema: "i18n",
-                table: "Languages",
-                column: "IsDefault",
-                filter: "\"IsDefault\" = true");
-
-            migrationBuilder.CreateIndex(
                 name: "UX_Languages_Code",
                 schema: "i18n",
                 table: "Languages",
                 column: "Code",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "UX_Languages_Default",
+                schema: "i18n",
+                table: "Languages",
+                column: "IsDefault",
+                unique: true,
+                filter: "\"IsDefault\" = true");
 
             migrationBuilder.CreateIndex(
                 name: "IX_LocaleConfigurations_LanguageId",
