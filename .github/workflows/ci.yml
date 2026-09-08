@@ -31,7 +31,7 @@ jobs:
         run: dotnet restore KUKULCAN.SharedKernel.i18n.slnx
 
       - name: Build solution
-        run: dotnet build KUKULCAN.SharedKernel.i18n.slnx --no-restore --configuration Release
+        run: dotnet build KUKULCAN.SharedKernel.i18n.slnx --no-restore --configuration Release -p:GeneratePackageOnBuild=false
 
       - name: Run unit tests
         shell: bash
