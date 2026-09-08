@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NUnit.Framework;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
@@ -112,8 +113,10 @@ public sealed class ApiWebApplicationFactory(
 
         builder.ConfigureTestServices(services =>
         {
-            services.AddDataProtection()
-                .UseEphemeralDataProtectionProvider();
+            // The production host may register the default XML-backed provider.
+            // Integration tests are transient and must not persist a key ring.
+            services.RemoveAll<IDataProtectionProvider>();
+            services.AddSingleton<IDataProtectionProvider, EphemeralDataProtectionProvider>();
 
             services.AddAuthentication(options =>
             {
