@@ -113,6 +113,11 @@ public sealed class ApiWebApplicationFactory(
             });
         });
 
+        builder.ConfigureLogging(logging =>
+            logging.AddFilter(
+                "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager",
+                LogLevel.Error));
+
         builder.ConfigureTestServices(services =>
         {
             // Replace the effective production Data Protection registrations.
@@ -121,14 +126,6 @@ public sealed class ApiWebApplicationFactory(
             services.RemoveAll<IDataProtectionProvider>();
             services.RemoveAll<IKeyManager>();
             services.AddSingleton<IDataProtectionProvider, EphemeralDataProtectionProvider>();
-
-            // ASP.NET Core can initialize its framework XmlKeyManager independently of the
-            // provider consumed by the application. This warning is not actionable in a
-            // transient integration host, so keep its filtering scoped to this test host.
-            services.AddLogging(logging =>
-                logging.AddFilter(
-                    "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager",
-                    LogLevel.Error));
 
             services.AddAuthentication(options =>
             {
