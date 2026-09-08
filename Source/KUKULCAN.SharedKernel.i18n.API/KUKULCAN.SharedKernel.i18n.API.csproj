@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <IsPackable>false</IsPackable>
         <RootNamespace>KUKULCAN.SharedKernel.i18n.API</RootNamespace>
         <AssemblyName>KUKULCAN.SharedKernel.i18n</AssemblyName>
         <SolutionDir>$(MSBuildThisFileDirectory)</SolutionDir>
