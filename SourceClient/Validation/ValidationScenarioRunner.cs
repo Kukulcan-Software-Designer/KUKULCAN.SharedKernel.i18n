@@ -176,13 +176,13 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
     private async Task TranslationsAsync(CancellationToken ct)
     {
         if (stateLanguage is null) return;
-        createdTranslationCode = NextCode(17);
+        createdTranslationCode = await FindUnusedCodeAsync(17, ct);
         createdTranslationLanguage = stateLanguage.Code;
 
         await Expect("Translations: invalid code", () => api.CreateTranslationAsync(new CreateTranslationRequest("bad", stateLanguage.Code, "x"), ct), 422);
-        await Expect("Translations: empty text", () => api.CreateTranslationAsync(new CreateTranslationRequest(NextCode(18), stateLanguage.Code, ""), ct), 422);
-        await Expect("Translations: text maximum length", () => api.CreateTranslationAsync(new CreateTranslationRequest(NextCode(19), stateLanguage.Code, new string('x', 4001)), ct), 422);
-        await Expect("Translations: max length constraint", () => api.CreateTranslationAsync(new CreateTranslationRequest(NextCode(20), stateLanguage.Code, "123456", null, 5), ct), 422);
+        await Expect("Translations: empty text", () => api.CreateTranslationAsync(new CreateTranslationRequest(await FindUnusedCodeAsync(18, ct), stateLanguage.Code, ""), ct), 422);
+        await Expect("Translations: text maximum length", () => api.CreateTranslationAsync(new CreateTranslationRequest(await FindUnusedCodeAsync(19, ct), stateLanguage.Code, new string('x', 4001)), ct), 422);
+        await Expect("Translations: max length constraint", () => api.CreateTranslationAsync(new CreateTranslationRequest(await FindUnusedCodeAsync(20, ct), stateLanguage.Code, "123456", null, 5), ct), 422);
         await Expect("Translations: create", () => api.CreateTranslationAsync(new CreateTranslationRequest(createdTranslationCode, stateLanguage.Code, "Original", "validation", 100), ct), 201);
         await Expect("Translations: duplicate", () => api.CreateTranslationAsync(new CreateTranslationRequest(createdTranslationCode, stateLanguage.Code, "Duplicate"), ct), 409);
 
@@ -206,7 +206,7 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         await Expect("Translations: module dictionary", () => api.GetModuleTranslationsAsync("TST", stateLanguage.Code, ct), 200);
         await Expect("Translations: delete", () => api.DeleteTranslationAsync(createdTranslationCode, stateLanguage.Code, ct), 204);
         createdTranslationCode = null;
-        await Expect("Translations: delete missing", () => api.DeleteTranslationAsync(NextCode(21), stateLanguage.Code, ct), 404);
+        await Expect("Translations: delete missing", () => api.DeleteTranslationAsync(await FindUnusedCodeAsync(21, ct), stateLanguage.Code, ct), 404);
     }
 
     private async Task FallbackAndProtectionAsync(CancellationToken ct)
@@ -266,10 +266,11 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         await Expect("Bulk: invalid code", () => api.BulkUpsertTranslationsAsync(new BulkUpsertRequest([
             new BulkTranslationEntry("bad", stateLanguage.Code, "x")]), ct), 422);
         await Expect("Bulk: over 5000", () => api.BulkUpsertTranslationsAsync(new BulkUpsertRequest(
-            Enumerable.Range(0, 5001).Select(i => new BulkTranslationEntry(NextCode(i + 100), stateLanguage.Code, "x")).ToArray()), ct), 422);
+            Enumerable.Range(0, 5001).Select(i => NextCode(i + 100)).ToArray()
+                .Select(code => new BulkTranslationEntry(code, stateLanguage.Code, "x")).ToArray()), ct), 422);
 
-        createdBulkCode1 = NextCode(31);
-        createdBulkCode2 = NextCode(32);
+        createdBulkCode1 = await FindUnusedCodeAsync(31, ct);
+        createdBulkCode2 = await FindUnusedCodeAsync(32, ct);
         BulkUpsertRequest bulk = new([
             new BulkTranslationEntry(createdBulkCode1, stateLanguage.Code, "Bulk one"),
             new BulkTranslationEntry(createdBulkCode2, stateLanguage.Code, "Bulk two")]);
@@ -306,6 +307,17 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
             }
         }
         catch (Exception ex) { Add("State restoration", false, null, null, ex.Message); }
+    }
+
+    private async Task<string> FindUnusedCodeAsync(int salt, CancellationToken ct)
+    {
+        for (int offset = 0; offset < 900; offset++)
+        {
+            string code = NextCode(salt + offset);
+            ApiResult<IReadOnlyList<TranslationDto>> variants = await api.GetTranslationVariantsAsync(code, ct);
+            if (variants.IsSuccess && (variants.Value is null || variants.Value.Count == 0)) return code;
+        }
+        throw new InvalidOperationException("Unable to find an unused translation code in the validation range.");
     }
 
     private async Task Expect<T>(string name, Func<Task<ApiResult<T>>> action, int expected)
@@ -349,7 +361,7 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
     private string NextCode(int salt)
     {
         int value = (int.Parse(suffix[^4..]) + salt) % 9999;
-        if (value < 1) value += 1;
+        if (value < 1) value = 1;
         return $"TST{value:D4}";
     }
 
