@@ -69,14 +69,23 @@ public sealed class I18NDbContext(
     }
 
     /// <summary>
-    /// Configures the entity model and applies the i18n default schema.
+    /// Configures the entity model and applies the provider-specific i18n schema strategy.
     /// </summary>
     /// <param name="modelBuilder">The model builder used to configure the entity model.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("i18n");
+        DatabaseProvider provider = _databaseOptions.Value.Provider;
+
+        // PostgreSQL and SQL Server support a schema namespace within the Atlas database.
+        // MySQL treats schema as an alias for database, so applying "i18n" here would
+        // redirect the model to a different database instead of the configured Atlas database.
+        if (provider != DatabaseProvider.MySql)
+        {
+            modelBuilder.HasDefaultSchema("i18n");
+        }
+
         base.OnModelCreating(modelBuilder);
-        ConfigureDefaultLanguageInvariant(modelBuilder, _databaseOptions.Value.Provider);
+        ConfigureDefaultLanguageInvariant(modelBuilder, provider);
     }
 
     /// <summary>
