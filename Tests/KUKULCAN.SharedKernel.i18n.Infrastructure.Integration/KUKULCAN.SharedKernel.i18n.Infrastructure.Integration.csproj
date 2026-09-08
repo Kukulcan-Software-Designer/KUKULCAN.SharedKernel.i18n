@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../Source/KUKULCAN.SharedKernel.i18n.Infrastructure/KUKULCAN.SharedKernel.i18n.Infrastructure.csproj" />
+    <ProjectReference Include="../../Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj" />
   </ItemGroup>
 
   <ItemGroup>
