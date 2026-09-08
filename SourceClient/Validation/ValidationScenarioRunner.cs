@@ -19,6 +19,7 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
     private string? createdTranslationLanguage;
     private string? createdBulkCode1;
     private string? createdBulkCode2;
+    private bool suiteCancelled;
 
     public async Task<int> RunAsync(CancellationToken ct = default)
     {
@@ -34,7 +35,8 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         }
         catch (OperationCanceledException)
         {
-            Add("Suite cancellation", true, null, null, "Cancellation requested.");
+            suiteCancelled = true;
+            Skip("Suite cancellation", "Cancellation requested; validation suite did not complete.");
         }
         catch (Exception ex)
         {
@@ -42,11 +44,11 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         }
         finally
         {
-            await RestoreAsync(ct);
+            await RestoreAsync();
         }
 
         RenderSummary();
-        return results.Any(x => !x.Passed) ? 1 : 0;
+        return suiteCancelled || results.Any(x => x.Status == ScenarioStatus.Fail) ? 1 : 0;
     }
 
     private async Task AuthenticationAsync(CancellationToken ct)
@@ -58,8 +60,8 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         string? forbiddenToken = Environment.GetEnvironmentVariable("I18N_FORBIDDEN_BEARER_TOKEN");
         if (string.IsNullOrWhiteSpace(forbiddenToken))
         {
-            Add("Authenticated read-only identity cannot write (403)", true, null, null,
-                "SKIPPED: set I18N_FORBIDDEN_BEARER_TOKEN to a valid authenticated token without i18n.write.");
+            Skip("Authenticated read-only identity cannot write (403)",
+                "Set I18N_FORBIDDEN_BEARER_TOKEN to a valid authenticated token without i18n.write.");
             return;
         }
 
@@ -90,9 +92,15 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
             new CreateLanguageRequest($"zz-{suffix[^4..]}", new string('N', 101), "Native"), ct), 422);
         await Expect("Languages: native name maximum length", () => api.CreateLanguageAsync(
             new CreateLanguageRequest($"zz-{suffix[^4..]}", "Name", new string('N', 101)), ct), 422);
+        await Expect("Languages: duplicate", () => api.CreateLanguageAsync(
+            new CreateLanguageRequest(stateLanguage.Code, stateLanguage.Name, stateLanguage.NativeName), ct), 409);
 
         await Expect("Languages: update", () => api.UpdateLanguageAsync(stateLanguage.Code,
             new UpdateLanguageRequest(stateLanguage.Name + " validation", stateLanguage.NativeName + " validation"), ct), 200);
+        await Expect("Languages: update empty name", () => api.UpdateLanguageAsync(stateLanguage.Code,
+            new UpdateLanguageRequest("", stateLanguage.NativeName), ct), 422);
+        await Expect("Languages: update empty native name", () => api.UpdateLanguageAsync(stateLanguage.Code,
+            new UpdateLanguageRequest(stateLanguage.Name, ""), ct), 422);
         await Expect("Languages: update missing", () => api.UpdateLanguageAsync($"zz-MISSING-{suffix}",
             new UpdateLanguageRequest("x", "x"), ct), 404);
         await Expect("Languages: deactivate non-default", () => api.SetLanguageActiveAsync(stateLanguage.Code, false, ct), 204);
@@ -103,7 +111,15 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
             await Expect("Languages: default cannot deactivate", () => api.SetLanguageActiveAsync(defaultLanguage, false, ct), 409);
             await Expect("Languages: transfer default", () => api.SetDefaultLanguageAsync(stateLanguage.Code, ct), 204);
             await Expect("Languages: new default cannot deactivate", () => api.SetLanguageActiveAsync(stateLanguage.Code, false, ct), 409);
+            await Expect("Languages: inactive language cannot become default", async () =>
+            {
+                ApiResult<Unit> reactivated = await api.SetLanguageActiveAsync(stateLanguage.Code, true, ct);
+                if (!reactivated.IsSuccess) return reactivated;
+                await api.SetLanguageActiveAsync(stateLanguage.Code, false, ct);
+                return await api.SetDefaultLanguageAsync(stateLanguage.Code, ct);
+            }, 409);
             await Expect("Languages: restore default", () => api.SetDefaultLanguageAsync(defaultLanguage, ct), 204);
+            await Expect("Languages: restore state language active", () => api.SetLanguageActiveAsync(stateLanguage.Code, stateLanguageWasActive, ct), 204);
         }
     }
 
@@ -115,27 +131,30 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         LocaleConfigurationDto? existing = all.Value?.FirstOrDefault(x => x.LanguageCode.Equals(stateLanguage.Code, StringComparison.OrdinalIgnoreCase));
         if (existing is null)
         {
-            Add("Locales: persistent fixture", true, null, null, "SKIPPED: selected language has no existing locale; no orphan can be created safely.");
+            Skip("Locales: persistent fixture", "Selected language has no existing locale; no orphan can be created safely.");
             return;
         }
 
         await Expect("Locales: GET existing", () => api.GetLocaleAsync(existing.LanguageCode, ct), 200);
         await Expect("Locales: GET missing", () => api.GetLocaleAsync($"zz-MISSING-{suffix}", ct), 404);
-        await Expect("Locales: date format maximum length", () => api.UpsertLocaleAsync(existing.LanguageCode,
-            new UpsertLocaleRequest(new string('x', 51), existing.ShortDateFormat, existing.TimeFormat, existing.DateTimeFormat,
-                existing.FirstDayOfWeek, existing.DecimalSeparator, existing.ThousandsSeparator, existing.DecimalPlaces, existing.CurrencyDecimalPlaces), ct), 422);
-        await Expect("Locales: decimal separator empty", () => api.UpsertLocaleAsync(existing.LanguageCode,
-            new UpsertLocaleRequest(existing.DateFormat, existing.ShortDateFormat, existing.TimeFormat, existing.DateTimeFormat,
-                existing.FirstDayOfWeek, "", existing.ThousandsSeparator, existing.DecimalPlaces, existing.CurrencyDecimalPlaces), ct), 422);
-        await Expect("Locales: equal separators", () => api.UpsertLocaleAsync(existing.LanguageCode,
-            new UpsertLocaleRequest(existing.DateFormat, existing.ShortDateFormat, existing.TimeFormat, existing.DateTimeFormat,
-                existing.FirstDayOfWeek, ".", ".", existing.DecimalPlaces, existing.CurrencyDecimalPlaces), ct), 422);
-        await Expect("Locales: decimal places out of range", () => api.UpsertLocaleAsync(existing.LanguageCode,
-            new UpsertLocaleRequest(existing.DateFormat, existing.ShortDateFormat, existing.TimeFormat, existing.DateTimeFormat,
-                existing.FirstDayOfWeek, existing.DecimalSeparator, existing.ThousandsSeparator, 11, existing.CurrencyDecimalPlaces), ct), 422);
-        await Expect("Locales: invalid first day", () => api.UpsertLocaleAsync(existing.LanguageCode,
-            new UpsertLocaleRequest(existing.DateFormat, existing.ShortDateFormat, existing.TimeFormat, existing.DateTimeFormat,
-                "Tuesday", existing.DecimalSeparator, existing.ThousandsSeparator, existing.DecimalPlaces, existing.CurrencyDecimalPlaces), ct), 422);
+        await Expect("Locales: PUT missing language", () => api.UpsertLocaleAsync($"zz-MISSING-{suffix}", existing.ToRequest(), ct), 404);
+        await Expect("Locales: date format empty", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(dateFormat: ""), ct), 422);
+        await Expect("Locales: date format maximum length", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(dateFormat: new string('x', 51)), ct), 422);
+        await Expect("Locales: short date format empty", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(shortDateFormat: ""), ct), 422);
+        await Expect("Locales: short date format maximum length", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(shortDateFormat: new string('x', 51)), ct), 422);
+        await Expect("Locales: time format empty", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(timeFormat: ""), ct), 422);
+        await Expect("Locales: time format maximum length", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(timeFormat: new string('x', 51)), ct), 422);
+        await Expect("Locales: date-time format empty", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(dateTimeFormat: ""), ct), 422);
+        await Expect("Locales: date-time format maximum length", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(dateTimeFormat: new string('x', 101)), ct), 422);
+        await Expect("Locales: first day empty", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(firstDayOfWeek: ""), ct), 422);
+        await Expect("Locales: invalid first day", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(firstDayOfWeek: "Tuesday"), ct), 422);
+        await Expect("Locales: decimal separator empty", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(decimalSeparator: ""), ct), 422);
+        await Expect("Locales: decimal separator length", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(decimalSeparator: ".."), ct), 422);
+        await Expect("Locales: thousands separator empty", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(thousandsSeparator: ""), ct), 422);
+        await Expect("Locales: thousands separator length", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(thousandsSeparator: ".."), ct), 422);
+        await Expect("Locales: equal separators", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(decimalSeparator: ".", thousandsSeparator: "."), ct), 422);
+        await Expect("Locales: decimal places out of range", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(decimalPlaces: 11), ct), 422);
+        await Expect("Locales: currency decimal places out of range", () => api.UpsertLocaleAsync(existing.LanguageCode, existing.ToRequest(currencyDecimalPlaces: 11), ct), 422);
     }
 
     private async Task CurrenciesAsync(CancellationToken ct)
@@ -146,31 +165,27 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         CurrencyFormatDto? existing = all.Value?.FirstOrDefault();
         if (existing is null)
         {
-            Add("Currencies: persistent fixture", true, null, null, "SKIPPED: selected language has no existing currency; no orphan can be created safely.");
+            Skip("Currencies: persistent fixture", "Selected language has no existing currency; no orphan can be created safely.");
             return;
         }
 
-        await Expect("Currencies: invalid code", () => api.UpsertCurrencyAsync(stateLanguage.Code, "US",
-            new UpsertCurrencyRequest(existing.CurrencyName, existing.Symbol, existing.SymbolPosition, existing.SpaceBetweenSymbolAndAmount,
-                existing.DecimalSeparator, existing.ThousandsSeparator, existing.DecimalPlaces, existing.NegativePattern), ct), 422);
-        await Expect("Currencies: name maximum length", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode,
-            new UpsertCurrencyRequest(new string('N', 101), existing.Symbol, existing.SymbolPosition, existing.SpaceBetweenSymbolAndAmount,
-                existing.DecimalSeparator, existing.ThousandsSeparator, existing.DecimalPlaces, existing.NegativePattern), ct), 422);
-        await Expect("Currencies: symbol maximum length", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode,
-            new UpsertCurrencyRequest(existing.CurrencyName, new string('S', 6), existing.SymbolPosition, existing.SpaceBetweenSymbolAndAmount,
-                existing.DecimalSeparator, existing.ThousandsSeparator, existing.DecimalPlaces, existing.NegativePattern), ct), 422);
-        await Expect("Currencies: invalid position", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode,
-            new UpsertCurrencyRequest(existing.CurrencyName, existing.Symbol, "Middle", existing.SpaceBetweenSymbolAndAmount,
-                existing.DecimalSeparator, existing.ThousandsSeparator, existing.DecimalPlaces, existing.NegativePattern), ct), 422);
-        await Expect("Currencies: equal separators", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode,
-            new UpsertCurrencyRequest(existing.CurrencyName, existing.Symbol, existing.SymbolPosition, existing.SpaceBetweenSymbolAndAmount,
-                ".", ".", existing.DecimalPlaces, existing.NegativePattern), ct), 422);
-        await Expect("Currencies: decimal places out of range", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode,
-            new UpsertCurrencyRequest(existing.CurrencyName, existing.Symbol, existing.SymbolPosition, existing.SpaceBetweenSymbolAndAmount,
-                existing.DecimalSeparator, existing.ThousandsSeparator, 11, existing.NegativePattern), ct), 422);
-        await Expect("Currencies: invalid negative pattern", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode,
-            new UpsertCurrencyRequest(existing.CurrencyName, existing.Symbol, existing.SymbolPosition, existing.SpaceBetweenSymbolAndAmount,
-                existing.DecimalSeparator, existing.ThousandsSeparator, existing.DecimalPlaces, "-{symbol}"), ct), 422);
+        await Expect("Currencies: missing language", () => api.GetCurrenciesAsync($"zz-MISSING-{suffix}", ct), 200);
+        await Expect("Currencies: invalid code length", () => api.UpsertCurrencyAsync(stateLanguage.Code, "US", existing.ToRequest(), ct), 422);
+        await Expect("Currencies: invalid code characters", () => api.UpsertCurrencyAsync(stateLanguage.Code, "U$D", existing.ToRequest(), ct), 422);
+        await Expect("Currencies: name empty", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(currencyName: ""), ct), 422);
+        await Expect("Currencies: name maximum length", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(currencyName: new string('N', 101)), ct), 422);
+        await Expect("Currencies: symbol empty", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(symbol: ""), ct), 422);
+        await Expect("Currencies: symbol maximum length", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(symbol: new string('S', 6)), ct), 422);
+        await Expect("Currencies: invalid position", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(symbolPosition: "Middle"), ct), 422);
+        await Expect("Currencies: decimal separator empty", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(decimalSeparator: ""), ct), 422);
+        await Expect("Currencies: decimal separator length", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(decimalSeparator: ".."), ct), 422);
+        await Expect("Currencies: thousands separator empty", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(thousandsSeparator: ""), ct), 422);
+        await Expect("Currencies: thousands separator length", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(thousandsSeparator: ".."), ct), 422);
+        await Expect("Currencies: equal separators", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(decimalSeparator: ".", thousandsSeparator: "."), ct), 422);
+        await Expect("Currencies: decimal places out of range", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(decimalPlaces: 11), ct), 422);
+        await Expect("Currencies: negative pattern empty", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(negativePattern: ""), ct), 422);
+        await Expect("Currencies: negative pattern missing amount", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(negativePattern: "-{symbol}"), ct), 422);
+        await Expect("Currencies: delete missing", () => api.DeleteCurrencyAsync(stateLanguage.Code, "ZZZ", ct), 404);
     }
 
     private async Task TranslationsAsync(CancellationToken ct)
@@ -241,7 +256,7 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
             bool ok = lookup.IsSuccess && lookup.Value?.IsFallback == true && lookup.Value.ResolvedLanguageCode.Equals("es", StringComparison.OrdinalIgnoreCase);
             Add("Fallback: es-MX -> es", ok, 200, lookup.IsSuccess ? 200 : lookup.Error?.Status, lookup.Value?.ResolvedLanguageCode);
         }
-        else Add("Fallback: es-MX -> es", true, null, null, "SKIPPED: no safe existing es-without-es-MX fixture.");
+        else Skip("Fallback: es-MX -> es", "No safe existing es-without-es-MX fixture.");
 
         if (defaultOnly is not null)
         {
@@ -249,7 +264,7 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
             bool ok = lookup.IsSuccess && lookup.Value?.IsFallback == true && lookup.Value.ResolvedLanguageCode.Equals(defaultLanguage, StringComparison.OrdinalIgnoreCase);
             Add("Fallback: es-MX -> default", ok, 200, lookup.IsSuccess ? 200 : lookup.Error?.Status, lookup.Value?.ResolvedLanguageCode);
         }
-        else Add("Fallback: es-MX -> default", true, null, null, "SKIPPED: no safe existing default-only fixture.");
+        else Skip("Fallback: es-MX -> default", "No safe existing default-only fixture.");
 
         if (english is not null)
             await Expect("Default-language translation protected delete", () => api.DeleteTranslationAsync(english.Code, defaultLanguage, ct), 409);
@@ -288,10 +303,12 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         if (updated.IsSuccess) Add("Bulk: update counters", updated.Value?.Updated == 2 && updated.Value.Inserted == 0, 200, 200);
     }
 
-    private async Task RestoreAsync(CancellationToken ct)
+    private async Task RestoreAsync()
     {
         try
         {
+            using CancellationTokenSource cleanupCts = new(TimeSpan.FromSeconds(30));
+            CancellationToken ct = cleanupCts.Token;
             if (createdTranslationCode is not null && createdTranslationLanguage is not null)
                 await api.DeleteTranslationAsync(createdTranslationCode, createdTranslationLanguage, ct);
             if (createdBulkCode1 is not null && stateLanguage is not null)
@@ -365,18 +382,65 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         return $"TST{value:D4}";
     }
 
+    private void Skip(string name, string detail)
+        => results.Add(new ScenarioResult(name, ScenarioStatus.Skip, null, null, detail));
+
     private void Add(string name, bool passed, int? expected, int? actual, string? detail = null)
-        => results.Add(new ScenarioResult(name, passed, expected, actual, detail));
+        => results.Add(new ScenarioResult(name, passed ? ScenarioStatus.Pass : ScenarioStatus.Fail, expected, actual, detail));
 
     private void RenderSummary()
     {
         Table table = new Table().AddColumn("Scenario").AddColumn("Expected").AddColumn("Actual").AddColumn("Result");
         foreach (ScenarioResult result in results)
-            table.AddRow(result.Name, result.Expected?.ToString() ?? "—", result.Actual?.ToString() ?? "—",
-                result.Passed ? "[green]PASS[/]" : $"[red]FAIL[/] {Markup.Escape(result.Detail ?? "")}");
+        {
+            string rendered = result.Status switch
+            {
+                ScenarioStatus.Pass => "[green]PASS[/]",
+                ScenarioStatus.Skip => $"[yellow]SKIP[/] {Markup.Escape(result.Detail ?? "")}",
+                _ => $"[red]FAIL[/] {Markup.Escape(result.Detail ?? "")}"
+            };
+            table.AddRow(result.Name, result.Expected?.ToString() ?? "—", result.Actual?.ToString() ?? "—", rendered);
+        }
         AnsiConsole.Write(table);
-        AnsiConsole.MarkupLine($"[bold]Validation: {results.Count(x => x.Passed)}/{results.Count} passed.[/]");
+        int passed = results.Count(x => x.Status == ScenarioStatus.Pass);
+        int skipped = results.Count(x => x.Status == ScenarioStatus.Skip);
+        int failed = results.Count(x => x.Status == ScenarioStatus.Fail);
+        AnsiConsole.MarkupLine($"[bold]Validation: {passed} passed, {skipped} skipped, {failed} failed.[/]");
     }
 
-    private sealed record ScenarioResult(string Name, bool Passed, int? Expected, int? Actual, string? Detail);
+    private enum ScenarioStatus { Pass, Skip, Fail }
+
+    private sealed record ScenarioResult(string Name, ScenarioStatus Status, int? Expected, int? Actual, string? Detail);
+}
+
+file static class ValidationDtoExtensions
+{
+    public static UpsertLocaleRequest ToRequest(this LocaleConfigurationDto value,
+        string? dateFormat = null, string? shortDateFormat = null, string? timeFormat = null,
+        string? dateTimeFormat = null, string? firstDayOfWeek = null, string? decimalSeparator = null,
+        string? thousandsSeparator = null, int? decimalPlaces = null, int? currencyDecimalPlaces = null)
+        => new(
+            dateFormat ?? value.DateFormat,
+            shortDateFormat ?? value.ShortDateFormat,
+            timeFormat ?? value.TimeFormat,
+            dateTimeFormat ?? value.DateTimeFormat,
+            firstDayOfWeek ?? value.FirstDayOfWeek,
+            decimalSeparator ?? value.DecimalSeparator,
+            thousandsSeparator ?? value.ThousandsSeparator,
+            decimalPlaces ?? value.DecimalPlaces,
+            currencyDecimalPlaces ?? value.CurrencyDecimalPlaces);
+
+    public static UpsertCurrencyRequest ToRequest(this CurrencyFormatDto value,
+        string? currencyName = null, string? symbol = null, string? symbolPosition = null,
+        bool? spaceBetweenSymbolAndAmount = null, string? decimalSeparator = null,
+        string? thousandsSeparator = null, int? decimalPlaces = null, string? negativePattern = null)
+        => new(
+            currencyName ?? value.CurrencyName,
+            symbol ?? value.Symbol,
+            symbolPosition ?? value.SymbolPosition,
+            spaceBetweenSymbolAndAmount ?? value.SpaceBetweenSymbolAndAmount,
+            decimalSeparator ?? value.DecimalSeparator,
+            thousandsSeparator ?? value.ThousandsSeparator,
+            decimalPlaces ?? value.DecimalPlaces,
+            negativePattern ?? value.NegativePattern);
 }
