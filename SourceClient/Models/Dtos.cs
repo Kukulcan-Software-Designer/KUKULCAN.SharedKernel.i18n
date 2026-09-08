@@ -3,13 +3,14 @@ using System.Text.Json.Serialization;
 namespace KUKULCAN.SharedKernel.i18n.Client.Models;
 
 public record LanguageDto(
+    Guid Id,
     string Code,
     string Name,
     string NativeName,
-    bool IsActive,
     bool IsDefault,
-    string? CreatedAt,
-    string? UpdatedAt);
+    bool IsActive,
+    DateTimeOffset CreatedOn,
+    DateTimeOffset? ModifiedOn);
 
 public record CreateLanguageRequest(string Code, string Name, string NativeName);
 public record UpdateLanguageRequest(string Name, string NativeName);
@@ -25,7 +26,9 @@ public record LocaleConfigurationDto(
     string DecimalSeparator,
     string ThousandsSeparator,
     int DecimalPlaces,
-    int CurrencyDecimalPlaces);
+    int CurrencyDecimalPlaces,
+    DateTimeOffset CreatedOn,
+    DateTimeOffset? ModifiedOn);
 
 public record UpsertLocaleRequest(
     string DateFormat,
@@ -39,6 +42,7 @@ public record UpsertLocaleRequest(
     int CurrencyDecimalPlaces = 2);
 
 public record CurrencyFormatDto(
+    Guid Id,
     string LanguageCode,
     string CurrencyCode,
     string CurrencyName,
@@ -49,7 +53,9 @@ public record CurrencyFormatDto(
     string ThousandsSeparator,
     int DecimalPlaces,
     string NegativePattern,
-    string FormattedExample);
+    string FormattedExample,
+    DateTimeOffset CreatedOn,
+    DateTimeOffset? ModifiedOn);
 
 public record UpsertCurrencyRequest(
     string CurrencyName,
@@ -62,14 +68,16 @@ public record UpsertCurrencyRequest(
     string NegativePattern = "-{symbol}{amount}");
 
 public record TranslationDto(
+    Guid Id,
     string Code,
+    string Module,
     string LanguageCode,
     string Text,
     string? Context,
     int? MaxLength,
     bool IsReviewed,
-    string? CreatedAt,
-    string? UpdatedAt);
+    DateTimeOffset CreatedOn,
+    DateTimeOffset? ModifiedOn);
 
 public record TranslationLookupDto(
     string Code,
