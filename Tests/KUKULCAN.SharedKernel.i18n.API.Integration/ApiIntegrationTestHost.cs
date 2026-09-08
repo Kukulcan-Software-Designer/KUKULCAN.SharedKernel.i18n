@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
@@ -110,7 +109,7 @@ public sealed class ApiWebApplicationFactory(
                 ["Jwt:SecretKey"] = IntegrationJwtConfiguration.SecretKey,
                 ["Jwt:Issuer"] = IntegrationJwtConfiguration.Issuer,
                 ["Jwt:Audience"] = IntegrationJwtConfiguration.Audience,
-                ["Logging:LogLevel:Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"] = "Error",
+                ["Serilog:MinimumLevel:Override:Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"] = "Error",
             });
         });
 
