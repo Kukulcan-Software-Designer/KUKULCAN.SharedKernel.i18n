@@ -91,7 +91,7 @@ Languages are global and are never physically deleted; there is no language-dele
 
 The default language cannot be deactivated. Setting another active language as default transfers the default designation from the previous default; the newly selected default is active by definition.
 
-Language creation and update validate BCP-47 language codes and require non-empty display names. Application validation limits `Name` and `NativeName` to 100 characters.
+Language creation validates the code as BCP-47 and requires non-empty display names; application validation limits `Name` and `NativeName` to 100 characters. Language update requires non-empty display names, but the current `UpdateLanguageCommand` has no application maximum-length validator.
 
 ---
 
@@ -111,7 +111,7 @@ Base route:
 
 Locale configuration includes date/time formats, first day of week, decimal/thousands separators and decimal precision.
 
-The application validates the language code as BCP-47; date/time format fields are required and length-limited; `FirstDayOfWeek` must be a supported enum value; decimal and thousands separators are single, non-empty and distinct characters; and both decimal-precision fields must be in the range `0..10`.
+The application validates the language code as BCP-47; `DateFormat`, `ShortDateFormat` and `TimeFormat` are required and limited to 50 characters; `DateTimeFormat` is required and limited to 100 characters; `FirstDayOfWeek` must be a supported enum value; decimal and thousands separators are single, non-empty and distinct characters; and both decimal-precision fields must be in the range `0..10`.
 
 A locale configuration can only be created or updated for an existing language.
 
@@ -133,7 +133,7 @@ Base route:
 
 The configuration controls symbol placement, spacing, separators, decimal places and negative-number formatting.
 
-The application validates the language code as BCP-47 and the currency code as exactly three letters. Currency name and symbol are required and length-limited by application validation; `SymbolPosition` must be a supported enum value; decimal and thousands separators are single, non-empty and distinct characters; decimal places must be in the range `0..10`; and `NegativePattern` must contain the `{amount}` placeholder.
+Currency upsert validates the language code as BCP-47 and the currency code as exactly three letters. `CurrencyName` is required and limited to 100 characters; `Symbol` is required and limited to 5 characters; `SymbolPosition` must be a supported enum value; decimal and thousands separators are single, non-empty and distinct characters; decimal places must be in the range `0..10`; and `NegativePattern` must contain the `{amount}` placeholder.
 
 Currency upsert requires the referenced language to exist. Deleting a missing currency format returns `404 Not Found`.
 
