@@ -110,13 +110,9 @@ public sealed class ApiWebApplicationFactory(
                 ["Jwt:SecretKey"] = IntegrationJwtConfiguration.SecretKey,
                 ["Jwt:Issuer"] = IntegrationJwtConfiguration.Issuer,
                 ["Jwt:Audience"] = IntegrationJwtConfiguration.Audience,
+                ["Logging:LogLevel:Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"] = "Error",
             });
         });
-
-        builder.ConfigureLogging(logging =>
-            logging.AddFilter(
-                "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager",
-                LogLevel.Error));
 
         builder.ConfigureTestServices(services =>
         {
