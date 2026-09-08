@@ -1,5 +1,6 @@
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -111,6 +112,9 @@ public sealed class ApiWebApplicationFactory(
 
         builder.ConfigureTestServices(services =>
         {
+            services.AddDataProtection()
+                .UseEphemeralDataProtectionProvider();
+
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = TestAuthenticationHandler.SchemeName;
