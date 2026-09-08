@@ -1,6 +1,7 @@
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -113,9 +114,11 @@ public sealed class ApiWebApplicationFactory(
 
         builder.ConfigureTestServices(services =>
         {
-            // The production host may register the default XML-backed provider.
-            // Integration tests are transient and must not persist a key ring.
+            // Replace the effective production Data Protection registrations.
+            // ConfigureTestServices runs after the application service registration.
+            // Remove the XML key manager as well so it cannot initialize a persisted key ring.
             services.RemoveAll<IDataProtectionProvider>();
+            services.RemoveAll<IKeyManager>();
             services.AddSingleton<IDataProtectionProvider, EphemeralDataProtectionProvider>();
 
             services.AddAuthentication(options =>
