@@ -26,9 +26,9 @@ public record CreateTranslationRequest
         MaxLength = maxLength;
     }
 
-    // Legacy console signature: module is derived from the translation code by the API/application layer.
+    // Legacy console signature retained for source compatibility; module is not part of the API request contract.
     public CreateTranslationRequest(string code, string languageCode, string text, string? module, string? context)
-        : this(code, languageCode, text, context, null) { }
+        : this(code, languageCode, text, context, (int?)null) { }
 
     public string Code { get; }
     public string LanguageCode { get; }
