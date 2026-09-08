@@ -71,14 +71,11 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
     {
         ApiResult<IReadOnlyList<LanguageDto>> all = await api.GetAllLanguagesAsync(false, ct);
         Expect("Languages: GET all", all, 200);
-        if (!all.IsSuccess || all.Value is null)
-            return;
+        if (!all.IsSuccess || all.Value is null) return;
 
-        LanguageDto? currentDefault = all.Value.FirstOrDefault(x => x.IsDefault);
-        defaultLanguage = currentDefault?.Code;
+        defaultLanguage = all.Value.FirstOrDefault(x => x.IsDefault)?.Code;
         stateLanguage = all.Value.FirstOrDefault(x => x.IsActive && !x.IsDefault)
-                         ?? all.Value.FirstOrDefault(x => !x.IsDefault);
-
+                        ?? all.Value.FirstOrDefault(x => !x.IsDefault);
         if (stateLanguage is null)
         {
             Add("Languages: non-default state fixture", false, null, null, "No non-default language is available.");
@@ -98,7 +95,6 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
             new UpdateLanguageRequest(stateLanguage.Name + " validation", stateLanguage.NativeName + " validation"), ct), 200);
         await Expect("Languages: update missing", () => api.UpdateLanguageAsync($"zz-MISSING-{suffix}",
             new UpdateLanguageRequest("x", "x"), ct), 404);
-
         await Expect("Languages: deactivate non-default", () => api.SetLanguageActiveAsync(stateLanguage.Code, false, ct), 204);
         await Expect("Languages: reactivate non-default", () => api.SetLanguageActiveAsync(stateLanguage.Code, true, ct), 204);
 
@@ -116,18 +112,16 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         if (stateLanguage is null) return;
         ApiResult<IReadOnlyList<LocaleConfigurationDto>> all = await api.GetAllLocalesAsync(ct);
         ExpectValue("Locales: GET all", all, 200);
-
-        LocaleConfigurationDto? existing = all.Value?.FirstOrDefault(x =>
-            string.Equals(x.LanguageCode, stateLanguage.Code, StringComparison.OrdinalIgnoreCase));
+        LocaleConfigurationDto? existing = all.Value?.FirstOrDefault(x => x.LanguageCode.Equals(stateLanguage.Code, StringComparison.OrdinalIgnoreCase));
         if (existing is null)
         {
-            Add("Locales: persistent fixture", true, null, null, "SKIPPED: selected language has no existing locale configuration; no orphan can be created safely.");
+            Add("Locales: persistent fixture", true, null, null, "SKIPPED: selected language has no existing locale; no orphan can be created safely.");
             return;
         }
 
         await Expect("Locales: GET existing", () => api.GetLocaleAsync(existing.LanguageCode, ct), 200);
-        await Expect("Locales: invalid language", () => api.GetLocaleAsync($"zz-MISSING-{suffix}", ct), 404);
-        await Expect("Locales: date format max length", () => api.UpsertLocaleAsync(existing.LanguageCode,
+        await Expect("Locales: GET missing", () => api.GetLocaleAsync($"zz-MISSING-{suffix}", ct), 404);
+        await Expect("Locales: date format maximum length", () => api.UpsertLocaleAsync(existing.LanguageCode,
             new UpsertLocaleRequest(new string('x', 51), existing.ShortDateFormat, existing.TimeFormat, existing.DateTimeFormat,
                 existing.FirstDayOfWeek, existing.DecimalSeparator, existing.ThousandsSeparator, existing.DecimalPlaces, existing.CurrencyDecimalPlaces), ct), 422);
         await Expect("Locales: decimal separator empty", () => api.UpsertLocaleAsync(existing.LanguageCode,
@@ -159,10 +153,10 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         await Expect("Currencies: invalid code", () => api.UpsertCurrencyAsync(stateLanguage.Code, "US",
             new UpsertCurrencyRequest(existing.CurrencyName, existing.Symbol, existing.SymbolPosition, existing.SpaceBetweenSymbolAndAmount,
                 existing.DecimalSeparator, existing.ThousandsSeparator, existing.DecimalPlaces, existing.NegativePattern), ct), 422);
-        await Expect("Currencies: name max length", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode,
+        await Expect("Currencies: name maximum length", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode,
             new UpsertCurrencyRequest(new string('N', 101), existing.Symbol, existing.SymbolPosition, existing.SpaceBetweenSymbolAndAmount,
                 existing.DecimalSeparator, existing.ThousandsSeparator, existing.DecimalPlaces, existing.NegativePattern), ct), 422);
-        await Expect("Currencies: symbol max length", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode,
+        await Expect("Currencies: symbol maximum length", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode,
             new UpsertCurrencyRequest(existing.CurrencyName, new string('S', 6), existing.SymbolPosition, existing.SpaceBetweenSymbolAndAmount,
                 existing.DecimalSeparator, existing.ThousandsSeparator, existing.DecimalPlaces, existing.NegativePattern), ct), 422);
         await Expect("Currencies: invalid position", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode,
@@ -182,30 +176,27 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
     private async Task TranslationsAsync(CancellationToken ct)
     {
         if (stateLanguage is null) return;
-        createdTranslationCode = $"TST{suffix[^4..]}";
+        createdTranslationCode = NextCode(17);
         createdTranslationLanguage = stateLanguage.Code;
 
         await Expect("Translations: invalid code", () => api.CreateTranslationAsync(new CreateTranslationRequest("bad", stateLanguage.Code, "x"), ct), 422);
-        await Expect("Translations: empty text", () => api.CreateTranslationAsync(new CreateTranslationRequest("TST0001", stateLanguage.Code, ""), ct), 422);
-        await Expect("Translations: text max length", () => api.CreateTranslationAsync(new CreateTranslationRequest("TST0002", stateLanguage.Code, new string('x', 4001)), ct), 422);
-        await Expect("Translations: max length constraint", () => api.CreateTranslationAsync(new CreateTranslationRequest("TST0003", stateLanguage.Code, "123456", null, 5), ct), 422);
+        await Expect("Translations: empty text", () => api.CreateTranslationAsync(new CreateTranslationRequest(NextCode(18), stateLanguage.Code, ""), ct), 422);
+        await Expect("Translations: text maximum length", () => api.CreateTranslationAsync(new CreateTranslationRequest(NextCode(19), stateLanguage.Code, new string('x', 4001)), ct), 422);
+        await Expect("Translations: max length constraint", () => api.CreateTranslationAsync(new CreateTranslationRequest(NextCode(20), stateLanguage.Code, "123456", null, 5), ct), 422);
         await Expect("Translations: create", () => api.CreateTranslationAsync(new CreateTranslationRequest(createdTranslationCode, stateLanguage.Code, "Original", "validation", 100), ct), 201);
         await Expect("Translations: duplicate", () => api.CreateTranslationAsync(new CreateTranslationRequest(createdTranslationCode, stateLanguage.Code, "Duplicate"), ct), 409);
 
-        ApiResult<TranslationDto> created = await api.GetTranslationAsync(createdTranslationCode, stateLanguage.Code, ct);
-        ExpectValue("Translations: exact lookup", created, 200);
-        if (created.IsSuccess && created.Value is not null)
-        {
-            bool correct = created.Value.Text == "Original" && !created.Value.IsFallback && created.Value.ResolvedLanguageCode == stateLanguage.Code;
-            Add("Translations: exact lookup semantics", correct, 200, 200, created.Value.Text);
-        }
+        ApiResult<TranslationDto> exact = await api.GetTranslationAsync(createdTranslationCode, stateLanguage.Code, ct);
+        ExpectValue("Translations: exact lookup", exact, 200);
+        if (exact.IsSuccess && exact.Value is not null)
+            Add("Translations: exact lookup semantics", exact.Value.Text == "Original" && !exact.Value.IsReviewed &&
+                exact.Value.LanguageCode.Equals(stateLanguage.Code, StringComparison.OrdinalIgnoreCase), 200, 200);
 
         await Expect("Translations: update", () => api.UpdateTranslationAsync(createdTranslationCode, stateLanguage.Code,
             new UpdateTranslationRequest("Updated", "updated"), ct), 200);
         await Expect("Translations: reviewed=true", () => api.SetTranslationReviewedAsync(createdTranslationCode, stateLanguage.Code, true, ct), 204);
         ApiResult<TranslationDto> reviewed = await api.GetTranslationAsync(createdTranslationCode, stateLanguage.Code, ct);
-        bool reviewedOk = reviewed.IsSuccess && reviewed.Value?.IsReviewed == true;
-        Add("Translations: reviewed state", reviewedOk, 200, reviewed.IsSuccess ? 200 : reviewed.Error?.Status);
+        Add("Translations: reviewed state", reviewed.IsSuccess && reviewed.Value?.IsReviewed == true, 200, reviewed.IsSuccess ? 200 : reviewed.Error?.Status);
         await Expect("Translations: update resets review", () => api.UpdateTranslationAsync(createdTranslationCode, stateLanguage.Code,
             new UpdateTranslationRequest("Updated again"), ct), 200);
         ApiResult<TranslationDto> reset = await api.GetTranslationAsync(createdTranslationCode, stateLanguage.Code, ct);
@@ -215,7 +206,7 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         await Expect("Translations: module dictionary", () => api.GetModuleTranslationsAsync("TST", stateLanguage.Code, ct), 200);
         await Expect("Translations: delete", () => api.DeleteTranslationAsync(createdTranslationCode, stateLanguage.Code, ct), 204);
         createdTranslationCode = null;
-        await Expect("Translations: delete missing", () => api.DeleteTranslationAsync($"TST{suffix[^4..]}", stateLanguage.Code, ct), 404);
+        await Expect("Translations: delete missing", () => api.DeleteTranslationAsync(NextCode(21), stateLanguage.Code, ct), 404);
     }
 
     private async Task FallbackAndProtectionAsync(CancellationToken ct)
@@ -228,12 +219,11 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         TranslationDto? english = null;
         TranslationDto? parent = null;
         TranslationDto? defaultOnly = null;
-        int pages = Math.Min(first.Value.TotalPages, 20);
-        for (int page = 1; page <= pages && (english is null || parent is null || defaultOnly is null); page++)
+        for (int page = 1; page <= Math.Min(first.Value.TotalPages, 20) && (parent is null || defaultOnly is null); page++)
         {
             ApiResult<PagedResult<TranslationDto>> current = page == 1 ? first : await api.GetTranslationsPagedAsync(page, 50, null, null, null, ct);
             if (!current.IsSuccess || current.Value is null) continue;
-            foreach (TranslationDto item in current.Value.Items.Where(x => string.Equals(x.LanguageCode, defaultLanguage, StringComparison.OrdinalIgnoreCase)))
+            foreach (TranslationDto item in current.Value.Items.Where(x => x.LanguageCode.Equals(defaultLanguage, StringComparison.OrdinalIgnoreCase)))
             {
                 ApiResult<IReadOnlyList<TranslationDto>> variants = await api.GetTranslationVariantsAsync(item.Code, ct);
                 if (!variants.IsSuccess || variants.Value is null) continue;
@@ -249,17 +239,15 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         {
             ApiResult<TranslationLookupDto> lookup = await api.GetTranslationAsync(parent.Code, "es-MX", ct);
             bool ok = lookup.IsSuccess && lookup.Value?.IsFallback == true && lookup.Value.ResolvedLanguageCode.Equals("es", StringComparison.OrdinalIgnoreCase);
-            Add("Fallback: es-MX -> es", ok, 200, lookup.IsSuccess ? 200 : lookup.Error?.Status,
-                lookup.Value?.ResolvedLanguageCode);
+            Add("Fallback: es-MX -> es", ok, 200, lookup.IsSuccess ? 200 : lookup.Error?.Status, lookup.Value?.ResolvedLanguageCode);
         }
-        else Add("Fallback: es-MX -> es", true, null, null, "SKIPPED: no safe existing fixture with es but without es-MX.");
+        else Add("Fallback: es-MX -> es", true, null, null, "SKIPPED: no safe existing es-without-es-MX fixture.");
 
         if (defaultOnly is not null)
         {
             ApiResult<TranslationLookupDto> lookup = await api.GetTranslationAsync(defaultOnly.Code, "es-MX", ct);
             bool ok = lookup.IsSuccess && lookup.Value?.IsFallback == true && lookup.Value.ResolvedLanguageCode.Equals(defaultLanguage, StringComparison.OrdinalIgnoreCase);
-            Add("Fallback: es-MX -> default", ok, 200, lookup.IsSuccess ? 200 : lookup.Error?.Status,
-                lookup.Value?.ResolvedLanguageCode);
+            Add("Fallback: es-MX -> default", ok, 200, lookup.IsSuccess ? 200 : lookup.Error?.Status, lookup.Value?.ResolvedLanguageCode);
         }
         else Add("Fallback: es-MX -> default", true, null, null, "SKIPPED: no safe existing default-only fixture.");
 
@@ -271,27 +259,23 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
     {
         if (stateLanguage is null) return;
         ApiResult<PagedResult<TranslationDto>> page = await api.GetTranslationsPagedAsync(0, 500, null, stateLanguage.Code, null, ct);
-        bool clamped = page.IsSuccess && page.Value is not null && page.Value.Page == 1 && page.Value.PageSize == 200;
-        Add("Pagination: page/pageSize are clamped", clamped, 200, page.IsSuccess ? 200 : page.Error?.Status);
+        Add("Pagination: page/pageSize clamped", page.IsSuccess && page.Value?.Page == 1 && page.Value.PageSize == 200,
+            200, page.IsSuccess ? 200 : page.Error?.Status);
 
         await Expect("Bulk: empty", () => api.BulkUpsertTranslationsAsync(new BulkUpsertRequest([]), ct), 422);
-        await Expect("Bulk: invalid item", () => api.BulkUpsertTranslationsAsync(new BulkUpsertRequest([
+        await Expect("Bulk: invalid code", () => api.BulkUpsertTranslationsAsync(new BulkUpsertRequest([
             new BulkTranslationEntry("bad", stateLanguage.Code, "x")]), ct), 422);
         await Expect("Bulk: over 5000", () => api.BulkUpsertTranslationsAsync(new BulkUpsertRequest(
-            Enumerable.Range(0, 5001).Select(i => new BulkTranslationEntry($"TST{(i % 9999) + 1:D4}", stateLanguage.Code, "x")).ToArray()), ct), 422);
+            Enumerable.Range(0, 5001).Select(i => new BulkTranslationEntry(NextCode(i + 100), stateLanguage.Code, "x")).ToArray()), ct), 422);
 
-        createdBulkCode1 = $"TST{suffix[^4..]}";
-        int second = (int.Parse(suffix[^4..]) % 9000) + 1000;
-        createdBulkCode2 = $"TST{second:D4}";
-        if (createdBulkCode1 == createdBulkCode2) createdBulkCode2 = "TST9999";
-
+        createdBulkCode1 = NextCode(31);
+        createdBulkCode2 = NextCode(32);
         BulkUpsertRequest bulk = new([
             new BulkTranslationEntry(createdBulkCode1, stateLanguage.Code, "Bulk one"),
             new BulkTranslationEntry(createdBulkCode2, stateLanguage.Code, "Bulk two")]);
         ApiResult<BulkUpsertResultDto> inserted = await api.BulkUpsertTranslationsAsync(bulk, ct);
         ExpectValue("Bulk: insert", inserted, 200);
-        if (inserted.IsSuccess)
-            Add("Bulk: insert counters", inserted.Value?.Inserted == 2 && inserted.Value.Updated == 0, 200, 200);
+        if (inserted.IsSuccess) Add("Bulk: insert counters", inserted.Value?.Inserted == 2 && inserted.Value.Updated == 0, 200, 200);
 
         ApiResult<BulkUpsertResultDto> updated = await api.BulkUpsertTranslationsAsync(bulk with
         {
@@ -300,8 +284,7 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
                 new BulkTranslationEntry(createdBulkCode2, stateLanguage.Code, "Bulk two updated")]
         }, ct);
         ExpectValue("Bulk: update", updated, 200);
-        if (updated.IsSuccess)
-            Add("Bulk: update counters", updated.Value?.Updated == 2 && updated.Value.Inserted == 0, 200, 200);
+        if (updated.IsSuccess) Add("Bulk: update counters", updated.Value?.Updated == 2 && updated.Value.Inserted == 0, 200, 200);
     }
 
     private async Task RestoreAsync(CancellationToken ct)
@@ -316,15 +299,13 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
                 await api.DeleteTranslationAsync(createdBulkCode2, stateLanguage.Code, ct);
             if (stateLanguage is not null)
             {
+                await api.UpdateLanguageAsync(stateLanguage.Code, new UpdateLanguageRequest(stateLanguage.Name, stateLanguage.NativeName), ct);
                 await api.SetLanguageActiveAsync(stateLanguage.Code, stateLanguageWasActive, ct);
                 if (defaultLanguage is not null)
                     await api.SetDefaultLanguageAsync(defaultLanguage, ct);
             }
         }
-        catch (Exception ex)
-        {
-            Add("State restoration", false, null, null, ex.Message);
-        }
+        catch (Exception ex) { Add("State restoration", false, null, null, ex.Message); }
     }
 
     private async Task Expect<T>(string name, Func<Task<ApiResult<T>>> action, int expected)
@@ -333,8 +314,7 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         {
             ApiResult<T> result = await action();
             int? actual = result.StatusCode == 0 ? null : (int)result.StatusCode;
-            bool passed = actual == expected;
-            Add(name, passed, expected, actual, result.Error?.Detail);
+            Add(name, actual == expected, expected, actual, result.Error?.Detail);
         }
         catch (Exception ex) { Add(name, false, expected, null, ex.Message); }
     }
@@ -364,6 +344,13 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
             Add(name, (int)response.StatusCode == expected, expected, (int)response.StatusCode);
         }
         catch (Exception ex) { Add(name, false, expected, null, ex.Message); }
+    }
+
+    private string NextCode(int salt)
+    {
+        int value = (int.Parse(suffix[^4..]) + salt) % 9999;
+        if (value < 1) value += 1;
+        return $"TST{value:D4}";
     }
 
     private void Add(string name, bool passed, int? expected, int? actual, string? detail = null)
