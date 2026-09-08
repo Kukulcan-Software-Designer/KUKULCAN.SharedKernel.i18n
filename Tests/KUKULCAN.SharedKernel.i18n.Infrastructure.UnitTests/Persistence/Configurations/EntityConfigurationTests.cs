@@ -48,22 +48,19 @@ public sealed class EntityConfigurationTests
     }
 
     [Test]
-    public void Language_DefaultIndex_IsUniqueAndFilteredToDefaultLanguages()
+    public void LanguageConfiguration_DoesNotConfigureProviderSpecificDefaultIndex()
     {
         var modelBuilder = new ModelBuilder();
 
         new LanguageConfiguration().Configure(modelBuilder.Entity<Language>());
 
         IMutableEntityType entity = modelBuilder.Model.FindEntityType(typeof(Language))!;
-        IMutableIndex index = entity.GetIndexes()
-            .Single(index => index.Properties.Select(property => property.Name).SequenceEqual(new[] { nameof(Language.IsDefault) }));
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(index.IsUnique, Is.True);
-            Assert.That(index.GetDatabaseName(), Is.EqualTo("UX_Languages_Default"));
-            Assert.That(index.GetFilter(), Is.EqualTo("\"IsDefault\" = true"));
-        });
+        Assert.That(
+            entity.GetIndexes().Any(index =>
+                index.Properties.Select(property => property.Name)
+                    .SequenceEqual(new[] { nameof(Language.IsDefault) })),
+            Is.False);
     }
 
     [Test]
