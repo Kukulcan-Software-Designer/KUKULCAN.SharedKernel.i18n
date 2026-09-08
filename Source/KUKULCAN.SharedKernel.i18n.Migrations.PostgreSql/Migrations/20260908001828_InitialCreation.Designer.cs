@@ -9,10 +9,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql
+namespace KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.Migrations
 {
     [DbContext(typeof(I18NDbContext))]
-    [Migration("20260823095510_InitialCreation")]
+    [Migration("20260908001828_InitialCreation")]
     partial class InitialCreation
     {
         /// <inheritdoc />
@@ -135,7 +135,8 @@ namespace KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql
                         .HasDatabaseName("UX_Languages_Code");
 
                     b.HasIndex("IsDefault")
-                        .HasDatabaseName("IX_Languages_Default")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Languages_Default")
                         .HasFilter("\"IsDefault\" = true");
 
                     b.ToTable("Languages", "i18n");
