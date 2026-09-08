@@ -8,7 +8,7 @@ using Spectre.Console;
 namespace KUKULCAN.SharedKernel.i18n.Client.Validation;
 
 /// <summary>Runs a non-destructive API contract validation suite against an existing i18n installation.</summary>
-public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http, ApiSettings settings)
+public sealed class ValidationScenarioRunner(I18NApiClient api, ApiSettings settings)
 {
     private readonly List<ScenarioResult> results = [];
     private readonly string suffix = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
@@ -115,7 +115,8 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
             {
                 ApiResult<Unit> reactivated = await api.SetLanguageActiveAsync(stateLanguage.Code, true, ct);
                 if (!reactivated.IsSuccess) return reactivated;
-                await api.SetLanguageActiveAsync(stateLanguage.Code, false, ct);
+                ApiResult<Unit> deactivated = await api.SetLanguageActiveAsync(stateLanguage.Code, false, ct);
+                if (!deactivated.IsSuccess) return deactivated;
                 return await api.SetDefaultLanguageAsync(stateLanguage.Code, ct);
             }, 409);
             await Expect("Languages: restore default", () => api.SetDefaultLanguageAsync(defaultLanguage, ct), 204);
@@ -193,35 +194,43 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
         if (stateLanguage is null) return;
         createdTranslationCode = await FindUnusedCodeAsync(17, ct);
         createdTranslationLanguage = stateLanguage.Code;
+        string emptyTextCode = await FindUnusedCodeAsync(18, ct);
+        string maxTextCode = await FindUnusedCodeAsync(19, ct);
+        string maxLengthCode = await FindUnusedCodeAsync(20, ct);
+        string missingDeleteCode = await FindUnusedCodeAsync(21, ct);
 
         await Expect("Translations: invalid code", () => api.CreateTranslationAsync(new CreateTranslationRequest("bad", stateLanguage.Code, "x"), ct), 422);
-        await Expect("Translations: empty text", () => api.CreateTranslationAsync(new CreateTranslationRequest(await FindUnusedCodeAsync(18, ct), stateLanguage.Code, ""), ct), 422);
-        await Expect("Translations: text maximum length", () => api.CreateTranslationAsync(new CreateTranslationRequest(await FindUnusedCodeAsync(19, ct), stateLanguage.Code, new string('x', 4001)), ct), 422);
-        await Expect("Translations: max length constraint", () => api.CreateTranslationAsync(new CreateTranslationRequest(await FindUnusedCodeAsync(20, ct), stateLanguage.Code, "123456", null, 5), ct), 422);
+        await Expect("Translations: empty text", () => api.CreateTranslationAsync(new CreateTranslationRequest(emptyTextCode, stateLanguage.Code, ""), ct), 422);
+        await Expect("Translations: text maximum length", () => api.CreateTranslationAsync(new CreateTranslationRequest(maxTextCode, stateLanguage.Code, new string('x', 4001)), ct), 422);
+        await Expect("Translations: max length constraint", () => api.CreateTranslationAsync(new CreateTranslationRequest(maxLengthCode, stateLanguage.Code, "123456", null, 5), ct), 422);
         await Expect("Translations: create", () => api.CreateTranslationAsync(new CreateTranslationRequest(createdTranslationCode, stateLanguage.Code, "Original", "validation", 100), ct), 201);
         await Expect("Translations: duplicate", () => api.CreateTranslationAsync(new CreateTranslationRequest(createdTranslationCode, stateLanguage.Code, "Duplicate"), ct), 409);
 
-        ApiResult<TranslationDto> exact = await api.GetTranslationAsync(createdTranslationCode, stateLanguage.Code, ct);
+        ApiResult<TranslationLookupDto> exact = await api.GetTranslationAsync(createdTranslationCode, stateLanguage.Code, ct);
         ExpectValue("Translations: exact lookup", exact, 200);
         if (exact.IsSuccess && exact.Value is not null)
-            Add("Translations: exact lookup semantics", exact.Value.Text == "Original" && !exact.Value.IsReviewed &&
-                exact.Value.LanguageCode.Equals(stateLanguage.Code, StringComparison.OrdinalIgnoreCase), 200, 200);
+            Add("Translations: exact lookup semantics", exact.Value.Text == "Original" &&
+                exact.Value.LanguageCode.Equals(stateLanguage.Code, StringComparison.OrdinalIgnoreCase) &&
+                !exact.Value.IsFallback && exact.Value.ResolvedLanguageCode.Equals(stateLanguage.Code, StringComparison.OrdinalIgnoreCase),
+                200, 200);
 
         await Expect("Translations: update", () => api.UpdateTranslationAsync(createdTranslationCode, stateLanguage.Code,
             new UpdateTranslationRequest("Updated", "updated"), ct), 200);
         await Expect("Translations: reviewed=true", () => api.SetTranslationReviewedAsync(createdTranslationCode, stateLanguage.Code, true, ct), 204);
-        ApiResult<TranslationDto> reviewed = await api.GetTranslationAsync(createdTranslationCode, stateLanguage.Code, ct);
-        Add("Translations: reviewed state", reviewed.IsSuccess && reviewed.Value?.IsReviewed == true, 200, reviewed.IsSuccess ? 200 : reviewed.Error?.Status);
+        ApiResult<IReadOnlyList<TranslationDto>> reviewedVariants = await api.GetTranslationVariantsAsync(createdTranslationCode, ct);
+        TranslationDto? reviewed = reviewedVariants.Value?.FirstOrDefault(x => x.LanguageCode.Equals(stateLanguage.Code, StringComparison.OrdinalIgnoreCase));
+        Add("Translations: reviewed state", reviewedVariants.IsSuccess && reviewed?.IsReviewed == true, 200, reviewedVariants.IsSuccess ? 200 : reviewedVariants.Error?.Status);
         await Expect("Translations: update resets review", () => api.UpdateTranslationAsync(createdTranslationCode, stateLanguage.Code,
             new UpdateTranslationRequest("Updated again"), ct), 200);
-        ApiResult<TranslationDto> reset = await api.GetTranslationAsync(createdTranslationCode, stateLanguage.Code, ct);
-        Add("Translations: update review reset semantics", reset.IsSuccess && reset.Value?.IsReviewed == false, 200, reset.IsSuccess ? 200 : reset.Error?.Status);
+        ApiResult<IReadOnlyList<TranslationDto>> resetVariants = await api.GetTranslationVariantsAsync(createdTranslationCode, ct);
+        TranslationDto? reset = resetVariants.Value?.FirstOrDefault(x => x.LanguageCode.Equals(stateLanguage.Code, StringComparison.OrdinalIgnoreCase));
+        Add("Translations: update review reset semantics", resetVariants.IsSuccess && reset?.IsReviewed == false, 200, resetVariants.IsSuccess ? 200 : resetVariants.Error?.Status);
 
         await Expect("Translations: variants", () => api.GetTranslationVariantsAsync(createdTranslationCode, ct), 200);
         await Expect("Translations: module dictionary", () => api.GetModuleTranslationsAsync("TST", stateLanguage.Code, ct), 200);
         await Expect("Translations: delete", () => api.DeleteTranslationAsync(createdTranslationCode, stateLanguage.Code, ct), 204);
         createdTranslationCode = null;
-        await Expect("Translations: delete missing", () => api.DeleteTranslationAsync(await FindUnusedCodeAsync(21, ct), stateLanguage.Code, ct), 404);
+        await Expect("Translations: delete missing", () => api.DeleteTranslationAsync(missingDeleteCode, stateLanguage.Code, ct), 404);
     }
 
     private async Task FallbackAndProtectionAsync(CancellationToken ct)
