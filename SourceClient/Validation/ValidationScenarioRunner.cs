@@ -169,7 +169,7 @@ public sealed class ValidationScenarioRunner(I18NApiClient api, HttpClient http,
             return;
         }
 
-        await Expect("Currencies: missing language", () => api.GetCurrenciesAsync($"zz-MISSING-{suffix}", ct), 200);
+        await Expect("Currencies: missing language upsert", () => api.UpsertCurrencyAsync($"zz-MISSING-{suffix}", existing.CurrencyCode, existing.ToRequest(), ct), 404);
         await Expect("Currencies: invalid code length", () => api.UpsertCurrencyAsync(stateLanguage.Code, "US", existing.ToRequest(), ct), 422);
         await Expect("Currencies: invalid code characters", () => api.UpsertCurrencyAsync(stateLanguage.Code, "U$D", existing.ToRequest(), ct), 422);
         await Expect("Currencies: name empty", () => api.UpsertCurrencyAsync(stateLanguage.Code, existing.CurrencyCode, existing.ToRequest(currencyName: ""), ct), 422);
