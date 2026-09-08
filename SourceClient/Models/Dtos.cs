@@ -14,7 +14,29 @@ public record TranslationDto(Guid Id, string Code, string Module, string Languag
 public record TranslationLookupDto(string Code, string LanguageCode, string Text, bool IsFallback, string ResolvedLanguageCode);
 public record TranslationMapDto(string Module, string LanguageCode, [property: JsonPropertyName("translations")] Dictionary<string, string> Translations);
 public record BulkUpsertResultDto(int Inserted, int Updated, int Skipped);
-public record CreateTranslationRequest(string Code, string LanguageCode, string Text, string? Context = null, int? MaxLength = null);
+
+public record CreateTranslationRequest
+{
+    public CreateTranslationRequest(string code, string languageCode, string text, string? context = null, int? maxLength = null)
+    {
+        Code = code;
+        LanguageCode = languageCode;
+        Text = text;
+        Context = context;
+        MaxLength = maxLength;
+    }
+
+    // Legacy console signature: module is derived from the translation code by the API/application layer.
+    public CreateTranslationRequest(string code, string languageCode, string text, string? module, string? context)
+        : this(code, languageCode, text, context, null) { }
+
+    public string Code { get; }
+    public string LanguageCode { get; }
+    public string Text { get; }
+    public string? Context { get; }
+    public int? MaxLength { get; }
+}
+
 public record UpdateTranslationRequest(string Text, string? Context = null);
 public record SetReviewedRequest(bool IsReviewed);
 public record BulkTranslationEntry(string Code, string LanguageCode, string Text, string? Context = null, int? MaxLength = null);
