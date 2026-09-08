@@ -11,7 +11,7 @@ The service exposes a versioned REST API under `/api/v1`.
 
 Controllers are intentionally thin. Each endpoint creates a MediatR command/query and maps the application result to an HTTP response.
 
-All responses use JSON, and failures are exposed as `ProblemDetails` where the controller declares an error response.
+Responses use JSON when a response body is defined. Successful `204 No Content` responses have no response body. Application/domain failures are returned as RFC 7807 `ProblemDetails` with the domain/application error code also exposed as the `errorCode` extension.
 
 ---
 
@@ -27,6 +27,8 @@ Two authorization policies are defined by the service:
 | `i18n.write` | Administrative create/update/delete operations |
 
 The write policy is intended for the platform administration roles described by the repository configuration, including `KUKULCAN.Admin` and `KUKULCAN.i18n.Admin`.
+
+Requests requiring authorization return `401 Unauthorized` when authentication is missing or invalid, and `403 Forbidden` when the caller is authenticated but does not satisfy the required policy.
 
 ---
 
@@ -60,7 +62,7 @@ GET /api/v1/translations/CRM0001/es-MX
 
 The lookup service walks the BCP-47 fallback hierarchy. A regional language can fall back to its parent language and then to the configured global default.
 
-The response exposes an `isFallback` indicator so clients can distinguish an exact translation from a fallback result.
+The response exposes `isFallback` and the language actually resolved by the lookup, allowing clients to distinguish an exact translation from a fallback result.
 
 The endpoint is designed as a hot path and is cached.
 
@@ -85,7 +87,11 @@ Base route:
 
 `GET /api/v1/languages` accepts `activeOnly=true` by default. Administrators can request inactive languages by setting it to `false`.
 
-The default language cannot be deactivated.
+Languages are global and are never physically deleted; there is no language-delete endpoint. A language is deactivated/reactivated through the active-state endpoint instead.
+
+The default language cannot be deactivated. Setting another active language as default transfers the default designation from the previous default; the newly selected default is active by definition.
+
+Language creation and update validate BCP-47 language codes and require non-empty display names. Application validation limits `Name` and `NativeName` to 100 characters.
 
 ---
 
@@ -105,6 +111,10 @@ Base route:
 
 Locale configuration includes date/time formats, first day of week, decimal/thousands separators and decimal precision.
 
+The application validates the language code as BCP-47; date/time format fields are required and length-limited; `FirstDayOfWeek` must be a supported enum value; decimal and thousands separators are single, non-empty and distinct characters; and both decimal-precision fields must be in the range `0..10`.
+
+A locale configuration can only be created or updated for an existing language.
+
 ---
 
 # 6. Currencies
@@ -123,24 +133,31 @@ Base route:
 
 The configuration controls symbol placement, spacing, separators, decimal places and negative-number formatting.
 
+The application validates the language code as BCP-47 and the currency code as exactly three letters. Currency name and symbol are required and length-limited by application validation; `SymbolPosition` must be a supported enum value; decimal and thousands separators are single, non-empty and distinct characters; decimal places must be in the range `0..10`; and `NegativePattern` must contain the `{amount}` placeholder.
+
+Currency upsert requires the referenced language to exist. Deleting a missing currency format returns `404 Not Found`.
+
 ---
 
 # 7. HTTP Status Semantics
 
-The API uses normal REST semantics where the controller declares the corresponding response type.
+The HTTP status is derived from the application/domain error code by the API result mapping. It is not inferred from the human-readable error message.
 
 Common responses include:
 
 | Status | Meaning |
 |---|---|
-| `200 OK` | Successful query/update operation |
-| `201 Created` | Successful creation |
-| `204 No Content` | Successful state change/delete without response body |
-| `404 Not Found` | Requested language/translation/configuration does not exist |
-| `409 Conflict` | Operation violates a business or uniqueness constraint |
-| `422 Unprocessable Entity` | Request passed transport parsing but failed validation |
+| `200 OK` | Successful query or update operation |
+| `201 Created` | Successful language/translation creation |
+| `204 No Content` | Successful state change or delete without response body |
+| `401 Unauthorized` | Authentication is missing or invalid |
+| `403 Forbidden` | Caller is authenticated but does not satisfy the required authorization policy |
+| `404 Not Found` | Requested language, translation, locale configuration or currency format does not exist |
+| `409 Conflict` | Operation violates a business or uniqueness constraint, including inactive-default selection, default-language deactivation, duplicate language/translation, or protected translation deletion |
+| `422 Unprocessable Entity` | Request passed transport parsing but failed application/domain validation |
+| `500 Internal Server Error` | Error code is not mapped to one of the known domain/application HTTP categories |
 
-Errors are represented as `ProblemDetails` where applicable.
+Errors are represented as RFC 7807 `ProblemDetails`. The domain/application error code is also returned in the `errorCode` extension.
 
 ---
 
@@ -160,7 +177,7 @@ exact translation
                            |
                            +-- found --> return parent
                            |
-                           +-- missing --> global default language
+                           +-- missing --> configured global default language
                                                 |
                                                 +-- found --> return fallback
 ```
@@ -172,10 +189,10 @@ Request: es-MX
    |
    +--> es-MX
    +--> es
-   +--> configured default (normally en)
+   +--> configured default
 ```
 
-The client does not need to implement this algorithm itself.
+The client does not need to implement this algorithm itself. The lookup response identifies whether fallback occurred and reports the actual language used.
 
 ---
 
@@ -185,10 +202,12 @@ The administrative API is deliberately more restrictive than runtime lookup.
 
 Important protections include:
 
+- Languages are never physically deleted.
 - The default language cannot be deactivated.
+- Setting an inactive language as the default is rejected; the language must be active first.
 - Default-language translation deletion is protected by the service's translation rules.
 - Updating translation text clears its reviewed status.
-- Bulk operations are bounded to protect the service from unbounded request payloads.
+- Bulk operations are bounded to a maximum of 5,000 entries.
 
 ---
 
