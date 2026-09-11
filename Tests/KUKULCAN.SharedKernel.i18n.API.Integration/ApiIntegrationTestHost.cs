@@ -1,11 +1,14 @@
 using KUKULCAN.SharedKernel.i18n.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NUnit.Framework;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
@@ -106,11 +109,19 @@ public sealed class ApiWebApplicationFactory(
                 ["Jwt:SecretKey"] = IntegrationJwtConfiguration.SecretKey,
                 ["Jwt:Issuer"] = IntegrationJwtConfiguration.Issuer,
                 ["Jwt:Audience"] = IntegrationJwtConfiguration.Audience,
+                ["Serilog:MinimumLevel:Override:Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"] = "Error",
             });
         });
 
         builder.ConfigureTestServices(services =>
         {
+            // Replace the effective production Data Protection registrations.
+            // ConfigureTestServices runs after the application service registration.
+            // Remove the XML key manager as well so it cannot initialize a persisted key ring.
+            services.RemoveAll<IDataProtectionProvider>();
+            services.RemoveAll<IKeyManager>();
+            services.AddSingleton<IDataProtectionProvider, EphemeralDataProtectionProvider>();
+
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = TestAuthenticationHandler.SchemeName;

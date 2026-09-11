@@ -1,6 +1,7 @@
 using KUKULCAN.SharedKernel.i18n.Client.ApiClient;
 using KUKULCAN.SharedKernel.i18n.Client.Configuration;
 using KUKULCAN.SharedKernel.i18n.Client.UI;
+using KUKULCAN.SharedKernel.i18n.Client.Validation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
@@ -37,10 +38,19 @@ services.AddHttpClient<I18NApiClient>(client =>
 });
 
 services.AddTransient<ConsoleMenu>();
+services.AddTransient<ValidationScenarioRunner>();
 
-var sp = services.BuildServiceProvider();
+using ServiceProvider sp = services.BuildServiceProvider();
 
-// ── Run ───────────────────────────────────────────────────────────────────────
+// ── Validation mode ───────────────────────────────────────────────────────────
+if (args.Any(x => string.Equals(x, "--validate", StringComparison.OrdinalIgnoreCase)))
+{
+    using var validationCts = new CancellationTokenSource();
+    Console.CancelKeyPress += (_, e) => { e.Cancel = true; validationCts.Cancel(); };
+    return await sp.GetRequiredService<ValidationScenarioRunner>().RunAsync(validationCts.Token);
+}
+
+// ── Interactive client ────────────────────────────────────────────────────────
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
