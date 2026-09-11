@@ -62,3 +62,35 @@ jobs:
             echo "Running integration tests: ${project}"
             dotnet test "${project}" --no-build --configuration Release --logger "console;verbosity=normal"
           done
+
+      - name: Build Docker image
+        run: docker build --tag kukulcan-sharedkernel-i18n:ci .
+
+      - name: Run Docker container
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach \
+            --name kukulcan-sharedkernel-i18n-ci \
+            --publish 8080:8080 \
+            --env ASPNETCORE_HTTP_PORTS=8080 \
+            kukulcan-sharedkernel-i18n:ci
+
+          cleanup() {
+            docker logs kukulcan-sharedkernel-i18n-ci || true
+            docker rm --force kukulcan-sharedkernel-i18n-ci || true
+          }
+          trap cleanup EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/health/live; then
+              echo
+              echo "Docker container health check passed."
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          echo "Docker container did not become healthy."
+          exit 1
