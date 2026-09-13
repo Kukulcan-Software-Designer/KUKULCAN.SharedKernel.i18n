@@ -74,6 +74,8 @@ jobs:
             --name kukulcan-sharedkernel-i18n-ci \
             --publish 8080:8080 \
             --env ASPNETCORE_HTTP_PORTS=8080 \
+            --env Kukulcan__Database__Provider=PostgresSql \
+            --env KUKULCAN__Database__ConnectionString='Host=localhost; Port=5432; Database=Atlas; Username=postgres; Password=vcl5nht4HtCkm5nJ' \
             kukulcan-sharedkernel-i18n:ci
 
           cleanup() {
