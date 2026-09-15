@@ -7,12 +7,17 @@ on:
 jobs:
   delete-branch:
     if: github.event.pull_request.merged == true
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
 
     steps:
       - name: Determine branch name
         id: vars
         run: echo "branch=${GITHUB_HEAD_REF}" >> $GITHUB_OUTPUT
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
       - name: Delete branch if allowed
         if: |
