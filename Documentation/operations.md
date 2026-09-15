@@ -22,17 +22,17 @@ The Infrastructure project uses the PostgreSQL EF Core provider and the API proj
 
 The principal configuration areas are:
 
-| Setting | Purpose |
-|---|---|
-| `Kukulcan__Database__Provider` | Database provider; the current service default is `PostgresSql` |
-| `Kukulcan__Database__ConnectionString` | PostgreSQL connection string |
-| `ConnectionStrings__Redis` | Redis connection string |
-| `Jwt__SecretKey` | JWT signing secret; supplied outside source control |
-| `Jwt__Issuer` | Expected token issuer |
-| `Jwt__Audience` | Expected token audience |
-| `Kukulcan__Database__Migration__AutoMigrateOnStartup` | Controls automatic migration at startup |
-| `ASPNETCORE_ENVIRONMENT` | ASP.NET Core environment |
-| `ASPNETCORE_HTTP_PORTS` | HTTP port used by the ASP.NET Core application; Docker uses `8080` |
+| Setting                                               | Purpose                                                            |
+|-------------------------------------------------------|--------------------------------------------------------------------|
+| `Kukulcan__Database__Provider`                        | Database provider; the current service default is `PostgresSql`    |
+| `Kukulcan__Database__ConnectionString`                | PostgreSQL connection string                                       |
+| `ConnectionStrings__Redis`                            | Redis connection string                                            |
+| `Jwt__SecretKey`                                      | JWT signing secret; supplied outside source control                |
+| `Jwt__Issuer`                                         | Expected token issuer                                              |
+| `Jwt__Audience`                                       | Expected token audience                                            |
+| `Kukulcan__Database__Migration__AutoMigrateOnStartup` | Controls automatic migration at startup                            |
+| `ASPNETCORE_ENVIRONMENT`                              | ASP.NET Core environment                                           |
+| `ASPNETCORE_HTTP_PORTS`                               | HTTP port used by the ASP.NET Core application; Docker uses `8080` |
 
 ASP.NET Core environment variables use double underscores (`__`) to represent configuration-section separators (`:`). For example, `Kukulcan__Database__ConnectionString` maps to `Kukulcan:Database:ConnectionString`.
 
@@ -105,10 +105,10 @@ Redis is a performance layer. PostgreSQL remains authoritative. A Redis outage m
 
 The service exposes:
 
-| Endpoint | Meaning |
-|---|---|
-| `/health` | Overall health; includes all registered health checks |
-| `/health/live` | Process liveness; only the `self` check is selected |
+| Endpoint        | Meaning                                                                            |
+|-----------------|------------------------------------------------------------------------------------|
+| `/health`       | Overall health; includes all registered health checks                              |
+| `/health/live`  | Process liveness; only the `self` check is selected                                |
 | `/health/ready` | Dependency readiness; selects PostgreSQL and Redis checks when they are registered |
 
 The health-check registrations are intentionally separated by tags:
