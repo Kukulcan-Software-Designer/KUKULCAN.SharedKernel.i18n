@@ -99,6 +99,183 @@ docker compose --profile dev-tools up -d
 
 ---
 
+
+## Docker
+
+The project provides a root-level `Dockerfile` for containerizing the ASP.NET Core 10 API. Docker is used for local execution, CI runtime validation, and production image publication.
+
+### Build the Docker image
+
+Run the following command from the repository root:
+
+```bash
+docker build --tag kukulcan-sharedkernel-i18n:local .
+```
+
+The image uses a multi-stage build. The build stage uses the .NET 10 SDK image and publishes the API in `Release` configuration. The runtime stage uses the ASP.NET 10 runtime image.
+
+### Run the API container
+
+Start the image and publish container port `8080` to host port `8080`:
+
+```bash
+docker run --detach \
+  --name kukulcan-sharedkernel-i18n \
+  --publish 8080:8080 \
+  --env ASPNETCORE_HTTP_PORTS=8080 \
+  kukulcan-sharedkernel-i18n:local
+```
+
+Verify that the container is running:
+
+```bash
+docker ps
+docker logs kukulcan-sharedkernel-i18n
+```
+
+Verify the liveness endpoint:
+
+```bash
+curl --fail http://127.0.0.1:8080/health/live
+```
+
+Stop and remove the container:
+
+```bash
+docker rm --force kukulcan-sharedkernel-i18n
+```
+
+### Run with application configuration
+
+Configuration can be supplied through environment variables. For example:
+
+```bash
+docker run --detach \
+  --name kukulcan-sharedkernel-i18n \
+  --publish 8080:8080 \
+  --env ASPNETCORE_HTTP_PORTS=8080 \
+  --env KUKULCAN__Database__ConnectionString='Host=<database-host>;Port=5432;Database=<database>;Username=<username>;Password=<password>' \
+  --env Jwt__SecretKey='<application-secret>' \
+  kukulcan-sharedkernel-i18n:local
+```
+
+Replace the placeholder values with environment-specific configuration.
+
+Do not commit real database passwords, JWT secrets, Docker Hub tokens, or other credentials to the repository.
+
+### Docker image inspection
+
+List local images:
+
+```bash
+docker image ls kukulcan-sharedkernel-i18n
+```
+
+Inspect an image:
+
+```bash
+docker image inspect kukulcan-sharedkernel-i18n:local
+```
+
+Inspect the Docker Engine storage root:
+
+```bash
+docker info --format '{{.DockerRootDir}}'
+```
+
+Docker images are managed by the Docker Engine and are not stored as a single image file in the repository.
+
+### Docker in CI
+
+The CI workflow builds the image using the tag:
+
+```text
+kukulcan-sharedkernel-i18n:ci
+```
+
+It then starts a container and verifies:
+
+```text
+GET /health/live
+```
+
+The CI image is a validation image and is not published to Docker Hub.
+
+Equivalent local smoke-test commands are:
+
+```bash
+docker build --tag kukulcan-sharedkernel-i18n:ci .
+
+docker run --detach \
+  --name kukulcan-sharedkernel-i18n-ci \
+  --publish 8080:8080 \
+  --env ASPNETCORE_HTTP_PORTS=8080 \
+  kukulcan-sharedkernel-i18n:ci
+
+curl --fail http://127.0.0.1:8080/health/live
+
+docker rm --force kukulcan-sharedkernel-i18n-ci
+```
+
+### Publish the production image to Docker Hub
+
+Production publication is handled by:
+
+```text
+.github/workflows/docker-publish.yml
+```
+
+The workflow runs when a semantic version tag matching `v*.*.*` is pushed.
+
+Example:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The workflow authenticates to Docker Hub with these GitHub repository secrets:
+
+```text
+DOCKERHUB_USERNAME
+DOCKERHUB_TOKEN
+```
+
+For `v1.0.0`, the production image receives these tags:
+
+```text
+<DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:1.0.0
+<DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:1.0
+<DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:1
+<DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:latest
+```
+
+The complete Docker build, CI, release, Docker Hub, and troubleshooting documentation is available in `Documentation/DOCKER.md`.
+
+### Pull and run a published image
+
+For a published version:
+
+```bash
+docker pull <DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:1.0.0
+```
+
+Run the exact version:
+
+```bash
+docker run --detach \
+  --name kukulcan-sharedkernel-i18n \
+  --publish 8080:8080 \
+  --env ASPNETCORE_HTTP_PORTS=8080 \
+  --env KUKULCAN__Database__ConnectionString='<connection-string>' \
+  --env Jwt__SecretKey='<application-secret>' \
+  <DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:1.0.0
+```
+
+Using an explicit version tag such as `1.0.0` makes the deployment reproducible.
+
+---
+
 ## Local Startup (Without Docker)
 
 ```bash
