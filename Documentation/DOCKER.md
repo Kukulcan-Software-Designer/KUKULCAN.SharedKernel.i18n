@@ -184,6 +184,142 @@ Secrets must not be committed to the repository or embedded in the Dockerfile.
 
 ---
 
+## 5.1 Local Deployment Scripts
+
+For a local deployment against an existing PostgreSQL Docker container, the repository provides cross-platform helpers in:
+
+```text
+Documentation/Scripts/Docker/
+├── KUKULCAN.SharedKernel.i18n-docker-linux.sh
+├── KUKULCAN.SharedKernel.i18n-docker-macos.sh
+└── KUKULCAN.SharedKernel.i18n-docker-windows.ps1
+```
+
+### Purpose
+
+The scripts automate the local deployment of the i18n API when PostgreSQL is already available in the Docker container `mypostgres` and the application database is `Atlas`.
+
+They:
+
+- show progress by percentage;
+- stop immediately when a command fails;
+- show the failing command's output;
+- show container logs when startup or health checks fail;
+- create or reuse the `kukulcan-local` Docker network;
+- connect `mypostgres` to that network;
+- verify PostgreSQL readiness and the `Atlas` database;
+- build the `kukulcan-i18n:local` image;
+- start the API on host port `8080`;
+- verify `/health/live` and `/health/ready`.
+
+The scripts do not create the PostgreSQL database. If `Atlas` does not exist, they stop and report the database check failure.
+
+### Linux
+
+From the repository root:
+
+```bash
+chmod +x Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-linux.sh
+./Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-linux.sh
+```
+
+### macOS
+
+From the repository root:
+
+```bash
+chmod +x Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-macos.sh
+./Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-macos.sh
+```
+
+### Windows PowerShell
+
+From the repository root:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\Documentation\Scripts\Docker\KUKULCAN.SharedKernel.i18n-docker-windows.ps1
+```
+
+### Default local configuration
+
+The helper scripts use:
+
+| Setting | Default |
+|---|---|
+| PostgreSQL container | `mypostgres` |
+| PostgreSQL host | `mypostgres` |
+| PostgreSQL port | `5432` |
+| Database | `Atlas` |
+| Database user | `postgres` |
+| Provider | `PostgresSql` |
+| Docker network | `kukulcan-local` |
+| API container | `kukulcan-i18n` |
+| Host API port | `8080` |
+| Image | `kukulcan-i18n:local` |
+| JWT issuer | `ATLAS` |
+| JWT audience | `ATLAS.i18n` |
+| Redis | empty; MemoryCache is used |
+
+### Secrets and overrides
+
+The scripts do not contain the PostgreSQL password or JWT signing secret.
+
+They read:
+
+```text
+KUKULCAN_I18N_DB_PASSWORD
+KUKULCAN_I18N_JWT_SECRET
+```
+
+When these variables are not set, the scripts prompt for the PostgreSQL password and JWT secret. An empty JWT prompt generates a temporary local secret with at least 32 characters.
+
+Additional deployment overrides are supported:
+
+```text
+KUKULCAN_I18N_IMAGE_NAME
+KUKULCAN_I18N_CONTAINER_NAME
+KUKULCAN_I18N_NETWORK_NAME
+KUKULCAN_I18N_DB_CONTAINER
+KUKULCAN_I18N_DB_PROVIDER
+KUKULCAN_I18N_DB_HOST
+KUKULCAN_I18N_DB_PORT
+KUKULCAN_I18N_DB_NAME
+KUKULCAN_I18N_DB_USER
+KUKULCAN_I18N_HTTP_PORT
+KUKULCAN_I18N_AUTO_MIGRATE
+KUKULCAN_I18N_SEED_DATA
+KUKULCAN_I18N_REDIS_CONNECTION
+KUKULCAN_I18N_REPO_ROOT
+```
+
+The scripts translate those values into the application's .NET configuration, including:
+
+```text
+ASPNETCORE_HTTP_PORTS
+Kukulcan__Database__Provider
+Kukulcan__Database__ConnectionString
+Kukulcan__Database__Migration__AutoMigrateOnStartup
+Kukulcan__Database__Migration__SeedDataOnStartup
+Jwt__SecretKey
+Jwt__Issuer
+Jwt__Audience
+ConnectionStrings__Redis
+```
+
+### Startup behavior
+
+The default script configuration enables:
+
+```text
+Kukulcan__Database__Migration__AutoMigrateOnStartup=true
+Kukulcan__Database__Migration__SeedDataOnStartup=true
+```
+
+This is intended for local development. Production deployments should use the project's normal release/CI database migration strategy rather than relying on local helper-script defaults.
+
+The Redis override is empty by default so the container does not attempt to use the `localhost:6379` value from `appsettings.json` unless Redis is deliberately configured.
+
 ## 6. Health Check
 
 The CI workflow verifies the running container through:
@@ -647,6 +783,8 @@ Do not add secrets to the Dockerfile.
 | `.github/workflows/ci.yml` | Build, test, Docker build, container startup, and health smoke test |
 | `.github/workflows/docker-publish.yml` | Production Docker Hub publication |
 | `Directory.Build.props` | Project version used as the basis for release versioning |
+| `Documentation/Scripts/Docker/*.sh` | Linux/macOS local Docker deployment helpers |
+| `Documentation/Scripts/Docker/*.ps1` | Windows PowerShell local Docker deployment helper |
 
 ---
 
