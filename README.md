@@ -316,7 +316,7 @@ A translation code follows the format **`{MÓDULO}{NNNN}`**:
 
 | Parte | Descripción                                               | Ejemplo |
 |---|-----------------------------------------------------------|---|
-| `MÓDULO` | 2–5 uppercase letters identifying the owning ItzamNa API | `CRM`, `PIM`, `WMS`, `AUTH`, `CORE` |
+| `MÓDULO` | 2–5 uppercase letters identifying the owning ATLAS API | `CRM`, `PIM`, `WMS`, `AUTH`, `CORE` |
 | `NNNN` | 4-digit sequential number with leading zeros              | `0001` … `9999` |
 
 Valid examples: `CRM0001`, `PIM0042`, `AUTH0010`, `CORE0001`, `ATLAS0001`
@@ -379,7 +379,7 @@ DELETE /api/v1/currencies/{lang}/{currency}  → Delete format
 
 ## Authentication
 
-The service uses JWT Bearer, which is shared across the ItzamNa platform.
+The service uses JWT Bearer, which is shared across the ATLAS platform.
 Authorization policies are:
 
 | Policy | Allowed Roles                           | Endpoints |
@@ -400,7 +400,7 @@ Authorization policies are:
 
 ## How to Add a New ATLAS Module
 
-1. Reserve the module prefix (2–5 letters) in the ITZAMNA catalog. Examples:  `CRM`, `PIM`, `WMS`, `ERP`, `SCM`.
+1. Reserve the module prefix (2–5 letters) in the ATLAS catalog. Examples:  `CRM`, `PIM`, `WMS`, `ERP`, `SCM`.
 2. The module can start creating translations immediately with **POST** `/api/v1/translations` or vía **bulk**.
 3. It is recommended to start codes at `0001` and reserve ranges by subsystem (e.g. `CRM0001–CRM0099` for entities, `CRM0100–CRM0199` for errors, `CRM0200–CRM0299` for UI labels).
 
@@ -443,7 +443,7 @@ No manual flush endpoint is exposed (it can be implemented in CacheKeys.Translat
 | `ConnectionStrings__I18nDb` | Database connection string | `Host=…;Database=kukulcan_i18n;…` |
 | `ConnectionStrings__Redis` | Redis connection string. Empty → uses MemoryCache | `localhost:6379`                  |
 | `Jwt__SecretKey` | JWT secret key (minimum 32 characters) | _(secreto)_                       |
-| `Jwt__Issuer` | Token issuer | `ITZAMNA`                         |
+| `Jwt__Issuer` | Token issuer | `ATLAS`                         |
 | `Jwt__Audience` | Token audience | `KUKULCAN.SharedKernel.i18n`            |
 | `Database__AutoMigrate` | Apply migrations on startup | `true`                            |
 | `ASPNETCORE_ENVIRONMENT` | Environment  (`Development` / `Production`) | `Production`                      |
