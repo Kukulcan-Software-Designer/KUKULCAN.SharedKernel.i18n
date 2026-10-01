@@ -79,19 +79,19 @@ Using a separate runtime image keeps the final image independent of the .NET SDK
 From the repository root:
 
 ```bash
-docker build --tag kukulcan-sharedkernel-i18n:local .
+docker build --tag kukulcan-i18n:local .
 ```
 
 Verify that the image exists:
 
 ```bash
-docker image ls kukulcan-sharedkernel-i18n
+docker image ls kukulcan-i18n
 ```
 
 Inspect the image:
 
 ```bash
-docker image inspect kukulcan-sharedkernel-i18n:local
+docker image inspect kukulcan-i18n:local
 ```
 
 The Docker image is managed by the Docker Engine; it is not represented by a single ordinary file in the repository.
@@ -106,10 +106,10 @@ A basic container can be started with:
 
 ```bash
 docker run --detach \
-  --name kukulcan-sharedkernel-i18n \
+  --name kukulcan-i18n \
   --publish 8080:8080 \
   --env ASPNETCORE_HTTP_PORTS=8080 \
-  kukulcan-sharedkernel-i18n:local
+  kukulcan-i18n:local
 ```
 
 The option:
@@ -129,19 +129,19 @@ docker ps
 View its logs:
 
 ```bash
-docker logs kukulcan-sharedkernel-i18n
+docker logs kukulcan-i18n
 ```
 
 Stop it:
 
 ```bash
-docker stop kukulcan-sharedkernel-i18n
+docker stop kukulcan-i18n
 ```
 
 Remove it:
 
 ```bash
-docker rm kukulcan-sharedkernel-i18n
+docker rm kukulcan-i18n
 ```
 
 ---
@@ -172,12 +172,12 @@ Example:
 
 ```bash
 docker run --detach \
-  --name kukulcan-sharedkernel-i18n \
+  --name kukulcan-i18n \
   --publish 8080:8080 \
   --env ASPNETCORE_HTTP_PORTS=8080 \
   --env KUKULCAN__Database__ConnectionString='Host=<database-host>; Port=5432; Database=<database>; Username=<username>; Password=<password>' \
   --env Jwt__SecretKey='<application-secret>' \
-  kukulcan-sharedkernel-i18n:local
+  kukulcan-i18n:local
 ```
 
 Secrets must not be committed to the repository or embedded in the Dockerfile.
@@ -222,7 +222,7 @@ The existing `.github/workflows/ci.yml` workflow performs the following Docker s
 The CI image is deliberately tagged:
 
 ```text
-kukulcan-sharedkernel-i18n:ci
+kukulcan-i18n:ci
 ```
 
 It is a validation image only. The CI workflow does **not** publish this image to Docker Hub.
@@ -230,19 +230,19 @@ It is a validation image only. The CI workflow does **not** publish this image t
 The relevant build command is:
 
 ```bash
-docker build --tag kukulcan-sharedkernel-i18n:ci .
+docker build --tag kukulcan-i18n:ci .
 ```
 
 The container is started with:
 
 ```bash
 docker run --detach \
-  --name kukulcan-sharedkernel-i18n-ci \
+  --name kukulcan-i18n-ci \
   --publish 8080:8080 \
   --env ASPNETCORE_HTTP_PORTS=8080 \
   --env KUKULCAN__Database__ConnectionString='Host=localhost; Port=5432; Database=SmokeTest; Username=postgres; Password=postgres' \
   --env Jwt__SecretKey='KUKULCAN.SharedKernel.i18n.Docker.SmokeTest.SecretKey.2026' \
-  kukulcan-sharedkernel-i18n:ci
+  kukulcan-i18n:ci
 ```
 
 The workflow retries the health endpoint for up to 30 attempts, with a two-second delay between attempts.
@@ -286,7 +286,7 @@ The publication workflow:
 The image repository name is constructed as:
 
 ```text
-<DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n
+<DOCKERHUB_USERNAME>/kukulcan-i18n
 ```
 
 The workflow does not hard-code the Docker Hub username.
@@ -332,10 +332,10 @@ v1.0.0
 the Docker metadata configuration publishes these tags:
 
 ```text
-<DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:1.0.0
-<DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:1.0
-<DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:1
-<DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:latest
+<DOCKERHUB_USERNAME>/kukulcan-i18n:1.0.0
+<DOCKERHUB_USERNAME>/kukulcan-i18n:1.0
+<DOCKERHUB_USERNAME>/kukulcan-i18n:1
+<DOCKERHUB_USERNAME>/kukulcan-i18n:latest
 ```
 
 Therefore:
@@ -387,17 +387,17 @@ dotnet test --configuration Release
 Build the container locally:
 
 ```bash
-docker build --tag kukulcan-sharedkernel-i18n:local .
+docker build --tag kukulcan-i18n:local .
 ```
 
 Run it and verify:
 
 ```bash
 docker run --detach \
-  --name kukulcan-sharedkernel-i18n-test \
+  --name kukulcan-i18n-test \
   --publish 8080:8080 \
   --env ASPNETCORE_HTTP_PORTS=8080 \
-  kukulcan-sharedkernel-i18n:local
+  kukulcan-i18n:local
 ```
 
 Then:
@@ -409,7 +409,7 @@ curl --fail http://127.0.0.1:8080/health/live
 Clean up:
 
 ```bash
-docker rm --force kukulcan-sharedkernel-i18n-test
+docker rm --force kukulcan-i18n-test
 ```
 
 ### Step 3: Create the release tag
@@ -438,19 +438,19 @@ The workflow authenticates to Docker Hub using the two repository secrets and pu
 After publication, the image can be downloaded from Docker Hub with:
 
 ```bash
-docker pull <DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:1.0.0
+docker pull <DOCKERHUB_USERNAME>/kukulcan-i18n:1.0.0
 ```
 
 Run the exact version:
 
 ```bash
 docker run --detach \
-  --name kukulcan-sharedkernel-i18n \
+  --name kukulcan-i18n \
   --publish 8080:8080 \
   --env ASPNETCORE_HTTP_PORTS=8080 \
   --env KUKULCAN__Database__ConnectionString='<connection-string>' \
   --env Jwt__SecretKey='<application-secret>' \
-  <DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:1.0.0
+  <DOCKERHUB_USERNAME>/kukulcan-i18n:1.0.0
 ```
 
 For reproducible deployments, prefer an explicit version tag such as `1.0.0` rather than relying on `latest`.
@@ -468,7 +468,7 @@ docker image ls
 Inspect an image:
 
 ```bash
-docker image inspect <DOCKERHUB_USERNAME>/kukulcan-sharedkernel-i18n:1.0.0
+docker image inspect <DOCKERHUB_USERNAME>/kukulcan-i18n:1.0.0
 ```
 
 List running containers:
@@ -522,13 +522,13 @@ If the command cannot connect to the Docker daemon, resolve the Docker Engine/se
 Inspect the logs:
 
 ```bash
-docker logs kukulcan-sharedkernel-i18n
+docker logs kukulcan-i18n
 ```
 
 Check that port `8080` is published:
 
 ```bash
-docker port kukulcan-sharedkernel-i18n
+docker port kukulcan-i18n
 ```
 
 Check the endpoint from the host:
@@ -596,7 +596,7 @@ Responsibilities:
 CI image:
 
 ```text
-kukulcan-sharedkernel-i18n:ci
+kukulcan-i18n:ci
 ```
 
 The CI image is not published.
