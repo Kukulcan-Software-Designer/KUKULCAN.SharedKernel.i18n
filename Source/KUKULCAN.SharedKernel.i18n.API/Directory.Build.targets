@@ -16,13 +16,14 @@
         <RepositoryUrl>https://github.com/Kukulcan-Software-Designer/KUKULCAN.SharedKernel.i18n</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <Description>
-		Kukulcan Software Designer's application internationalization microservice.
-		It offers:
+		KUKULCAN Software Designer's generic application internationalization microservice for the ATLAS platform.
 
-- Translations: search by unique code (`MODULE + NNNN`) and language, with an option for automatic translation to English.
-- Regional settings: date and time formats, decimal and thousands separators.
-- Currency formats: symbol, position, spacing, decimals, and negative format.
-        </Description>
+		This version:
+- Aligns service JWT configuration with ATLAS using ATLAS as the issuer and ATLAS.i18n as the audience.
+- Standardizes the Docker image and container naming to kukulcan-i18n for local and CI execution.
+- Provides HTTP-based internationalization capabilities for translations, locale configuration, and currency formatting.
+- Preserves automatic English fallback for translation lookup.
+</Description>
     </PropertyGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
