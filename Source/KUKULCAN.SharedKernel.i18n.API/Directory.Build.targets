@@ -19,11 +19,11 @@
 		KUKULCAN Software Designer's generic application internationalization microservice for the ATLAS platform.
 
 		This version:
-- Aligns service JWT configuration with ATLAS using ATLAS as the issuer and ATLAS.i18n as the audience.
-- Standardizes the Docker image and container naming to kukulcan-i18n for local and CI execution.
-- Provides HTTP-based internationalization capabilities for translations, locale configuration, and currency formatting.
-- Preserves automatic English fallback for translation lookup.
-</Description>
+            - Aligns service JWT configuration with ATLAS using ATLAS as the issuer and ATLAS.i18n as the audience.
+            - Standardizes the Docker image and container naming to kukulcan-i18n for local and CI execution.
+            - Provides HTTP-based internationalization capabilities for translations, locale configuration, and currency formatting.
+            - Preserves automatic English fallback for translation lookup.
+        </Description>
     </PropertyGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'Release'">
