@@ -22,7 +22,8 @@ jobs:
       - name: Delete branch if allowed
         if: |
           steps.vars.outputs.branch != 'main' &&
-          steps.vars.outputs.branch != 'develop'
+          steps.vars.outputs.branch != 'develop' &&
+          steps.vars.outputs.branch != 'Develop'
         run: |
           echo "Deleting branch: ${GITHUB_HEAD_REF}"
           git config --global user.email "actions@github.com"

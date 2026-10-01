@@ -68,8 +68,8 @@ public static class ApiServiceExtensions
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSection["Issuer"] ?? "ITZAMNA",
-                    ValidAudience = jwtSection["Audience"] ?? "ITZAMNA.i18n",
+                    ValidIssuer = jwtSection["Issuer"] ?? "ATLAS",
+                    ValidAudience = jwtSection["Audience"] ?? "ATLAS.i18n",
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ClockSkew = TimeSpan.FromMinutes(5),
                 };

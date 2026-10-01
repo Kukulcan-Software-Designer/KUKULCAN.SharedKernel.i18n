@@ -99,6 +99,183 @@ docker compose --profile dev-tools up -d
 
 ---
 
+
+## Docker
+
+The project provides a root-level `Dockerfile` for containerizing the ASP.NET Core 10 API. Docker is used for local execution, CI runtime validation, and production image publication.
+
+### Build the Docker image
+
+Run the following command from the repository root:
+
+```bash
+docker build --tag kukulcan-i18n:local .
+```
+
+The image uses a multi-stage build. The build stage uses the .NET 10 SDK image and publishes the API in `Release` configuration. The runtime stage uses the ASP.NET 10 runtime image.
+
+### Run the API container
+
+Start the image and publish container port `8080` to host port `8080`:
+
+```bash
+docker run --detach \
+  --name kukulcan-i18n \
+  --publish 8080:8080 \
+  --env ASPNETCORE_HTTP_PORTS=8080 \
+  kukulcan-i18n:local
+```
+
+Verify that the container is running:
+
+```bash
+docker ps
+docker logs kukulcan-i18n
+```
+
+Verify the liveness endpoint:
+
+```bash
+curl --fail http://127.0.0.1:8080/health/live
+```
+
+Stop and remove the container:
+
+```bash
+docker rm --force kukulcan-i18n
+```
+
+### Run with application configuration
+
+Configuration can be supplied through environment variables. For example:
+
+```bash
+docker run --detach \
+  --name kukulcan-i18n \
+  --publish 8080:8080 \
+  --env ASPNETCORE_HTTP_PORTS=8080 \
+  --env KUKULCAN__Database__ConnectionString='Host=<database-host>;Port=5432;Database=<database>;Username=<username>;Password=<password>' \
+  --env Jwt__SecretKey='<application-secret>' \
+  kukulcan-i18n:local
+```
+
+Replace the placeholder values with environment-specific configuration.
+
+Do not commit real database passwords, JWT secrets, Docker Hub tokens, or other credentials to the repository.
+
+### Docker image inspection
+
+List local images:
+
+```bash
+docker image ls kukulcan-i18n
+```
+
+Inspect an image:
+
+```bash
+docker image inspect kukulcan-i18n:local
+```
+
+Inspect the Docker Engine storage root:
+
+```bash
+docker info --format '{{.DockerRootDir}}'
+```
+
+Docker images are managed by the Docker Engine and are not stored as a single image file in the repository.
+
+### Docker in CI
+
+The CI workflow builds the image using the tag:
+
+```text
+kukulcan-i18n:ci
+```
+
+It then starts a container and verifies:
+
+```text
+GET /health/live
+```
+
+The CI image is a validation image and is not published to Docker Hub.
+
+Equivalent local smoke-test commands are:
+
+```bash
+docker build --tag kukulcan-i18n:ci .
+
+docker run --detach \
+  --name kukulcan-i18n-ci \
+  --publish 8080:8080 \
+  --env ASPNETCORE_HTTP_PORTS=8080 \
+  kukulcan-i18n:ci
+
+curl --fail http://127.0.0.1:8080/health/live
+
+docker rm --force kukulcan-i18n-ci
+```
+
+### Publish the production image to Docker Hub
+
+Production publication is handled by:
+
+```text
+.github/workflows/docker-publish.yml
+```
+
+The workflow runs when a semantic version tag matching `v*.*.*` is pushed.
+
+Example:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The workflow authenticates to Docker Hub with these GitHub repository secrets:
+
+```text
+DOCKERHUB_USERNAME
+DOCKERHUB_TOKEN
+```
+
+For `v1.0.0`, the production image receives these tags:
+
+```text
+<DOCKERHUB_USERNAME>/kukulcan-i18n:1.0.0
+<DOCKERHUB_USERNAME>/kukulcan-i18n:1.0
+<DOCKERHUB_USERNAME>/kukulcan-i18n:1
+<DOCKERHUB_USERNAME>/kukulcan-i18n:latest
+```
+
+The complete Docker build, CI, release, Docker Hub, and troubleshooting documentation is available in `Documentation/DOCKER.md`.
+
+### Pull and run a published image
+
+For a published version:
+
+```bash
+docker pull <DOCKERHUB_USERNAME>/kukulcan-i18n:1.0.0
+```
+
+Run the exact version:
+
+```bash
+docker run --detach \
+  --name kukulcan-i18n \
+  --publish 8080:8080 \
+  --env ASPNETCORE_HTTP_PORTS=8080 \
+  --env KUKULCAN__Database__ConnectionString='<connection-string>' \
+  --env Jwt__SecretKey='<application-secret>' \
+  <DOCKERHUB_USERNAME>/kukulcan-i18n:1.0.0
+```
+
+Using an explicit version tag such as `1.0.0` makes the deployment reproducible.
+
+---
+
 ## Local Startup (Without Docker)
 
 ```bash
@@ -139,7 +316,7 @@ A translation code follows the format **`{MÓDULO}{NNNN}`**:
 
 | Parte | Descripción                                               | Ejemplo |
 |---|-----------------------------------------------------------|---|
-| `MÓDULO` | 2–5 uppercase letters identifying the owning ItzamNa API | `CRM`, `PIM`, `WMS`, `AUTH`, `CORE` |
+| `MÓDULO` | 2–5 uppercase letters identifying the owning ATLAS API | `CRM`, `PIM`, `WMS`, `AUTH`, `CORE` |
 | `NNNN` | 4-digit sequential number with leading zeros              | `0001` … `9999` |
 
 Valid examples: `CRM0001`, `PIM0042`, `AUTH0010`, `CORE0001`, `ATLAS0001`
@@ -202,7 +379,7 @@ DELETE /api/v1/currencies/{lang}/{currency}  → Delete format
 
 ## Authentication
 
-The service uses JWT Bearer, which is shared across the ItzamNa platform.
+The service uses JWT Bearer, which is shared across the ATLAS platform.
 Authorization policies are:
 
 | Policy | Allowed Roles                           | Endpoints |
@@ -223,7 +400,7 @@ Authorization policies are:
 
 ## How to Add a New ATLAS Module
 
-1. Reserve the module prefix (2–5 letters) in the ITZAMNA catalog. Examples:  `CRM`, `PIM`, `WMS`, `ERP`, `SCM`.
+1. Reserve the module prefix (2–5 letters) in the ATLAS catalog. Examples:  `CRM`, `PIM`, `WMS`, `ERP`, `SCM`.
 2. The module can start creating translations immediately with **POST** `/api/v1/translations` or vía **bulk**.
 3. It is recommended to start codes at `0001` and reserve ranges by subsystem (e.g. `CRM0001–CRM0099` for entities, `CRM0100–CRM0199` for errors, `CRM0200–CRM0299` for UI labels).
 
@@ -266,7 +443,7 @@ No manual flush endpoint is exposed (it can be implemented in CacheKeys.Translat
 | `ConnectionStrings__I18nDb` | Database connection string | `Host=…;Database=kukulcan_i18n;…` |
 | `ConnectionStrings__Redis` | Redis connection string. Empty → uses MemoryCache | `localhost:6379`                  |
 | `Jwt__SecretKey` | JWT secret key (minimum 32 characters) | _(secreto)_                       |
-| `Jwt__Issuer` | Token issuer | `ITZAMNA`                         |
+| `Jwt__Issuer` | Token issuer | `ATLAS`                         |
 | `Jwt__Audience` | Token audience | `KUKULCAN.SharedKernel.i18n`            |
 | `Database__AutoMigrate` | Apply migrations on startup | `true`                            |
 | `ASPNETCORE_ENVIRONMENT` | Environment  (`Development` / `Production`) | `Production`                      |

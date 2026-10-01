@@ -64,23 +64,23 @@ jobs:
           done
 
       - name: Build Docker image
-        run: docker build --tag kukulcan-sharedkernel-i18n:ci .
+        run: docker build --tag kukulcan-i18n:ci .
 
       - name: Run Docker container
         shell: bash
         run: |
           set -euo pipefail
           docker run --detach \
-            --name kukulcan-sharedkernel-i18n-ci \
+            --name kukulcan-i18n-ci \
             --publish 8080:8080 \
             --env ASPNETCORE_HTTP_PORTS=8080 \
             --env KUKULCAN__Database__ConnectionString='Host=localhost; Port=5432; Database=SmokeTest; Username=postgres; Password=postgres' \
             --env Jwt__SecretKey='KUKULCAN.SharedKernel.i18n.Docker.SmokeTest.SecretKey.2026' \
-            kukulcan-sharedkernel-i18n:ci
+            kukulcan-i18n:ci
 
           cleanup() {
-            docker logs kukulcan-sharedkernel-i18n-ci || true
-            docker rm --force kukulcan-sharedkernel-i18n-ci || true
+            docker logs kukulcan-i18n-ci || true
+            docker rm --force kukulcan-i18n-ci || true
           }
           trap cleanup EXIT
 
