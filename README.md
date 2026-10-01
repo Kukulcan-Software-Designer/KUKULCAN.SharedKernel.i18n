@@ -77,32 +77,118 @@ KUKULCAN.SharedKernel.i18n/
 
 ## Quick Start (Docker)
 
+For the local Docker deployment backed by the existing PostgreSQL container `mypostgres`, use the cross-platform helper scripts described in the Docker documentation.
+
+### Linux
+
 ```bash
-# 1. Clone and enter the directory
-git clone https://github.com/Kukulcan-Software-Designer/KUKULCAN.SharedKernel.i18n
-cd KUKULCAN.SharedKernel.i18n
-
-# 2. Start the full stack (service + Database Server + Redis)
-docker compose up -d
-
-# 3. The service starts at http://localhost:5100
-#    Interactive documentation (Scalar): http://localhost:5100/scalar/v1
-#    Health check:                       http://localhost:5100/health
-
-# 4. Optional: start the Redis GUI as well
-docker compose --profile dev-tools up -d
-# Redis Commander: http://localhost:8081
+chmod +x Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-linux.sh
+./Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-linux.sh
 ```
 
-> On the first startup, EF Core will automatically apply migrations and execute the seed
-> (languages EN, ES, CA, FR, DE with their locales and currency formats).
+### macOS
+
+```bash
+chmod +x Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-macos.sh
+./Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-macos.sh
+```
+
+### Windows PowerShell
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\Documentation\Scripts\Docker\KUKULCAN.SharedKernel.i18n-docker-windows.ps1
+```
+
+The scripts build the local image, prepare the `kukulcan-local` Docker network, connect `mypostgres`, verify the `Atlas` database, start the API container, apply the configured startup migration/seed behavior, and wait for both liveness and readiness.
+
+For details, environment variables, progress reporting and error handling, see [Documentation/DOCKER.md](Documentation/DOCKER.md).
 
 ---
-
 
 ## Docker
 
 The project provides a root-level `Dockerfile` for containerizing the ASP.NET Core 10 API. Docker is used for local execution, CI runtime validation, and production image publication.
+
+### Cross-platform local deployment scripts
+
+The repository includes three local deployment helpers under `Documentation/Scripts/Docker/`:
+
+| Platform | Script |
+|---|---|
+| Linux | `KUKULCAN.SharedKernel.i18n-docker-linux.sh` |
+| macOS | `KUKULCAN.SharedKernel.i18n-docker-macos.sh` |
+| Windows PowerShell | `KUKULCAN.SharedKernel.i18n-docker-windows.ps1` |
+
+These scripts are intended for a local environment where PostgreSQL is already running in the Docker container `mypostgres` and the target database is `Atlas`.
+
+They perform the complete local deployment flow:
+
+1. Check Docker and required tools.
+2. Check the repository `Dockerfile`.
+3. Obtain the PostgreSQL password without storing it in the repository.
+4. Obtain or generate a JWT signing secret with the required minimum length.
+5. Verify that `mypostgres` is running.
+6. Create or reuse the `kukulcan-local` Docker network.
+7. Attach `mypostgres` to that network when necessary.
+8. Verify PostgreSQL readiness and that the `Atlas` database exists.
+9. Build `kukulcan-i18n:local`.
+10. Replace the previous `kukulcan-i18n` container and start a new one.
+11. Verify `/health/live` and `/health/ready`.
+
+The scripts display the current progress as a percentage and stop immediately when a command returns an error. The failing command's output is left visible; when container startup or health checks fail, the container logs are also displayed.
+
+On Linux and macOS, make the shell script executable once:
+
+```bash
+chmod +x Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-linux.sh
+chmod +x Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-macos.sh
+```
+
+The scripts use these local defaults:
+
+```text
+PostgreSQL container: mypostgres
+PostgreSQL host:      mypostgres
+PostgreSQL port:      5432
+Database:             Atlas
+Database user:        postgres
+Database provider:    PostgresSql
+Docker network:       kukulcan-local
+API container:        kukulcan-i18n
+API host port:        8080
+Docker image:         kukulcan-i18n:local
+JWT issuer:           ATLAS
+JWT audience:         ATLAS.i18n
+Redis:                disabled by default (MemoryCache)
+```
+
+The PostgreSQL password can be provided through `KUKULCAN_I18N_DB_PASSWORD`; otherwise the scripts prompt for it. The JWT secret can be provided through `KUKULCAN_I18N_JWT_SECRET`; otherwise the scripts prompt for it and can generate a temporary local secret.
+
+Optional script-level overrides include:
+
+```text
+KUKULCAN_I18N_IMAGE_NAME
+KUKULCAN_I18N_CONTAINER_NAME
+KUKULCAN_I18N_NETWORK_NAME
+KUKULCAN_I18N_DB_CONTAINER
+KUKULCAN_I18N_DB_PROVIDER
+KUKULCAN_I18N_DB_HOST
+KUKULCAN_I18N_DB_PORT
+KUKULCAN_I18N_DB_NAME
+KUKULCAN_I18N_DB_USER
+KUKULCAN_I18N_DB_PASSWORD
+KUKULCAN_I18N_HTTP_PORT
+KUKULCAN_I18N_AUTO_MIGRATE
+KUKULCAN_I18N_SEED_DATA
+KUKULCAN_I18N_REDIS_CONNECTION
+KUKULCAN_I18N_REPO_ROOT
+KUKULCAN_I18N_JWT_SECRET
+```
+
+The scripts pass the runtime configuration to the API using the .NET configuration hierarchy, notably `Kukulcan__Database__Provider`, `Kukulcan__Database__ConnectionString`, `Kukulcan__Database__Migration__AutoMigrateOnStartup`, `Kukulcan__Database__Migration__SeedDataOnStartup`, `Jwt__SecretKey`, `Jwt__Issuer`, `Jwt__Audience`, and `ConnectionStrings__Redis`.
+
+These helper scripts are local deployment tools. They do not replace the CI Docker smoke test or the Docker Hub publication workflow.
 
 ### Build the Docker image
 
@@ -438,17 +524,34 @@ No manual flush endpoint is exposed (it can be implemented in CacheKeys.Translat
 
 ## Variables de entorno
 
-| Variable | Description | Example Value                     |
-|---|---|-----------------------------------|
-| `ConnectionStrings__I18nDb` | Database connection string | `Host=…;Database=kukulcan_i18n;…` |
-| `ConnectionStrings__Redis` | Redis connection string. Empty → uses MemoryCache | `localhost:6379`                  |
-| `Jwt__SecretKey` | JWT secret key (minimum 32 characters) | _(secreto)_                       |
-| `Jwt__Issuer` | Token issuer | `ATLAS`                         |
-| `Jwt__Audience` | Token audience | `KUKULCAN.SharedKernel.i18n`            |
-| `Database__AutoMigrate` | Apply migrations on startup | `true`                            |
-| `ASPNETCORE_ENVIRONMENT` | Environment  (`Development` / `Production`) | `Production`                      |
+### Aplicación
 
----
+| Variable | Required | Description | Example |
+|---|---|---|---|
+| `KUKULCAN__Database__Provider` | Yes for PostgreSQL | Database provider | `PostgresSql` |
+| `KUKULCAN__Database__ConnectionString` | Yes | Full ADO.NET connection string | `Host=mypostgres;Port=5432;Database=Atlas;Username=postgres;Password=...` |
+| `KUKULCAN__Database__CommandTimeoutSeconds` | No | EF Core command timeout | `30` |
+| `KUKULCAN__Database__EnableSensitiveDataLogging` | No | Include parameter values in logs | `false` |
+| `KUKULCAN__Database__EnableDetailedErrors` | No | Detailed EF Core errors | `false` |
+| `KUKULCAN__Database__Retry__Enabled` | No | Enable database retries | `true` |
+| `KUKULCAN__Database__Retry__MaxRetryCount` | No | Maximum retry attempts | `3` |
+| `KUKULCAN__Database__Retry__MaxRetryDelaySeconds` | No | Retry delay cap | `30` |
+| `KUKULCAN__Database__Pool__Enabled` | No | Enable connection pooling | `true` |
+| `KUKULCAN__Database__Pool__MinSize` | No | Minimum pool size | `5` |
+| `KUKULCAN__Database__Pool__MaxSize` | No | Maximum pool size | `100` |
+| `KUKULCAN__Database__Migration__AutoMigrateOnStartup` | No | Apply pending migrations at startup | `true` |
+| `KUKULCAN__Database__Migration__SeedDataOnStartup` | No | Enable startup seeding | `true` |
+| `Jwt__SecretKey` | Yes | JWT signing key; minimum 32 characters | _(secret)_ |
+| `Jwt__Issuer` | No | JWT issuer | `ATLAS` |
+| `Jwt__Audience` | No | JWT audience | `ATLAS.i18n` |
+| `ConnectionStrings__Redis` | No | Redis connection; empty uses MemoryCache | _(empty)_ |
+| `ASPNETCORE_HTTP_PORTS` | Yes for Docker | HTTP port inside the container | `8080` |
+
+### Script overrides
+
+The Docker helper scripts also accept the `KUKULCAN_I18N_*` variables documented in the [Docker deployment section](Documentation/DOCKER.md), so deployment-specific values can be changed without editing the scripts.
+
+Do not commit real PostgreSQL passwords, JWT secrets, Docker Hub tokens, or other credentials.
 
 ## Health Checks
 
