@@ -36,6 +36,7 @@
       <File Path=".github/workflows/application-integration-tests.yml" />
       <File Path=".github/workflows/api-integration-tests.yml" />
     <File Path=".github\workflows\ci.yml" />
+    <File Path=".github\workflows\docker-publish.yml" />
   </Folder>
 
   <Folder Name="/Source/">
