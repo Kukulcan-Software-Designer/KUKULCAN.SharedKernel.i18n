@@ -41,7 +41,7 @@ TestSecret123!
 ENV_FILE="${TEMP_HOME}/.config/kukulcan/database.env"
 grep -Fq 'KUKULCAN__DATABASE__PROVIDER="PostgresSql"' "${ENV_FILE}"
 grep -Fq 'KUKULCAN__DATABASE__CONNECTIONSTRING="Host=localhost;Port=5432;Database=Atlas;Username=postgre;Password=TestSecret123!"' "${ENV_FILE}"
-grep -Fq 'KUKULCAN__DATABASE__CONNECTION__STRING="Host=localhost;Port=5432;Database=Atlas;Username=postgre;Password=TestSecret123!"' "${ENV_FILE}"
+grep -Fq 'KUKULCAN__DATABASE__CONNECTIONSTRING="Host=localhost;Port=5432;Database=Atlas;Username=postgre;Password=TestSecret123!"' "${ENV_FILE}"
 if grep -Eq '(^|[[:space:]])export KUKULCAN_DATABASE_(PROVIDER|CONNECTION_STRING)=|^KUKULCAN_DATABASE_(PROVIDER|CONNECTION_STRING)=' "${ENV_FILE}"; then
   printf '%s\n' 'Single-underscore database variables must not be persisted.' >&2
   exit 1
