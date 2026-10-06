@@ -2,6 +2,10 @@
 set -euo pipefail
 
 ENV_FILE="${HOME}/.config/kukulcan/database.env"
+DOTNET_TOOLS_DIR="${HOME}/.dotnet/tools"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
+API_PROJECT="Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj"
 SHELL_RC=""
 
 case "${SHELL:-}" in
@@ -36,6 +40,21 @@ escape_value() {
   printf '%s' "${value}"
 }
 
+ensure_ef_tool() {
+  export PATH="${DOTNET_TOOLS_DIR}:${PATH}"
+
+  local ef_version=""
+  ef_version="$(dotnet ef --version 2>/dev/null || true)"
+
+  if [[ "${ef_version}" != 10.* ]]; then
+    if ! dotnet tool update --global dotnet-ef --version 10.* >/dev/null 2>&1; then
+      dotnet tool install --global dotnet-ef --version 10.*
+    fi
+  fi
+
+  export PATH="${DOTNET_TOOLS_DIR}:${PATH}"
+}
+
 while true; do
   printf '%s\n' "Seleccione el gestor de base de datos:"
   printf '%s\n' "1. SQL Server"
@@ -45,9 +64,21 @@ while true; do
   read -r -p "Opción: " option
 
   case "${option}" in
-    1) provider="SqlServer"; port="1433" ;;
-    2) provider="PostgresSql"; port="5432" ;;
-    3) provider="MySql"; port="3306" ;;
+    1)
+      provider="SqlServer"
+      port="1433"
+      migration_project="Source/KUKULCAN.SharedKernel.i18n.Migrations.SqlServer/KUKULCAN.SharedKernel.i18n.Migrations.SqlServer.csproj"
+      ;;
+    2)
+      provider="PostgresSql"
+      port="5432"
+      migration_project="Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj"
+      ;;
+    3)
+      provider="MySql"
+      port="3306"
+      migration_project="Source/KUKULCAN.SharedKernel.i18n.Migrations.MySql/KUKULCAN.SharedKernel.i18n.Migrations.MySql.csproj"
+      ;;
     0)
       printf '%s\n' "Salir sin registrar las variables"
       exit 0
@@ -86,6 +117,8 @@ umask 077
 cat > "${ENV_FILE}" <<EOF
 export KUKULCAN_DATABASE_PROVIDER="${provider}"
 export KUKULCAN_DATABASE_CONNECTION_STRING="${connection_string}"
+export KUKULCAN__DATABASE__PROVIDER="${provider}"
+export KUKULCAN__DATABASE__CONNECTIONSTRING="${connection_string}"
 EOF
 chmod 600 "${ENV_FILE}"
 
@@ -97,8 +130,19 @@ fi
 
 export KUKULCAN_DATABASE_PROVIDER="${provider}"
 export KUKULCAN_DATABASE_CONNECTION_STRING="${connection_string}"
+export KUKULCAN__DATABASE__PROVIDER="${provider}"
+export KUKULCAN__DATABASE__CONNECTIONSTRING="${connection_string}"
 
-printf '%s\n' "Las variables de entorno de base de datos han sido registradas."
+cd "${REPO_ROOT}"
+ensure_ef_tool
+
+printf '%s\n' "Ejecutando migraciones EF Core para ${provider}..."
+dotnet ef database update \
+  --project "${migration_project}" \
+  --startup-project "${API_PROJECT}" \
+  --configuration Release
+
+printf '%s\n' "Base de datos configurada y migraciones aplicadas correctamente."
 printf '%s\n' "Provider: ${provider}"
 printf '%s\n' "Host: localhost"
 printf '%s\n' "Port: ${port}"
