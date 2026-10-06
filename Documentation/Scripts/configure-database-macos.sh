@@ -16,14 +16,14 @@ mask_password() {
     if [[ "${char}" == $'\177' || "${char}" == $'\b' ]]; then
       if [[ -n "${password}" ]]; then
         password="${password%?}"
-        printf '\b \b'
+        printf '\b \b' >&2
       fi
     else
       password+="${char}"
-      printf '*'
+      printf '*' >&2
     fi
   done
-  printf '\n'
+  printf '\n' >&2
   printf '%s' "${password}"
 }
 
@@ -109,8 +109,6 @@ esac
 mkdir -p "$(dirname "${ENV_FILE}")"
 umask 077
 cat > "${ENV_FILE}" <<EOF
-export KUKULCAN_DATABASE_PROVIDER="${provider}"
-export KUKULCAN_DATABASE_CONNECTION_STRING="${connection_string}"
 export KUKULCAN__DATABASE__PROVIDER="${provider}"
 export KUKULCAN__DATABASE__CONNECTIONSTRING="${connection_string}"
 EOF
@@ -122,8 +120,6 @@ if ! grep -Fqx "${source_line}" "${SHELL_RC}" 2>/dev/null; then
   printf '\n%s\n' "${source_line}" >> "${SHELL_RC}"
 fi
 
-export KUKULCAN_DATABASE_PROVIDER="${provider}"
-export KUKULCAN_DATABASE_CONNECTION_STRING="${connection_string}"
 export KUKULCAN__DATABASE__PROVIDER="${provider}"
 export KUKULCAN__DATABASE__CONNECTIONSTRING="${connection_string}"
 

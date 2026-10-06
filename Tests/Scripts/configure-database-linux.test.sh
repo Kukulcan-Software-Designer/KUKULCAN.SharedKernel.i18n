@@ -35,9 +35,18 @@ export PATH="${FAKE_BIN}:${PATH}"
 printf '%s\n' '2' 'Atlas' 'postgre' 'TestSecret123!' | bash "${DATABASE_SCRIPT}"
 ENV_FILE="${HOME}/.config/kukulcan/database.env"
 test -f "${ENV_FILE}"
-grep -Fq 'KUKULCAN_DATABASE_PROVIDER="PostgresSql"' "${ENV_FILE}"
+grep -Fq 'KUKULCAN__DATABASE__PROVIDER="PostgresSql"' "${ENV_FILE}"
 printf '%s\n' '2' 'Atlas' 'postgre' 'TestSecret123!' | bash "${DATABASE_SCRIPT}"
 printf '%s\n' '2' 'Atlas' 'postgre' 'TestSecret123!' | bash "${DATABASE_SCRIPT}"
+grep -Fq 'KUKULCAN__DATABASE__CONNECTIONSTRING="Host=localhost;Port=5432;Database=Atlas;Username=postgre;Password=TestSecret123!"' "${ENV_FILE}"
+if grep -Eq '(^|[[:space:]])export KUKULCAN_DATABASE_(PROVIDER|CONNECTION_STRING)=|^KUKULCAN_DATABASE_(PROVIDER|CONNECTION_STRING)=' "${ENV_FILE}"; then
+  printf '%s\n' 'Single-underscore database variables must not be persisted.' >&2
+  exit 1
+fi
+if grep -Fq 'KUKULCAN__DATABASE__CONNECTIONSTRING' "${ENV_FILE}"; then
+  printf '%s\n' 'The legacy double-underscore connection variable without the STRING separator must not be persisted.' >&2
+  exit 1
+fi
 if grep -Fq '*' "${ENV_FILE}"; then
   printf '%s\n' 'Password masking characters leaked into the persisted connection string.' >&2
   exit 1

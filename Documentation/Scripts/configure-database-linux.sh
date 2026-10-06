@@ -115,8 +115,6 @@ esac
 mkdir -p "$(dirname "${ENV_FILE}")"
 umask 077
 cat > "${ENV_FILE}" <<EOF
-export KUKULCAN_DATABASE_PROVIDER="${provider}"
-export KUKULCAN_DATABASE_CONNECTION_STRING="${connection_string}"
 export KUKULCAN__DATABASE__PROVIDER="${provider}"
 export KUKULCAN__DATABASE__CONNECTIONSTRING="${connection_string}"
 EOF
@@ -128,8 +126,6 @@ if ! grep -Fqx "${source_line}" "${SHELL_RC}" 2>/dev/null; then
   printf '\n%s\n' "${source_line}" >> "${SHELL_RC}"
 fi
 
-export KUKULCAN_DATABASE_PROVIDER="${provider}"
-export KUKULCAN_DATABASE_CONNECTION_STRING="${connection_string}"
 export KUKULCAN__DATABASE__PROVIDER="${provider}"
 export KUKULCAN__DATABASE__CONNECTIONSTRING="${connection_string}"
 
