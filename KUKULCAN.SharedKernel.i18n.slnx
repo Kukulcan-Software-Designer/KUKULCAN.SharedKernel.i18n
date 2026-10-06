@@ -8,6 +8,12 @@
     <File Path="Documentation/api.md" />
     <File Path="Documentation/operations.md" />
   </Folder>
+  <Folder Name="/Documentation/Scripts/" />
+  <Folder Name="/Documentation/Scripts/Docker/">
+    <File Path="Documentation\Scripts\Docker\KUKULCAN.SharedKernel.i18n-docker-linux.sh" />
+    <File Path="Documentation\Scripts\Docker\KUKULCAN.SharedKernel.i18n-docker-macos.sh" />
+    <File Path="Documentation\Scripts\Docker\KUKULCAN.SharedKernel.i18n-docker-windows.ps1" />
+  </Folder>
 
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
