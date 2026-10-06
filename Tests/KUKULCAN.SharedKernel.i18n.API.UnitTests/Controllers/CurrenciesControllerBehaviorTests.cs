@@ -32,7 +32,7 @@ public sealed class CurrenciesControllerBehaviorTests
             "Euro", "€", "After", true, ".", ",", 2, "-n");
         using var cts = new CancellationTokenSource();
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new CurrenciesController(mediator.Object).Upsert("es-ES", "EUR", body, cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
@@ -58,7 +58,7 @@ public sealed class CurrenciesControllerBehaviorTests
         SetupException<Result>(mediator);
         using var cts = new CancellationTokenSource();
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new CurrenciesController(mediator.Object).Delete("es-ES", "EUR", cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
@@ -76,7 +76,7 @@ public sealed class CurrenciesControllerBehaviorTests
         SetupException<Result<IReadOnlyList<CurrencyFormatDto>>>(mediator);
         using var cts = new CancellationTokenSource();
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new CurrenciesController(mediator.Object).GetByLanguage("es-ES", cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));

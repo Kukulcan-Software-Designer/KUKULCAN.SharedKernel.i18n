@@ -61,6 +61,12 @@ jobs:
           grep -Fq "PostgresSql" "${{ matrix.script }}"
           grep -Fq "MySql" "${{ matrix.script }}"
 
+      - name: Test Linux database configuration flow
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          bash Tests/Scripts/configure-database-linux.test.sh
+
       - name: Validate PowerShell script
         if: runner.os == 'Windows'
         shell: pwsh
