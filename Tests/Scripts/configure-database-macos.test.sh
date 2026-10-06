@@ -39,8 +39,16 @@ TestSecret123!
   HOME="${TEMP_HOME}" PATH="${TEMP_HOME}/.dotnet/tools:${PATH}"   FAKE_DOTNET_LOG="${TEMP_HOME}/dotnet.log" bash "${SCRIPT}"
 
 ENV_FILE="${TEMP_HOME}/.config/kukulcan/database.env"
-grep -Fq 'KUKULCAN_DATABASE_PROVIDER="PostgresSql"' "${ENV_FILE}"
-grep -Fq 'Password=TestSecret123!' "${ENV_FILE}"
+grep -Fq 'KUKULCAN__DATABASE__PROVIDER="PostgresSql"' "${ENV_FILE}"
 grep -Fq 'KUKULCAN__DATABASE__CONNECTIONSTRING="Host=localhost;Port=5432;Database=Atlas;Username=postgre;Password=TestSecret123!"' "${ENV_FILE}"
+grep -Fq 'KUKULCAN__DATABASE__CONNECTION__STRING="Host=localhost;Port=5432;Database=Atlas;Username=postgre;Password=TestSecret123!"' "${ENV_FILE}"
+if grep -Eq '(^|[[:space:]])export KUKULCAN_DATABASE_(PROVIDER|CONNECTION_STRING)=|^KUKULCAN_DATABASE_(PROVIDER|CONNECTION_STRING)=' "${ENV_FILE}"; then
+  printf '%s\n' 'Single-underscore database variables must not be persisted.' >&2
+  exit 1
+fi
+if grep -Fq 'KUKULCAN__DATABASE__CONNECTIONSTRING' "${ENV_FILE}"; then
+  printf '%s\n' 'The legacy double-underscore connection variable without the STRING separator must not be persisted.' >&2
+  exit 1
+fi
 ! grep -Fq '*' "${ENV_FILE}"
 grep -Fq -- 'ef database update --project Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj --startup-project Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj --configuration Release' "${TEMP_HOME}/dotnet.log"
