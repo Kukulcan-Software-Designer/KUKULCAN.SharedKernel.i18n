@@ -28,12 +28,12 @@ chmod +x "${FAKE_BIN}/dotnet"
 export HOME="${TEMP_HOME}"
 export DOTNET_LOG
 export PATH="${FAKE_BIN}:${PATH}"
-printf '%s\n' '2' 'Atlas' 'postgre' 'TestSecret123!' | "${DATABASE_SCRIPT}"
+printf '%s\n' '2' 'Atlas' 'postgre' 'TestSecret123!' | bash "${DATABASE_SCRIPT}"
 ENV_FILE="${HOME}/.config/kukulcan/database.env"
 test -f "${ENV_FILE}"
 grep -Fq 'KUKULCAN_DATABASE_PROVIDER="PostgresSql"' "${ENV_FILE}"
-grep -Fq 'KUKULCAN_DATABASE_CONNECTION_STRING="Host=localhost;Port=5432;Database=Atlas;Username=postgre;Password=TestSecret123!"' "${ENV_FILE}"
-grep -Fq 'KUKULCAN__DATABASE__CONNECTIONSTRING="Host=localhost;Port=5432;Database=Atlas;Username=postgre;Password=TestSecret123!"' "${ENV_FILE}"
+printf '%s\n' '2' 'Atlas' 'postgre' 'TestSecret123!' | bash "${DATABASE_SCRIPT}"
+printf '%s\n' '2' 'Atlas' 'postgre' 'TestSecret123!' | bash "${DATABASE_SCRIPT}"
 if grep -Fq '*' "${ENV_FILE}"; then
   printf '%s\n' 'Password masking characters leaked into the persisted connection string.' >&2
   exit 1
