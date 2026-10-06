@@ -34,7 +34,7 @@ public sealed class LocalesControllerBehaviorTests
         UpsertLocaleRequest request = CreateRequest();
         using var cts = new CancellationTokenSource();
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new LocalesController(mediator.Object).Upsert("es-ES", request, cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
@@ -57,7 +57,7 @@ public sealed class LocalesControllerBehaviorTests
         SetupException<Result<IReadOnlyList<LocaleConfigurationDto>>>(mediator);
         using var cts = new CancellationTokenSource();
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new LocalesController(mediator.Object).GetAll(cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
@@ -73,7 +73,7 @@ public sealed class LocalesControllerBehaviorTests
         SetupException<Result<LocaleConfigurationDto>>(mediator);
         using var cts = new CancellationTokenSource();
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new LocalesController(mediator.Object).GetByLanguage("ca-ES", cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
