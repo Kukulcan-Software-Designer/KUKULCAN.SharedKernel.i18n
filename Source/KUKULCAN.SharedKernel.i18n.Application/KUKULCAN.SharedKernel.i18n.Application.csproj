@@ -23,7 +23,7 @@
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <!-- MediatR is used directly by the application layer. -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.*" />
-    <PackageReference Include="MediatR" Version="13.*" />
+    <PackageReference Include="MediatR" Version="14.2.0" />
   </ItemGroup>
 
 </Project>
