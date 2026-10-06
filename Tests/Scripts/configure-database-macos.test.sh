@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Regression coverage for password capture and EF Core update reachability on macOS.
+
 REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPT="${REPO_ROOT}/Documentation/Scripts/configure-database-macos.sh"
 TEMP_HOME="$(mktemp -d)"
