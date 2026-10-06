@@ -17,6 +17,10 @@ if [[ "${1:-}" == "ef" && "${2:-}" == "--version" ]]; then
   printf '%s\n' "Entity Framework Core tools version 10.0.302"
   exit 0
 fi
+if [[ "${1:-}" == "tool" && ( "${2:-}" == "install" || "${2:-}" == "update" ) ]]; then
+  exit 0
+fi
+
 if [[ "${1:-}" == "ef" && "${2:-}" == "database" && "${3:-}" == "update" ]]; then
   printf '%s\n' "$*" > "${DOTNET_LOG}"
   exit 0
