@@ -36,7 +36,7 @@ public sealed class TranslationsControllerBehaviorTests
         var command = new CreateTranslationCommand("CRM0001", "es-ES", "Cliente");
         using var cts = new CancellationTokenSource();
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new TranslationsController(mediator.Object).Create(command, cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
@@ -51,7 +51,7 @@ public sealed class TranslationsControllerBehaviorTests
         var mediator = new Mock<IMediator>();
         SetupException<Result<TranslationDto>>(mediator);
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new TranslationsController(mediator.Object).Update(
                 "CRM0001", "es-ES", new UpdateTranslationRequest("Cliente", "CRM"), CancellationToken.None));
 
@@ -71,7 +71,7 @@ public sealed class TranslationsControllerBehaviorTests
         var mediator = new Mock<IMediator>();
         SetupException<Result>(mediator);
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new TranslationsController(mediator.Object).SetReviewed(
                 "CRM0001", "ca-ES", new SetReviewedRequest(true), CancellationToken.None));
 
@@ -90,7 +90,7 @@ public sealed class TranslationsControllerBehaviorTests
         var mediator = new Mock<IMediator>();
         SetupException<Result>(mediator);
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new TranslationsController(mediator.Object).Delete("CRM0001", "es-ES", CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
@@ -106,7 +106,7 @@ public sealed class TranslationsControllerBehaviorTests
         var mediator = new Mock<IMediator>();
         SetupException<Result<TranslationLookupDto>>(mediator);
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new TranslationsController(mediator.Object).GetTranslation("CRM0001", "es-MX", CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
@@ -122,7 +122,7 @@ public sealed class TranslationsControllerBehaviorTests
         var mediator = new Mock<IMediator>();
         SetupException<Result<TranslationMapDto>>(mediator);
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new TranslationsController(mediator.Object).GetModuleTranslations(
                 "CRM", "es-ES", CancellationToken.None));
 
@@ -139,7 +139,7 @@ public sealed class TranslationsControllerBehaviorTests
         var mediator = new Mock<IMediator>();
         SetupException<Result<IReadOnlyList<TranslationDto>>>(mediator);
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new TranslationsController(mediator.Object).GetVariants("CRM0001", CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
@@ -156,7 +156,7 @@ public sealed class TranslationsControllerBehaviorTests
         var command = new BulkUpsertTranslationsCommand(Array.Empty<BulkTranslationDto>());
         using var cts = new CancellationTokenSource();
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new TranslationsController(mediator.Object).BulkUpsert(command, cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
