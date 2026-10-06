@@ -1,6 +1,9 @@
 $ErrorActionPreference = 'Stop'
 
 $envFile = Join-Path $HOME '.config/kukulcan/database.env'
+$dotnetToolsPath = Join-Path $HOME '.dotnet/tools'
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
+$apiProject = 'Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj'
 
 function Read-MaskedPassword {
     $password = [System.Text.StringBuilder]::new()
@@ -39,6 +42,22 @@ function Escape-ConnectionValue([string]$Value) {
     return $Value.Replace('\', '\\').Replace('"', '""')
 }
 
+function Ensure-EfTool {
+    if (Test-Path $dotnetToolsPath) {
+        $env:PATH = "$dotnetToolsPath;$env:PATH"
+    }
+
+    $efVersion = (& dotnet ef --version 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $efVersion -notmatch '^10.') {
+        & dotnet tool update --global dotnet-ef --version 10.*
+        if ($LASTEXITCODE -ne 0) {
+            & dotnet tool install --global dotnet-ef --version 10.*
+        }
+    }
+
+    $env:PATH = "$dotnetToolsPath;$env:PATH"
+}
+
 while ($true) {
     Write-Host 'Seleccione el gestor de base de datos:'
     Write-Host '1. SQL Server'
@@ -48,9 +67,24 @@ while ($true) {
     $option = Read-Host 'Opción'
 
     switch ($option) {
-        '1' { $provider = 'SqlServer'; $port = 1433; break }
-        '2' { $provider = 'PostgresSql'; $port = 5432; break }
-        '3' { $provider = 'MySql'; $port = 3306; break }
+        '1' {
+            $provider = 'SqlServer'
+            $port = 1433
+            $migrationProject = 'Source/KUKULCAN.SharedKernel.i18n.Migrations.SqlServer/KUKULCAN.SharedKernel.i18n.Migrations.SqlServer.csproj'
+            break
+        }
+        '2' {
+            $provider = 'PostgresSql'
+            $port = 5432
+            $migrationProject = 'Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj'
+            break
+        }
+        '3' {
+            $provider = 'MySql'
+            $port = 3306
+            $migrationProject = 'Source/KUKULCAN.SharedKernel.i18n.Migrations.MySql/KUKULCAN.SharedKernel.i18n.Migrations.MySql.csproj'
+            break
+        }
         '0' {
             Write-Host 'Salir sin registrar las variables'
             exit 0
@@ -90,15 +124,31 @@ New-Item -ItemType Directory -Path $directory -Force | Out-Null
 @"
 KUKULCAN_DATABASE_PROVIDER=$provider
 KUKULCAN_DATABASE_CONNECTION_STRING=$connectionString
+KUKULCAN__DATABASE__PROVIDER=$provider
+KUKULCAN__DATABASE__CONNECTIONSTRING=$connectionString
 "@ | Set-Content -Path $envFile -Encoding utf8NoBOM
 
 [Environment]::SetEnvironmentVariable('KUKULCAN_DATABASE_PROVIDER', $provider, 'User')
 [Environment]::SetEnvironmentVariable('KUKULCAN_DATABASE_CONNECTION_STRING', $connectionString, 'User')
+[Environment]::SetEnvironmentVariable('KUKULCAN__DATABASE__PROVIDER', $provider, 'User')
+[Environment]::SetEnvironmentVariable('KUKULCAN__DATABASE__CONNECTIONSTRING', $connectionString, 'User')
 
 $env:KUKULCAN_DATABASE_PROVIDER = $provider
 $env:KUKULCAN_DATABASE_CONNECTION_STRING = $connectionString
+$env:KUKULCAN__DATABASE__PROVIDER = $provider
+$env:KUKULCAN__DATABASE__CONNECTIONSTRING = $connectionString
 
-Write-Host 'Las variables de entorno de base de datos han sido registradas.'
+Set-Location $repoRoot
+Ensure-EfTool
+
+Write-Host "Ejecutando migraciones EF Core para $provider..."
+& dotnet ef database update --project $migrationProject --startup-project $apiProject --configuration Release
+
+if ($LASTEXITCODE -ne 0) {
+    throw "EF Core database migration failed for provider $provider."
+}
+
+Write-Host 'Base de datos configurada y migraciones aplicadas correctamente.'
 Write-Host "Provider: $provider"
 Write-Host 'Host: localhost'
 Write-Host "Port: $port"
