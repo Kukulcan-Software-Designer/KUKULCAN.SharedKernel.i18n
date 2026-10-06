@@ -30,7 +30,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Verify Bash script exists
-        # Expected RED until the implementation scripts are added.
         if: runner.os != 'Windows'
         shell: bash
         run: |
@@ -49,8 +48,11 @@ jobs:
         shell: bash
         run: |
           bash -n "${{ matrix.script }}"
-          grep -Fq "KUKULCAN_DATABASE_PROVIDER" "${{ matrix.script }}"
-          grep -Fq "KUKULCAN_DATABASE_CONNECTION_STRING" "${{ matrix.script }}"
+          grep -Fq "KUKULCAN__DATABASE__CONNECTIONSTRING" "${{ matrix.script }}"
+          grep -Fq "dotnet ef database update" "${{ matrix.script }}"
+          grep -Fq "KUKULCAN.SharedKernel.i18n.Migrations.SqlServer" "${{ matrix.script }}"
+          grep -Fq "KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql" "${{ matrix.script }}"
+          grep -Fq "KUKULCAN.SharedKernel.i18n.Migrations.MySql" "${{ matrix.script }}"
           grep -Fq "Salir sin registrar las variables" "${{ matrix.script }}"
           grep -Fq "SqlServer" "${{ matrix.script }}"
           grep -Fq "PostgresSql" "${{ matrix.script }}"
@@ -66,8 +68,11 @@ jobs:
             [ref]$null,
             [ref]$null
           ) | Out-Null
-          if ($content -notmatch 'KUKULCAN_DATABASE_PROVIDER') { throw 'Missing provider variable' }
-          if ($content -notmatch 'KUKULCAN_DATABASE_CONNECTION_STRING') { throw 'Missing connection string variable' }
+          if ($content -notmatch 'KUKULCAN__DATABASE__CONNECTIONSTRING') { throw 'Missing EF Core connection variable' }
+          if ($content -notmatch 'dotnet ef database update') { throw 'Missing EF Core database update command' }
+          if ($content -notmatch 'KUKULCAN.SharedKernel.i18n.Migrations.SqlServer') { throw 'Missing SQL Server migrations project' }
+          if ($content -notmatch 'KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql') { throw 'Missing PostgreSQL migrations project' }
+          if ($content -notmatch 'KUKULCAN.SharedKernel.i18n.Migrations.MySql') { throw 'Missing MySQL migrations project' }
           if ($content -notmatch 'Salir sin registrar las variables') { throw 'Missing exit option text' }
           if ($content -notmatch 'SqlServer') { throw 'Missing SQL Server provider' }
           if ($content -notmatch 'PostgresSql') { throw 'Missing PostgreSQL provider' }
