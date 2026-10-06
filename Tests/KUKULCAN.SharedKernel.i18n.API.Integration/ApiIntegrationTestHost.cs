@@ -35,14 +35,14 @@ public sealed class ApiIntegrationTestHost
     [OneTimeSetUp]
     public async Task SetUpAsync()
     {
-        _postgresqlContainer = new PostgreSqlBuilder()
+        _postgresqlContainer = new PostgreSqlBuilder("postgres:16-alpine")
             .WithImage("postgres:16-alpine")
             .WithDatabase("i18n_api_integration_tests")
             .WithUsername("postgres")
             .WithPassword("postgres")
             .Build();
 
-        _redisContainer = new RedisBuilder()
+        _redisContainer = new RedisBuilder("redis:7-alpine")
             .WithImage("redis:7-alpine")
             .Build();
 
