@@ -103,7 +103,7 @@ public sealed class DistributedCacheServiceTests
         memory.Set("key", new CacheValue("value"));
         var service = new DistributedCacheService(distributed, memory, NullLogger<DistributedCacheService>.Instance);
 
-        Assert.DoesNotThrowAsync(async () => await service.RemoveAsync("key"));
+        await Assert.DoesNotThrowAsync(async () => await service.RemoveAsync("key"));
         Assert.That(memory.TryGetValue("key", out _), Is.False);
     }
 
@@ -179,7 +179,7 @@ public sealed class DistributedCacheServiceTests
         using var memory = new MemoryCache(new MemoryCacheOptions());
         var service = new DistributedCacheService(distributed, memory, NullLogger<DistributedCacheService>.Instance);
 
-        Assert.DoesNotThrowAsync(async () => await service.RemoveByPrefixAsync("language:"));
+        await Assert.DoesNotThrowAsync(async () => await service.RemoveByPrefixAsync("language:"));
     }
 
     private sealed record CacheValue(string Value);
