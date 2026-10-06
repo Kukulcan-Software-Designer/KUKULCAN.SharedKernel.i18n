@@ -67,6 +67,12 @@ jobs:
         run: |
           bash Tests/Scripts/configure-database-linux.test.sh
 
+      - name: Test macOS database configuration flow
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          bash Tests/Scripts/configure-database-macos.test.sh
+
       - name: Validate PowerShell script
         if: runner.os == 'Windows'
         shell: pwsh
