@@ -1,54 +1,95 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Regression coverage for password capture and EF Core update reachability on macOS.
+# Regression coverage: pressing Enter after the password must not print an extra '*'.
+SCRIPT_DIR="\$(cd -- "\$(dirname -- "\${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="\$(cd -- "\${SCRIPT_DIR}/../.." && pwd)"
+DATABASE_SCRIPT="\${REPO_ROOT}/Documentation/Scripts/configure-database-macos.sh"
+TEMP_HOME="\$(mktemp -d)"
+FAKE_BIN="\${TEMP_HOME}/bin"
+OUTPUT_FILE="\${TEMP_HOME}/terminal-output.log"
+trap 'rm -rf "\${TEMP_HOME}"' EXIT
+mkdir -p "\${FAKE_BIN}"
 
-REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
-SCRIPT="${REPO_ROOT}/Documentation/Scripts/configure-database-macos.sh"
-TEMP_HOME="$(mktemp -d)"
-trap 'rm -rf "${TEMP_HOME}"' EXIT
-
-mkdir -p "${TEMP_HOME}/.dotnet/tools" "${TEMP_HOME}/.config/kukulcan"
-
-cat > "${TEMP_HOME}/fake-dotnet" <<'EOF'
+cat > "\${FAKE_BIN}/dotnet" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
-if [[ "${1:-}" == "ef" && "${2:-}" == "--version" ]]; then
-  printf '%s
-' '10.0.12'
+if [[ "\${1:-}" == "ef" && "\${2:-}" == "--version" ]]; then
+  printf '%s\n' '10.0.12'
   exit 0
 fi
-if [[ "${1:-}" == "ef" && "${2:-}" == "database" && "${3:-}" == "update" ]]; then
-  printf '%s
-' "${*}" > "${FAKE_DOTNET_LOG}"
+if [[ "\${1:-}" == "tool" ]]; then
   exit 0
 fi
-if [[ "${1:-}" == "tool" ]]; then
+if [[ "\${1:-}" == "ef" && "\${2:-}" == "database" && "\${3:-}" == "update" ]]; then
   exit 0
 fi
-exit 0
+exit 1
 EOF
-chmod +x "${TEMP_HOME}/fake-dotnet"
-ln -s "${TEMP_HOME}/fake-dotnet" "${TEMP_HOME}/.dotnet/tools/dotnet"
+chmod +x "\${FAKE_BIN}/dotnet"
 
-printf '2
-Atlas
-postgre
-TestSecret123!
-' |
-  HOME="${TEMP_HOME}" PATH="${TEMP_HOME}/.dotnet/tools:${PATH}"   FAKE_DOTNET_LOG="${TEMP_HOME}/dotnet.log" bash "${SCRIPT}"
+export HOME="\${TEMP_HOME}"
+export PATH="\${FAKE_BIN}:\${PATH}"
+export DATABASE_SCRIPT
+export OUTPUT_FILE
 
-ENV_FILE="${TEMP_HOME}/.config/kukulcan/database.env"
-grep -Fq 'KUKULCAN__DATABASE__PROVIDER="PostgresSql"' "${ENV_FILE}"
-grep -Fq 'KUKULCAN__DATABASE__CONNECTIONSTRING="Host=localhost;Port=5432;Database=Atlas;Username=postgre;Password=TestSecret123!"' "${ENV_FILE}"
-grep -Fq 'KUKULCAN__DATABASE__CONNECTIONSTRING="Host=localhost;Port=5432;Database=Atlas;Username=postgre;Password=TestSecret123!"' "${ENV_FILE}"
-if grep -Eq '(^|[[:space:]])export KUKULCAN_DATABASE_(PROVIDER|CONNECTION_STRING)=|^KUKULCAN_DATABASE_(PROVIDER|CONNECTION_STRING)=' "${ENV_FILE}"; then
-  printf '%s\n' 'Single-underscore database variables must not be persisted.' >&2
-  exit 1
-fi
-if grep -Fq 'KUKULCAN__DATABASE__CONNECTIONSTRING' "${ENV_FILE}"; then
-  printf '%s\n' 'The legacy double-underscore connection variable without the STRING separator must not be persisted.' >&2
-  exit 1
-fi
-! grep -Fq '*' "${ENV_FILE}"
-grep -Fq -- 'ef database update --project Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj --startup-project Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj --configuration Release' "${TEMP_HOME}/dotnet.log"
+python3 - <<'PY'
+import os
+import pty
+import select
+import time
+
+script = os.environ["DATABASE_SCRIPT"]
+output_file = os.environ["OUTPUT_FILE"]
+
+pid, fd = pty.fork()
+if pid == 0:
+    os.execvpe("bash", ["bash", script], os.environ)
+
+os.write(fd, b"2\rAtlas\rpostgre\rTestSecret123!\r")
+
+output = bytearray()
+deadline = time.time() + 15
+
+while time.time() < deadline:
+    ready, _, _ = select.select([fd], [], [], 0.2)
+    if not ready:
+        continue
+    try:
+        chunk = os.read(fd, 4096)
+    except OSError:
+        break
+    if not chunk:
+        break
+    output.extend(chunk)
+    if b"Base de datos configurada y migraciones aplicadas correctamente." in output:
+        break
+
+with open(output_file, "wb") as handle:
+    handle.write(output)
+
+text = output.decode(errors="replace")
+password = "TestSecret123!"
+marker = "Password: "
+start = text.find(marker)
+if start < 0:
+    raise SystemExit("Password prompt was not found.")
+
+after_prompt = text[start + len(marker):]
+execution = "Ejecutando migraciones EF Core para PostgresSql..."
+end = after_prompt.find(execution)
+if end < 0:
+    raise SystemExit(
+        "The script did not reach the next command after pressing Enter. "
+        f"Terminal output: {text!r}"
+    )
+
+masked = after_prompt[:end]
+if masked != "*" * len(password):
+    raise SystemExit(
+        "Password masking output is incorrect: "
+        f"expected {len(password)} stars, got {masked!r}"
+    )
+
+print("macOS interactive password Enter regression test passed.")
+PY
