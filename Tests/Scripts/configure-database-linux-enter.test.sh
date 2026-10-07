@@ -83,7 +83,7 @@ if end < 0:
         f"Terminal output: {text!r}"
     )
 
-masked = after_prompt[:end]
+masked = after_prompt[:end].rstrip("\r\n")
 if masked != "*" * len(password):
     raise SystemExit(
         "Password masking output is incorrect: "
