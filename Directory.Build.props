@@ -1,9 +1,9 @@
 <Project>
     <PropertyGroup>
         <!-- C# -->
-        <VersionPrefix>1.0.3</VersionPrefix>
-        <AssemblyVersion>1.0.3</AssemblyVersion>
-        <FileVersion>1.0.3</FileVersion>
+        <VersionPrefix>1.0.4</VersionPrefix>
+        <AssemblyVersion>1.0.4</AssemblyVersion>
+        <FileVersion>1.0.4</FileVersion>
         <NuGetAudit>true</NuGetAudit>
     </PropertyGroup>
 </Project>

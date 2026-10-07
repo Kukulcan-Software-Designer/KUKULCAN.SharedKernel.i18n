@@ -34,7 +34,7 @@ public sealed class LanguagesControllerBehaviorTests
         var command = new CreateLanguageCommand("es-ES", "Spanish", "Español");
         using var cts = new CancellationTokenSource();
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new LanguagesController(mediator.Object).Create(command, cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
@@ -50,7 +50,7 @@ public sealed class LanguagesControllerBehaviorTests
         SetupException<Result<LanguageDto>>(mediator);
         var body = new UpdateLanguageRequest("Spanish", "Español");
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new LanguagesController(mediator.Object).Update("es-ES", body, CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
@@ -68,7 +68,7 @@ public sealed class LanguagesControllerBehaviorTests
         var mediator = new Mock<IMediator>();
         SetupException<Result>(mediator);
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new LanguagesController(mediator.Object).SetActive(
                 "ca-ES", new SetActiveRequest(false), CancellationToken.None));
 
@@ -85,7 +85,7 @@ public sealed class LanguagesControllerBehaviorTests
         var mediator = new Mock<IMediator>();
         SetupException<Result>(mediator);
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new LanguagesController(mediator.Object).SetDefault("en", CancellationToken.None));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
@@ -101,7 +101,7 @@ public sealed class LanguagesControllerBehaviorTests
         SetupException<Result<IReadOnlyList<LanguageDto>>>(mediator);
         using var cts = new CancellationTokenSource();
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new LanguagesController(mediator.Object).GetAll(false, cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
@@ -117,7 +117,7 @@ public sealed class LanguagesControllerBehaviorTests
         SetupException<Result<LanguageDto>>(mediator);
         using var cts = new CancellationTokenSource();
 
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             new LanguagesController(mediator.Object).GetByCode("es-MX", cts.Token));
 
         Assert.That(exception!.Message, Is.EqualTo("sentinel"));
