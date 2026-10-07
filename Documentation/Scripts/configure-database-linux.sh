@@ -18,19 +18,19 @@ mask_password() {
   local password=""
   local char=""
   while IFS= read -r -s -n 1 char; do
-    [[ -z "\${char}" || "\${char}" == $'\n' || "\${char}" == $'\r' ]] && break
-    if [[ "\${char}" == $'\177' || "\${char}" == $'\b' ]]; then
-      if [[ -n "\${password}" ]]; then
-        password="\${password%?}"
+    [[ -z "${char}" || "${char}" == $'\n' || "${char}" == $'\r' ]] && break
+    if [[ "${char}" == $'\177' || "${char}" == $'\b' ]]; then
+      if [[ -n "${password}" ]]; then
+        password="${password%?}"
         printf '\b \b' >&2
       fi
     else
-      password+="\${char}"
+      password+="${char}"
       printf '*' >&2
     fi
   done
   printf '\n' >&2
-  printf '%s' "\${password}"
+  printf '%s' "${password}"
 }
 escape_value() {
   local value="$1"
