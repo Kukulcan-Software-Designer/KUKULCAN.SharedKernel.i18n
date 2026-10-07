@@ -73,6 +73,18 @@ jobs:
         run: |
           bash Tests/Scripts/configure-database-macos.test.sh
 
+      - name: Test Linux password Enter handling
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          bash Tests/Scripts/configure-database-linux-enter.test.sh
+
+      - name: Test macOS password Enter handling
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          bash Tests/Scripts/configure-database-macos-enter.test.sh
+
       - name: Validate PowerShell script
         if: runner.os == 'Windows'
         shell: pwsh

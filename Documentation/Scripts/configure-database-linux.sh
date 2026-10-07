@@ -18,7 +18,7 @@ mask_password() {
   local password=""
   local char=""
   while IFS= read -r -s -n 1 char; do
-    [[ "${char}" == $'\n' || "${char}" == $'\r' ]] && break
+    [[ -z "${char}" || "${char}" == $'\n' || "${char}" == $'\r' ]] && break
     if [[ "${char}" == $'\177' || "${char}" == $'\b' ]]; then
       if [[ -n "${password}" ]]; then
         password="${password%?}"
