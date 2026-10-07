@@ -1,34 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="\$(cd -- "\$(dirname -- "\${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="\$(cd -- "\${SCRIPT_DIR}/../.." && pwd)"
-DATABASE_SCRIPT="\${REPO_ROOT}/Documentation/Scripts/configure-database-macos.sh"
-TEMP_HOME="\$(mktemp -d)"
-FAKE_BIN="\${TEMP_HOME}/bin"
-OUTPUT_FILE="\${TEMP_HOME}/terminal-output.log"
-trap 'rm -rf "\${TEMP_HOME}"' EXIT
-mkdir -p "\${FAKE_BIN}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
+DATABASE_SCRIPT="${REPO_ROOT}/Documentation/Scripts/configure-database-macos.sh"
+TEMP_HOME="$(mktemp -d)"
+FAKE_BIN="${TEMP_HOME}/bin"
+OUTPUT_FILE="${TEMP_HOME}/terminal-output.log"
+trap 'rm -rf "${TEMP_HOME}"' EXIT
+mkdir -p "${FAKE_BIN}"
 
-cat > "\${FAKE_BIN}/dotnet" <<'EOF'
+cat > "${FAKE_BIN}/dotnet" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
-if [[ "\${1:-}" == "ef" && "\${2:-}" == "--version" ]]; then
+if [[ "${1:-}" == "ef" && "${2:-}" == "--version" ]]; then
   printf '%s\n' '10.0.12'
   exit 0
 fi
-if [[ "\${1:-}" == "tool" ]]; then
+if [[ "${1:-}" == "tool" ]]; then
   exit 0
 fi
-if [[ "\${1:-}" == "ef" && "\${2:-}" == "database" && "\${3:-}" == "update" ]]; then
+if [[ "${1:-}" == "ef" && "${2:-}" == "database" && "${3:-}" == "update" ]]; then
   exit 0
 fi
 exit 1
 EOF
-chmod +x "\${FAKE_BIN}/dotnet"
+chmod +x "${FAKE_BIN}/dotnet"
 
-export HOME="\${TEMP_HOME}"
-export PATH="\${FAKE_BIN}:\${PATH}"
+export HOME="${TEMP_HOME}"
+export PATH="${FAKE_BIN}:${PATH}"
 export DATABASE_SCRIPT
 export OUTPUT_FILE
 
