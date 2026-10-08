@@ -1,0 +1,45 @@
+name: Docker Update Scripts
+
+on:
+  push:
+    branches:
+      - "FEATURES/DOCKER-UPDATE-SCRIPTS"
+  pull_request:
+    branches:
+      - Develop
+
+permissions:
+  contents: read
+
+jobs:
+  validate-scripts:
+    name: Validate Docker update script (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            script: Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-linux.sh
+            test: Tests/Scripts/docker-update-linux.test.sh
+          - os: macos-latest
+            script: Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-macos.sh
+            test: Tests/Scripts/docker-update-macos.test.sh
+          - os: windows-latest
+            script: Documentation/Scripts/Docker/KUKULCAN.SharedKernel.i18n-docker-windows.ps1
+            test: Tests/Scripts/docker-update-windows.test.ps1
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Test Bash Docker update script contract
+        if: runner.os != 'Windows'
+        shell: bash
+        run: bash "${{ matrix.test }}"
+
+      - name: Test PowerShell Docker update script contract
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\${{ matrix.test }}

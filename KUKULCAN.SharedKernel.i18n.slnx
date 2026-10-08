@@ -8,7 +8,11 @@
     <File Path="Documentation/api.md" />
     <File Path="Documentation/operations.md" />
   </Folder>
-  <Folder Name="/Documentation/Scripts/" />
+  <Folder Name="/Documentation/Scripts/">
+    <File Path="Documentation\Scripts\configure-database-linux.sh" />
+    <File Path="Documentation\Scripts\configure-database-macos.sh" />
+    <File Path="Documentation\Scripts\Configure-Database-Windows.ps1" />
+  </Folder>
   <Folder Name="/Documentation/Scripts/Docker/">
     <File Path="Documentation\Scripts\Docker\KUKULCAN.SharedKernel.i18n-docker-linux.sh" />
     <File Path="Documentation\Scripts\Docker\KUKULCAN.SharedKernel.i18n-docker-macos.sh" />
@@ -42,7 +46,9 @@
       <File Path=".github/workflows/application-integration-tests.yml" />
       <File Path=".github/workflows/api-integration-tests.yml" />
     <File Path=".github\workflows\ci.yml" />
+    <File Path=".github\workflows\database-configuration-scripts.yml" />
     <File Path=".github\workflows\docker-publish.yml" />
+    <File Path=".github\workflows\docker-update-scripts.yml" />
   </Folder>
 
   <Folder Name="/Source/">
@@ -67,6 +73,18 @@
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests/KUKULCAN.SharedKernel.i18n.Domain.UnitTests.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration/KUKULCAN.SharedKernel.i18n.Infrastructure.Integration.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests/KUKULCAN.SharedKernel.i18n.Infrastructure.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/Tests/Scripts/">
+    <File Path="Tests\Scripts\configure-database-linux-enter.test.sh" />
+    <File Path="Tests\Scripts\configure-database-linux.test.sh" />
+    <File Path="Tests\Scripts\configure-database-macos-enter.test.sh" />
+    <File Path="Tests\Scripts\configure-database-macos.test.sh" />
+    <File Path="Tests\Scripts\docker-update-linux.test.sh" />
+    <File Path="Tests\Scripts\docker-update-macos.test.sh" />
+    <File Path="Tests\Scripts\docker-update-windows.test.ps1" />
+    <File Path="Tests\Scripts\ef-design-time-linux.test.sh" />
+    <File Path="Tests\Scripts\ef-design-time-macos.test.sh" />
+    <File Path="Tests\Scripts\ef-design-time-windows.test.ps1" />
   </Folder>
 
 </Solution>

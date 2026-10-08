@@ -74,6 +74,21 @@ public sealed class LanguageCodeTests
         Assert.That(first, Is.Not.SameAs(second));
     }
 
+
+    [TestCase("zh-Hant-TW", "zh-Hant-TW", new[] { "zh-Hant-TW", "zh-Hant", "zh", "en" })]
+    [TestCase("sr-Latn-RS", "sr-Latn-RS", new[] { "sr-Latn-RS", "sr-Latn", "sr", "en" })]
+    public void Create_ComplexBcp47Tag_PreservesTagAndBuildsProgressiveFallbackChain(
+        string input,
+        string expectedValue,
+        string[] expectedFallbackChain)
+    {
+        Result<LanguageCode> result = LanguageCode.Create(input);
+
+        Assert.That(result.IsSuccess, Is.True);
+        Assert.That(result.Value.Value, Is.EqualTo(expectedValue));
+        Assert.That(result.Value.FallbackChain, Is.EqualTo(expectedFallbackChain));
+    }
+
     [TestCase("zh-Hant-TW")]
     [TestCase("sr-Latn-RS")]
     public void Create_ComplexBcp47Tag_IsAccepted(string input)
