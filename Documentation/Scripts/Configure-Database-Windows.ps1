@@ -135,7 +135,7 @@ Set-Location $repoRoot
 Ensure-EfTool
 
 Write-Host "Ejecutando migraciones EF Core para $provider..."
-& dotnet ef database update --project $migrationProject --configuration Release
+& dotnet ef database update --project $migrationProject --startup-project $migrationProject --configuration Release
 
 if ($LASTEXITCODE -ne 0) {
     throw "EF Core database migration failed for provider $provider."
