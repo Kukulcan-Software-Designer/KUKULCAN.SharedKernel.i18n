@@ -42,9 +42,37 @@ public sealed class LanguageCode : ValueObject
                 $"'{tag}' is not a valid BCP-47 language tag (e.g., 'es-ES', 'en-US')."));
 
         string[] parts = normalised.Split('-');
-        string language = parts[0].ToLowerInvariant();
-        string? region = parts.Length > 1 ? parts[1].ToUpperInvariant() : null;
-        string value = region is not null ? $"{language}-{region}" : language;
+
+        var normalizedParts = new string[parts.Length];
+        normalizedParts[0] = parts[0].ToLowerInvariant();
+
+        for (int i = 1; i < parts.Length; i++)
+        {
+            string part = parts[i];
+
+            if (part.Length == 4 && part.All(char.IsLetter))
+            {
+                normalizedParts[i] =
+                    char.ToUpperInvariant(part[0]) + part[1..].ToLowerInvariant();
+            }
+            else if ((part.Length == 2 && part.All(char.IsLetter)) ||
+                     (part.Length == 3 && part.All(char.IsDigit)))
+            {
+                normalizedParts[i] = part.ToUpperInvariant();
+            }
+            else
+            {
+                normalizedParts[i] = part.ToLowerInvariant();
+            }
+        }
+
+        string value = string.Join("-", normalizedParts);
+        string language = normalizedParts[0];
+        string? region = normalizedParts
+            .Skip(1)
+            .FirstOrDefault(part =>
+                (part.Length == 2 && part.All(char.IsLetter)) ||
+                (part.Length == 3 && part.All(char.IsDigit)));
 
         return Result<LanguageCode>.Success(new LanguageCode(value, language, region));
     }
