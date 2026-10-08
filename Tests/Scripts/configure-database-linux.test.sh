@@ -52,6 +52,6 @@ if grep -Fq '*' "${ENV_FILE}"; then
   exit 1
 fi
 test -f "${DOTNET_LOG}"
-grep -Fq 'ef database update --project Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj --configuration Release' "${DOTNET_LOG}"
+grep -Fq 'ef database update --project Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj --startup-project Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj --configuration Release' "${DOTNET_LOG}"
 grep -Fq -- '--startup-project Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj' "${DOTNET_LOG}"
 printf '%s\n' 'Linux database configuration script integration test passed.'
