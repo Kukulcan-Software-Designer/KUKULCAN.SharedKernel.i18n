@@ -5,7 +5,6 @@ ENV_FILE="${HOME}/.config/kukulcan/database.env"
 DOTNET_TOOLS_DIR="${HOME}/.dotnet/tools"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
-API_PROJECT="Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj"
 SHELL_RC=""
 
 case "${SHELL:-}" in
@@ -18,7 +17,7 @@ mask_password() {
   local password=""
   local char=""
   while IFS= read -r -s -n 1 char; do
-    [[ "${char}" == $'\n' || "${char}" == $'\r' ]] && break
+    [[ -z "${char}" || "${char}" == $'\n' || "${char}" == $'\r' ]] && break
     if [[ "${char}" == $'\177' || "${char}" == $'\b' ]]; then
       if [[ -n "${password}" ]]; then
         password="${password%?}"
@@ -135,7 +134,6 @@ ensure_ef_tool
 printf '%s\n' "Ejecutando migraciones EF Core para ${provider}..."
 dotnet ef database update \
   --project "${migration_project}" \
-  --startup-project "${API_PROJECT}" \
   --configuration Release
 
 printf '%s\n' "Base de datos configurada y migraciones aplicadas correctamente."

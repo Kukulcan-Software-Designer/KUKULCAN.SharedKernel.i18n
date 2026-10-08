@@ -46,9 +46,10 @@ if grep -Eq '(^|[[:space:]])export KUKULCAN_DATABASE_(PROVIDER|CONNECTION_STRING
   printf '%s\n' 'Single-underscore database variables must not be persisted.' >&2
   exit 1
 fi
-if grep -Fq 'KUKULCAN__DATABASE__CONNECTIONSTRING' "${ENV_FILE}"; then
+if grep -Fq 'KUKULCAN__DATABASE__CONNECTION__STRING' "${ENV_FILE}"; then
   printf '%s\n' 'The legacy double-underscore connection variable without the STRING separator must not be persisted.' >&2
   exit 1
 fi
 ! grep -Fq '*' "${ENV_FILE}"
-grep -Fq -- 'ef database update --project Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj --startup-project Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj --configuration Release' "${TEMP_HOME}/dotnet.log"
+grep -Fq -- 'ef database update --project Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj --configuration Release' "${TEMP_HOME}/dotnet.log"
+! grep -Fq -- '--startup-project' "${TEMP_HOME}/dotnet.log"
