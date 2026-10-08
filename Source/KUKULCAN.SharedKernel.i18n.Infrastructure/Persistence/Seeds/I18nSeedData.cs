@@ -107,15 +107,22 @@ public static class I18NSeedData
             ("es-ES", "EUR", "Euro", "€", CurrencySymbolPosition.After, true, ',', '.', 2, "-{amount} {symbol}"),
             ("es-ES", "USD", "Dólar estadounidense", "$", CurrencySymbolPosition.After, true, ',', '.', 2, "-{amount} {symbol}"),
             ("es-ES", "GBP", "Libra esterlina", "£", CurrencySymbolPosition.After, true, ',', '.', 2, "-{amount} {symbol}"),
+            ("es-ES", "JPY", "Yen", "¥", CurrencySymbolPosition.After, true, ',', '.', 0, "-{amount} {symbol}"),
             // Catalan
             ("ca-ES", "EUR", "Euro", "€", CurrencySymbolPosition.After, true, ',', '.', 2, "-{amount} {symbol}"),
             ("ca-ES", "USD", "Dòlar estatunidenc", "$", CurrencySymbolPosition.After, true, ',', '.', 2, "-{amount} {symbol}"),
+            ("ca-ES", "GBP", "Libra esterlina", "£", CurrencySymbolPosition.After, true, ',', '.', 2, "-{amount} {symbol}"),
+            ("ca-ES", "JPY", "Yen", "¥", CurrencySymbolPosition.After, true, ',', '.', 0, "-{amount} {symbol}"),
             // French
             ("fr-FR", "EUR", "Euro", "€", CurrencySymbolPosition.After, true, ',', ' ', 2, "-{amount} {symbol}"),
             ("fr-FR", "USD", "Dollar américain", "$", CurrencySymbolPosition.After, true, ',', ' ', 2, "-{amount} {symbol}"),
+            ("fr-FR", "GBP", "Libra esterlina", "£", CurrencySymbolPosition.After, true, ',', '.', 2, "-{amount} {symbol}"),
+            ("fr-FR", "JPY", "Yen", "¥", CurrencySymbolPosition.After, true, ',', '.', 0, "-{amount} {symbol}"),
             // German
             ("de-DE", "EUR", "Euro", "€", CurrencySymbolPosition.After, true, ',', '.', 2, "-{amount} {symbol}"),
             ("de-DE", "USD", "US-Dollar", "$", CurrencySymbolPosition.After, true, ',', '.', 2, "-{amount} {symbol}"),
+            ("de-DE", "GBP", "Libra esterlina", "£", CurrencySymbolPosition.After, true, ',', '.', 2, "-{amount} {symbol}"),
+            ("de-DE", "JPY", "Yen", "¥", CurrencySymbolPosition.After, true, ',', '.', 0, "-{amount} {symbol}"),
         };
 
         foreach (var (lang, iso, name, sym, pos, space, dec, thou, dp, neg) in formats)
