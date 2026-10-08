@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "FEATURES/DATABASE-CONFIGURATION-SCRIPTS"
+      - "FIX/EFCORE-DESIGNTIME-MIGRATIONS"
   pull_request:
     branches:
       - Develop
@@ -52,7 +53,10 @@ jobs:
           grep -Fq "KUKULCAN__DATABASE__PROVIDER" "${{ matrix.script }}"
           grep -Fq "dotnet ef database update" "${{ matrix.script }}"
           grep -Fq "dotnet tool install --global dotnet-ef" "${{ matrix.script }}"
-          grep -Fq "Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj" "${{ matrix.script }}"
+          if grep -Fq -- "--startup-project" "${{ matrix.script }}"; then
+            echo "Database migration scripts must use the migration project design-time factory and must not start the API." >&2
+            exit 1
+          fi
           grep -Fq "KUKULCAN.SharedKernel.i18n.Migrations.SqlServer" "${{ matrix.script }}"
           grep -Fq "KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql" "${{ matrix.script }}"
           grep -Fq "KUKULCAN.SharedKernel.i18n.Migrations.MySql" "${{ matrix.script }}"
@@ -99,7 +103,7 @@ jobs:
           if ($content -notmatch 'KUKULCAN__DATABASE__PROVIDER') { throw 'Missing EF Core provider variable' }
           if ($content -notmatch 'dotnet ef database update') { throw 'Missing EF Core database update command' }
           if ($content -notmatch 'dotnet tool install --global dotnet-ef') { throw 'Missing EF Core tool installation' }
-          if ($content -notmatch 'Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj') { throw 'Missing API startup project' }
+          if ($content -match '--startup-project') { throw 'Database migration scripts must not start the API project.' }
           if ($content -notmatch 'KUKULCAN.SharedKernel.i18n.Migrations.SqlServer') { throw 'Missing SQL Server migrations project' }
           if ($content -notmatch 'KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql') { throw 'Missing PostgreSQL migrations project' }
           if ($content -notmatch 'KUKULCAN.SharedKernel.i18n.Migrations.MySql') { throw 'Missing MySQL migrations project' }
