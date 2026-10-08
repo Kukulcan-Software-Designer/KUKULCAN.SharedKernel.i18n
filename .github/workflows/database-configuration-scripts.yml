@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "FEATURES/DATABASE-CONFIGURATION-SCRIPTS"
-      - "FIX/EFCORE-DESIGNTIME-MIGRATIONS"
   pull_request:
     branches:
       - Develop
