@@ -11,10 +11,11 @@ unset Jwt__SecretKey
 export KUKULCAN__DATABASE__PROVIDER="PostgresSql"
 export KUKULCAN__DATABASE__CONNECTIONSTRING="${DATABASE_CONNECTION}"
 
-dotnet ef migrations list \
+dotnet ef migrations script \
   --project "${MIGRATION_PROJECT}" \
   --startup-project "${MIGRATION_PROJECT}" \
-  --configuration Release
+  --configuration Release \
+  --output "/tmp/kukulcan-i18n-migrations.sql"
 
 grep -Fq -- '--startup-project "${migration_project}"' Documentation/Scripts/configure-database-macos.sh
 
