@@ -117,7 +117,7 @@ case "$DOCKER_SERVER" in
 esac
 
 docker_cmd() {
-  docker "\${DOCKER_ARGS[@]}" "$@"
+  docker "${DOCKER_ARGS[@]}" "$@"
 }
 
 printf '\nDocker\n'
