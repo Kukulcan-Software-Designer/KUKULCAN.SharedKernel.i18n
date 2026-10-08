@@ -57,11 +57,15 @@ public sealed class LanguageCode : ValueObject
     {
         get
         {
-            var chain = new List<string> { Value };
-            if (Region is not null)
-                chain.Add(Language);
+            string[] parts = Value.Split('-');
+            var chain = new List<string>(parts.Length + 1);
+
+            for (int length = parts.Length; length >= 1; length--)
+                chain.Add(string.Join("-", parts.Take(length)));
+
             if (!chain.Contains("en", StringComparer.OrdinalIgnoreCase))
                 chain.Add("en");
+
             return chain;
         }
     }
