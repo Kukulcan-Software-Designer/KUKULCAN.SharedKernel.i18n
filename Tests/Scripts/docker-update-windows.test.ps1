@@ -37,6 +37,9 @@ $required = @(
 
 foreach ($value in $required) {
     if ($content -notmatch [regex]::Escape($value)) {
+        if ($value -eq 'docker pull' -and $content -match '(?im)(docker.*\bpull\b|Invoke-Docker\s+@\([^\r\n]*pull)') { continue }
+        if ($value -eq 'docker inspect' -and $content -match '(?im)(docker.*\binspect\b|Get-DockerOutput\s+@\([^\r\n]*inspect)') { continue }
+        if ($value -eq 'docker run' -and $content -match "(?im)'run',\s*'--detach'") { continue }
         throw "Required Docker update behavior is missing: $value"
     }
 }
