@@ -52,6 +52,24 @@ jobs:
           dotnet tool install --global dotnet-ef --version 10.*
           Add-Content -Path $env:GITHUB_PATH -Value "$HOME/.dotnet/tools"
 
+      - name: Test Linux EF design-time migration flow
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          bash Tests/Scripts/ef-design-time-linux.test.sh
+
+      - name: Test macOS EF design-time migration flow
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          bash Tests/Scripts/ef-design-time-macos.test.sh
+
+      - name: Test Windows EF design-time migration flow
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./Tests/Scripts/ef-design-time-windows.test.ps1
+
       - name: Verify Bash script exists
         if: runner.os != 'Windows'
         shell: bash
@@ -115,24 +133,6 @@ jobs:
         shell: bash
         run: |
           bash Tests/Scripts/configure-database-macos.test.sh
-
-      - name: Test Linux EF design-time migration flow
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          bash Tests/Scripts/ef-design-time-linux.test.sh
-
-      - name: Test macOS EF design-time migration flow
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          bash Tests/Scripts/ef-design-time-macos.test.sh
-
-      - name: Test Windows EF design-time migration flow
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          ./Tests/Scripts/ef-design-time-windows.test.ps1
 
       - name: Test Linux password Enter handling
         if: runner.os == 'Linux'
