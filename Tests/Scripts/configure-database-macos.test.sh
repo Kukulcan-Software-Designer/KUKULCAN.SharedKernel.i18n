@@ -51,5 +51,5 @@ if grep -Fq 'KUKULCAN__DATABASE__CONNECTION__STRING' "${ENV_FILE}"; then
   exit 1
 fi
 ! grep -Fq '*' "${ENV_FILE}"
-grep -Fq -- 'ef database update --project Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj --configuration Release' "${TEMP_HOME}/dotnet.log"
-! grep -Fq -- '--startup-project' "${TEMP_HOME}/dotnet.log"
+grep -Fq -- 'ef database update --project Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj --startup-project Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj --configuration Release' "${TEMP_HOME}/dotnet.log"
+grep -Fq -- '--startup-project Source/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql/KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql.csproj' "${TEMP_HOME}/dotnet.log"
