@@ -11,6 +11,7 @@ on:
 jobs:
   validate-scripts:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -28,6 +29,46 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore solution
+        run: dotnet restore KUKULCAN.SharedKernel.i18n.slnx
+
+      - name: Install EF Core tools
+        shell: bash
+        if: runner.os != 'Windows'
+        run: |
+          dotnet tool install --global dotnet-ef --version 10.*
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Install EF Core tools on Windows
+        shell: pwsh
+        if: runner.os == 'Windows'
+        run: |
+          dotnet tool install --global dotnet-ef --version 10.*
+          Add-Content -Path $env:GITHUB_PATH -Value "$HOME/.dotnet/tools"
+
+      - name: Test Linux EF design-time migration flow
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          bash Tests/Scripts/ef-design-time-linux.test.sh
+
+      - name: Test macOS EF design-time migration flow
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          bash Tests/Scripts/ef-design-time-macos.test.sh
+
+      - name: Test Windows EF design-time migration flow
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./Tests/Scripts/ef-design-time-windows.test.ps1
 
       - name: Verify Bash script exists
         if: runner.os != 'Windows'
@@ -52,10 +93,8 @@ jobs:
           grep -Fq "KUKULCAN__DATABASE__PROVIDER" "${{ matrix.script }}"
           grep -Fq "dotnet ef database update" "${{ matrix.script }}"
           grep -Fq "dotnet tool install --global dotnet-ef" "${{ matrix.script }}"
-          if grep -Fq -- "--startup-project" "${{ matrix.script }}"; then
-            echo "Database migration scripts must use the migration project design-time factory and must not start the API." >&2
-            exit 1
-          fi
+          grep -Fq -- "--startup-project" "${{ matrix.script }}"
+          grep -Fq -- "migration_project" "${{ matrix.script }}"
           grep -Fq "KUKULCAN.SharedKernel.i18n.Migrations.SqlServer" "${{ matrix.script }}"
           grep -Fq "KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql" "${{ matrix.script }}"
           grep -Fq "KUKULCAN.SharedKernel.i18n.Migrations.MySql" "${{ matrix.script }}"
@@ -63,6 +102,25 @@ jobs:
           grep -Fq "SqlServer" "${{ matrix.script }}"
           grep -Fq "PostgresSql" "${{ matrix.script }}"
           grep -Fq "MySql" "${{ matrix.script }}"
+
+      - name: Validate PowerShell script
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $content = Get-Content "${{ matrix.script }}" -Raw
+          [System.Management.Automation.Language.Parser]::ParseInput($content,[ref]$null,[ref]$null) | Out-Null
+          if ($content -notmatch 'KUKULCAN__DATABASE__CONNECTIONSTRING') { throw 'Missing EF Core connection variable' }
+          if ($content -notmatch 'KUKULCAN__DATABASE__PROVIDER') { throw 'Missing EF Core provider variable' }
+          if ($content -notmatch 'dotnet ef database update') { throw 'Missing EF Core database update command' }
+          if ($content -notmatch 'dotnet tool install --global dotnet-ef') { throw 'Missing EF Core tool installation' }
+          if ($content -notmatch '--startup-project') { throw 'Database migration scripts must use the migration project as the EF Core startup project.' }
+          if ($content -notmatch 'KUKULCAN.SharedKernel.i18n.Migrations.SqlServer') { throw 'Missing SQL Server migrations project' }
+          if ($content -notmatch 'KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql') { throw 'Missing PostgreSQL migrations project' }
+          if ($content -notmatch 'KUKULCAN.SharedKernel.i18n.Migrations.MySql') { throw 'Missing MySQL migrations project' }
+          if ($content -notmatch 'Salir sin registrar las variables') { throw 'Missing exit option text' }
+          if ($content -notmatch 'SqlServer') { throw 'Missing SQL Server provider' }
+          if ($content -notmatch 'PostgresSql') { throw 'Missing PostgreSQL provider' }
+          if ($content -notmatch 'MySql') { throw 'Missing MySQL provider' }
 
       - name: Test Linux database configuration flow
         if: runner.os == 'Linux'
@@ -87,26 +145,3 @@ jobs:
         shell: bash
         run: |
           bash Tests/Scripts/configure-database-macos-enter.test.sh
-
-      - name: Validate PowerShell script
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $content = Get-Content "${{ matrix.script }}" -Raw
-          [System.Management.Automation.Language.Parser]::ParseInput(
-            $content,
-            [ref]$null,
-            [ref]$null
-          ) | Out-Null
-          if ($content -notmatch 'KUKULCAN__DATABASE__CONNECTIONSTRING') { throw 'Missing EF Core connection variable' }
-          if ($content -notmatch 'KUKULCAN__DATABASE__PROVIDER') { throw 'Missing EF Core provider variable' }
-          if ($content -notmatch 'dotnet ef database update') { throw 'Missing EF Core database update command' }
-          if ($content -notmatch 'dotnet tool install --global dotnet-ef') { throw 'Missing EF Core tool installation' }
-          if ($content -match '--startup-project') { throw 'Database migration scripts must not start the API project.' }
-          if ($content -notmatch 'KUKULCAN.SharedKernel.i18n.Migrations.SqlServer') { throw 'Missing SQL Server migrations project' }
-          if ($content -notmatch 'KUKULCAN.SharedKernel.i18n.Migrations.PostgreSql') { throw 'Missing PostgreSQL migrations project' }
-          if ($content -notmatch 'KUKULCAN.SharedKernel.i18n.Migrations.MySql') { throw 'Missing MySQL migrations project' }
-          if ($content -notmatch 'Salir sin registrar las variables') { throw 'Missing exit option text' }
-          if ($content -notmatch 'SqlServer') { throw 'Missing SQL Server provider' }
-          if ($content -notmatch 'PostgresSql') { throw 'Missing PostgreSQL provider' }
-          if ($content -notmatch 'MySql') { throw 'Missing MySQL provider' }

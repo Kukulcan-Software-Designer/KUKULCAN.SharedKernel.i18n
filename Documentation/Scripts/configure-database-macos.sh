@@ -128,6 +128,7 @@ ensure_ef_tool
 printf '%s\n' "Ejecutando migraciones EF Core para ${provider}..."
 dotnet ef database update \
   --project "${migration_project}" \
+  --startup-project "${migration_project}" \
   --configuration Release
 
 printf '%s\n' "Base de datos configurada y migraciones aplicadas correctamente."
