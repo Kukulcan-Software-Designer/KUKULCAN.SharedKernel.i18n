@@ -1,210 +1,372 @@
-# KUKULCAN.SharedKernel.i18n local Docker deployment helper for Windows PowerShell.
-# Run from the repository root unless KUKULCAN_I18N_REPO_ROOT is set.
+# KUKULCAN.SharedKernel.i18n Docker deployment/update helper for Windows PowerShell.
+# Uses the published Docker Hub image and never builds the image locally.
 
 $ErrorActionPreference = 'Stop'
 
-function EnvValue([string]$Name, [string]$DefaultValue) {
-    $Value = [Environment]::GetEnvironmentVariable($Name)
-    if ([string]::IsNullOrWhiteSpace($Value)) { return $DefaultValue }
-    return $Value
+$IMAGE_REPOSITORY = 'jpardokukulcan/kukulcan-i18n'
+$CONTAINER_NAME = 'kukulcan-i18n'
+
+function Cleanup {
+    $DB_PASSWORD = $null
+    $JWT_SECRET = $null
+    $CONNECTION_STRING = $null
+    $DOCKER_SERVER = $null
+    $LATEST_VERSION = $null
+    $CURRENT_VERSION = $null
+    $CURRENT_IMAGE = $null
+
+    Remove-Variable DB_PASSWORD, JWT_SECRET, CONNECTION_STRING, DOCKER_SERVER,
+        LATEST_VERSION, CURRENT_VERSION, CURRENT_IMAGE -ErrorAction SilentlyContinue
+
+    Remove-Item Env:DB_PASSWORD, Env:JWT_SECRET, Env:CONNECTION_STRING -ErrorAction SilentlyContinue
 }
 
-function Step([string]$Description) {
-    $script:StepNumber++
-    $Percent = [math]::Floor(($script:StepNumber * 100) / $script:TotalSteps)
-    Write-Host ("[{0,3}%] {1}" -f $Percent, $Description)
+function Fail([string]$Message) {
+    throw $Message
 }
 
-function Fail([string]$Message, [int]$Code = 1) {
-    Write-Host "[ERROR] $Message" -ForegroundColor Red
-    exit $Code
+function Prompt-Default([string]$Prompt, [string]$Default) {
+    $value = Read-Host ('  ' + $Prompt + ' [' + $Default + ']')
+    if ([string]::IsNullOrWhiteSpace($value)) { return $Default }
+    return $value
 }
 
-function NativeStep([string]$Description, [string]$Command, [string[]]$Arguments) {
-    Step $Description
-    Write-Host ("      Command: {0} {1}" -f $Command, ($Arguments -join ' '))
-    & $Command @Arguments
-    $Code = $LASTEXITCODE
-    if ($Code -ne 0) {
-        Write-Host "[ERROR] Command failed (exit code $Code)." -ForegroundColor Red
-        Write-Host '[ERROR] The command output above is the reported cause.' -ForegroundColor Red
-        exit $Code
+function Prompt-Required([string]$Prompt) {
+    $value = Read-Host ('  ' + $Prompt)
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        Fail ($Prompt + ' cannot be empty.')
     }
+    return $value
 }
 
-$ImageName = EnvValue 'KUKULCAN_I18N_IMAGE_NAME' 'kukulcan-i18n:local'
-$ContainerName = EnvValue 'KUKULCAN_I18N_CONTAINER_NAME' 'kukulcan-i18n'
-$NetworkName = EnvValue 'KUKULCAN_I18N_NETWORK_NAME' 'kukulcan-local'
-$DbContainer = EnvValue 'KUKULCAN_I18N_DB_CONTAINER' 'mypostgres'
-$DbProvider = EnvValue 'KUKULCAN_I18N_DB_PROVIDER' 'PostgresSql'
-$DbHost = EnvValue 'KUKULCAN_I18N_DB_HOST' 'mypostgres'
-$DbPort = EnvValue 'KUKULCAN_I18N_DB_PORT' '5432'
-$DbName = EnvValue 'KUKULCAN_I18N_DB_NAME' 'Atlas'
-$DbUser = EnvValue 'KUKULCAN_I18N_DB_USER' 'postgre'
-$HttpPort = EnvValue 'KUKULCAN_I18N_HTTP_PORT' '8080'
-$AutoMigrate = EnvValue 'KUKULCAN_I18N_AUTO_MIGRATE' 'true'
-$SeedData = EnvValue 'KUKULCAN_I18N_SEED_DATA' 'true'
-$RepoRoot = EnvValue 'KUKULCAN_I18N_REPO_ROOT' (Get-Location).Path
-$DbPassword = [Environment]::GetEnvironmentVariable('KUKULCAN_I18N_DB_PASSWORD')
-$JwtSecret = [Environment]::GetEnvironmentVariable('KUKULCAN_I18N_JWT_SECRET')
-$RedisConnection = [Environment]::GetEnvironmentVariable('KUKULCAN_I18N_REDIS_CONNECTION')
-if ($null -eq $RedisConnection) { $RedisConnection = '' }
-$JwtIssuer = 'ATLAS'
-$JwtAudience = 'ATLAS.i18n'
-
-$TotalSteps = 11
-$StepNumber = 0
-
-Step 'Checking Docker and required tools.'
-if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { Fail 'Docker CLI is not available in PATH.' }
-& docker info *> $null
-if ($LASTEXITCODE -ne 0) { Fail 'Docker Desktop/Docker Engine is not running or is not accessible.' }
-Write-Host '      Docker is available.'
-
-Step 'Checking the repository and Dockerfile.'
-$Dockerfile = Join-Path $RepoRoot 'Dockerfile'
-if (-not (Test-Path -LiteralPath $Dockerfile)) { Fail "Dockerfile not found under $RepoRoot." }
-Write-Host "      Repository: $RepoRoot"
-
-Step 'Preparing PostgreSQL password and JWT secret.'
-if ([string]::IsNullOrWhiteSpace($DbPassword)) {
-    $SecurePassword = Read-Host "      PostgreSQL password for $DbUser@$DbContainer" -AsSecureString
-    $DbPassword = [System.Net.NetworkCredential]::new('', $SecurePassword).Password
-}
-if ([string]::IsNullOrWhiteSpace($DbPassword)) { Fail 'PostgreSQL password cannot be empty.' }
-
-if ([string]::IsNullOrWhiteSpace($JwtSecret)) {
-    $SecureSecret = Read-Host '      JWT secret (leave empty to generate a local development secret)' -AsSecureString
-    $JwtSecret = [System.Net.NetworkCredential]::new('', $SecureSecret).Password
-}
-if ([string]::IsNullOrWhiteSpace($JwtSecret)) {
-    $Bytes = New-Object byte[] 48
-    [System.Security.Cryptography.RandomNumberGenerator]::Fill($Bytes)
-    $JwtSecret = [Convert]::ToBase64String($Bytes)
-    Write-Host '      A temporary local JWT secret was generated.'
-}
-if ($JwtSecret.Length -lt 32) { Fail 'JWT secret must contain at least 32 characters.' }
-
-Step "Checking PostgreSQL container $DbContainer."
-& docker inspect $DbContainer *> $null
-if ($LASTEXITCODE -ne 0) { Fail "PostgreSQL container $DbContainer does not exist." }
-$DbRunning = (& docker inspect -f '{{.State.Running}}' $DbContainer).Trim()
-if ($DbRunning -ne 'true') { Fail "PostgreSQL container $DbContainer is not running." }
-Write-Host '      PostgreSQL container is running.'
-
-Step "Ensuring Docker network $NetworkName."
-& docker network inspect $NetworkName *> $null
-if ($LASTEXITCODE -ne 0) {
-    NativeStep "Creating Docker network $NetworkName." 'docker' @('network', 'create', $NetworkName)
-} else {
-    Write-Host '      Network already exists.'
-}
-
-$NetworkContainers = (& docker network inspect $NetworkName --format '{{range .Containers}}{{.Name}}{{printf "\n"}}{{end}}') -split [Environment]::NewLine |
-    ForEach-Object { $_.Trim() }
-
-if ($NetworkContainers -contains $DbContainer) {
-    Write-Host '      PostgreSQL is already attached to the network.'
-} else {
-    NativeStep "Connecting PostgreSQL to $NetworkName." 'docker' @('network', 'connect', $NetworkName, $DbContainer)
-}
-
-Step "Checking PostgreSQL readiness and database $DbName."
-& docker exec $DbContainer pg_isready -U $DbUser
-if ($LASTEXITCODE -ne 0) { Fail "PostgreSQL readiness command failed (exit code $LASTEXITCODE)." $LASTEXITCODE }
-
-$DbExists = (& docker exec $DbContainer psql -U $DbUser -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DbName';").Trim()
-if ($LASTEXITCODE -ne 0) { Fail "Database existence command failed (exit code $LASTEXITCODE)." $LASTEXITCODE }
-if ($DbExists -ne '1') { Fail "Database $DbName was not found. Create it before starting the API." }
-
-NativeStep "Building Docker image $ImageName." 'docker' @('build', '--tag', $ImageName, $RepoRoot)
-
-Step "Removing existing container $ContainerName, if present."
-& docker container inspect $ContainerName *> $null
-if ($LASTEXITCODE -eq 0) {
-    NativeStep "Removing container $ContainerName." 'docker' @('rm', '--force', $ContainerName)
-} else {
-    Write-Host '      No existing container found.'
-}
-
-$ConnectionString = "Host=$DbHost;Port=$DbPort;Database=$DbName;Username=$DbUser;Password=$DbPassword"
-
-Step "Starting container $ContainerName."
-Write-Host "      Image: $ImageName"
-Write-Host "      Network: $NetworkName"
-Write-Host ("      API port: {0}:8080" -f $HttpPort)
-Write-Host ("      Database: {0} on {1}:{2}" -f $DbName, $DbHost, $DbPort)
-
-$RunArguments = @(
-    'run', '--detach',
-    '--name', $ContainerName,
-    '--network', $NetworkName,
-    '--publish', ($HttpPort + ':8080'),
-    '--env', 'ASPNETCORE_HTTP_PORTS=8080',
-    '--env', ('Kukulcan__Database__Provider=' + $DbProvider),
-    '--env', ('Kukulcan__Database__ConnectionString=' + $ConnectionString),
-    '--env', ('Kukulcan__Database__Migration__AutoMigrateOnStartup=' + $AutoMigrate),
-    '--env', ('Kukulcan__Database__Migration__SeedDataOnStartup=' + $SeedData),
-    '--env', ('Jwt__SecretKey=' + $JwtSecret),
-    '--env', ('Jwt__Issuer=' + $JwtIssuer),
-    '--env', ('Jwt__Audience=' + $JwtAudience),
-    '--env', ('ConnectionStrings__Redis=' + $RedisConnection),
-    $ImageName
-)
-
-& docker @RunArguments *> $null
-if ($LASTEXITCODE -ne 0) {
-    $Code = $LASTEXITCODE
-    Write-Host "[ERROR] docker run failed (exit code $Code)." -ForegroundColor Red
-    Write-Host '[ERROR] Container logs:'
-    & docker logs $ContainerName
-    exit $Code
-}
-
-Step 'Waiting for liveness endpoint.'
-$LiveUrl = 'http://127.0.0.1:' + $HttpPort + '/health/live'
-$LiveOk = $false
-for ($Attempt = 1; $Attempt -le 30; $Attempt++) {
+function Prompt-Password([string]$Prompt) {
+    $secure = Read-Host ('  ' + $Prompt) -AsSecureString
+    $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
     try {
-        Invoke-WebRequest -Uri $LiveUrl -UseBasicParsing -TimeoutSec 2 | Out-Null
-        $LiveOk = $true
-        Write-Host "      Liveness is UP (attempt $Attempt/30)."
-        break
-    } catch {
-        Write-Host "      Waiting... ($Attempt/30)"
-        Start-Sleep -Seconds 2
+        return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
+    }
+    finally {
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
+        $secure.Dispose()
     }
 }
-if (-not $LiveOk) {
-    Write-Host '[ERROR] /health/live did not become available.' -ForegroundColor Red
-    Write-Host '[ERROR] Container logs:'
-    & docker logs $ContainerName
+
+function Prompt-YesNo([string]$Prompt, [string]$Default) {
+    $value = Read-Host ('  ' + $Prompt + ' [' + $Default + ']')
+    if ([string]::IsNullOrWhiteSpace($value)) { $value = $Default }
+
+    switch ($value.ToUpperInvariant()) {
+        'Y' { return 'true' }
+        'YES' { return 'true' }
+        'N' { return 'false' }
+        'NO' { return 'false' }
+        default { Fail 'Please answer Y or N.' }
+    }
+}
+
+function Invoke-Docker([string[]]$Arguments) {
+    & docker @script:DOCKER_ARGS @Arguments
+    if ($LASTEXITCODE -ne 0) {
+        Fail ('Docker command failed (exit code ' + $LASTEXITCODE + ').')
+    }
+}
+
+function Get-DockerOutput([string[]]$Arguments) {
+    $output = & docker @script:DOCKER_ARGS @Arguments
+    if ($LASTEXITCODE -ne 0) {
+        Fail ('Docker command failed (exit code ' + $LASTEXITCODE + ').')
+    }
+    return ($output -join [Environment]::NewLine).Trim()
+}
+
+function Test-SemVerGreater([string]$Left, [string]$Right) {
+    $l = $Left.Split('.')
+    $r = $Right.Split('.')
+
+    if ([int]$l[0] -ne [int]$r[0]) {
+        return ([int]$l[0] -gt [int]$r[0])
+    }
+    if ([int]$l[1] -ne [int]$r[1]) {
+        return ([int]$l[1] -gt [int]$r[1])
+    }
+    return ([int]$l[2] -gt [int]$r[2])
+}
+
+function Get-LatestDockerHubVersion {
+    $uri = "https://registry.hub.docker.com/v2/repositories/$script:IMAGE_REPOSITORY/tags?ordering=last_updated&page_size=100"
+
+    try {
+        $response = Invoke-RestMethod -Uri $uri -Method Get
+    }
+    catch {
+        Fail ('Unable to query Docker Hub for ' + $script:IMAGE_REPOSITORY + '. ' + $_.Exception.Message)
+    }
+
+    $latest = $null
+    foreach ($tag in $response.results) {
+        if ($tag.name -match '^\d+\.\d+\.\d+$') {
+            if ($null -eq $latest -or (Test-SemVerGreater $tag.name $latest)) {
+                $latest = $tag.name
+            }
+        }
+    }
+
+    if ($null -eq $latest) {
+        Fail 'No semantic version tag (x.y.z) was found on Docker Hub.'
+    }
+
+    return $latest
+}
+
+try {
+    Write-Host '========================================================'
+    Write-Host ' KUKULCAN.SharedKernel.I18N Docker Deployment'
+    Write-Host '========================================================'
+
+    Write-Host ''
+    Write-Host 'Docker server'
+    $DOCKER_SERVER = Prompt-Default 'Docker server (local or tcp://host:port)' 'local'
+
+    $DOCKER_ARGS = @()
+    $HEALTH_HOST = '127.0.0.1'
+
+    if ($DOCKER_SERVER -in @('', 'local', 'localhost')) {
+        $DOCKER_SERVER = 'local'
+    }
+    elseif ($DOCKER_SERVER -match '^tcp://([^/:]+):([0-9]+)$') {
+        $DOCKER_ARGS = @('--host', $DOCKER_SERVER)
+        $HEALTH_HOST = $Matches[1]
+    }
+    else {
+        Fail "Use 'local' or a Docker endpoint in the form tcp://host:port."
+    }
+
+    Write-Host ''
+    Write-Host 'Docker'
+    if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+        Fail 'Docker CLI is not available in PATH.'
+    }
+
+    $null = & docker @DOCKER_ARGS info 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Fail 'Docker server is not accessible.'
+    }
+    Write-Host '  Docker connection: OK'
+
+    Write-Host ''
+    Write-Host 'Container'
+    $CONTAINER_EXISTS = $false
+    $CURRENT_IMAGE = $null
+    $CURRENT_VERSION = $null
+
+    $null = & docker @DOCKER_ARGS container inspect $CONTAINER_NAME 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        $CONTAINER_EXISTS = $true
+        $CURRENT_IMAGE = Get-DockerOutput @('inspect', '-f', '{{.Config.Image}}', $CONTAINER_NAME)
+        if ($CURRENT_IMAGE -match ':([0-9]+\.[0-9]+\.[0-9]+)$') {
+            $CURRENT_VERSION = $Matches[1]
+            Write-Host ('  Container: ' + $CONTAINER_NAME)
+            Write-Host ('  Current image: ' + $CURRENT_IMAGE)
+            Write-Host ('  Current version: ' + $CURRENT_VERSION)
+        }
+        else {
+            Write-Host ('  Container: ' + $CONTAINER_NAME)
+            Write-Host ('  Current image: ' + $CURRENT_IMAGE)
+            Write-Host '  Current version: unknown'
+        }
+    }
+    else {
+        Write-Host ('  Container ' + $CONTAINER_NAME + ' does not exist.')
+    }
+
+    Write-Host ''
+    Write-Host 'Docker Hub'
+    $LATEST_VERSION = Get-LatestDockerHubVersion
+    Write-Host ('  Latest version: ' + $LATEST_VERSION)
+
+    if (-not $CONTAINER_EXISTS) {
+        $ACTION = 'create'
+    }
+    elseif ([string]::IsNullOrWhiteSpace($CURRENT_VERSION)) {
+        $ACTION = 'update'
+    }
+    elseif (Test-SemVerGreater $LATEST_VERSION $CURRENT_VERSION) {
+        $ACTION = 'update'
+    }
+    else {
+        $ACTION = 'none'
+    }
+
+    if ($ACTION -eq 'none') {
+        Write-Host ''
+        Write-Host 'Update'
+        Write-Host ('  Current version: ' + $CURRENT_VERSION)
+        Write-Host ('  Latest version:  ' + $LATEST_VERSION)
+        Write-Host '  No update required.'
+
+        $running = Get-DockerOutput @('inspect', '-f', '{{.State.Running}}', $CONTAINER_NAME)
+        if ($running -eq 'true') {
+            Write-Host '  Container is already running.'
+        }
+        else {
+            Write-Host '  Container is stopped; it has not been started because no update is required.'
+        }
+        return
+    }
+
+    Write-Host ''
+    Write-Host 'Database (PostgreSQL)'
+    $DB_HOST = Prompt-Default 'PostgreSQL host' 'mypostgres'
+    $DB_PORT = Prompt-Default 'PostgreSQL port' '5432'
+    $DB_NAME = Prompt-Default 'PostgreSQL database' 'Atlas'
+    $DB_USER = Prompt-Required 'PostgreSQL user'
+    $DB_PASSWORD = Prompt-Password 'PostgreSQL password'
+
+    Write-Host ''
+    Write-Host 'Docker configuration'
+    $NETWORK_NAME = Prompt-Default 'Docker network' 'kukulcan-local'
+    $HTTP_PORT = Prompt-Default 'HTTP port' '8080'
+    $AUTO_MIGRATE = Prompt-YesNo 'Enable automatic migrations' 'Y'
+    $SEED_DATA = Prompt-YesNo 'Enable seed data' 'Y'
+    $REDIS_CONNECTION = Prompt-Default 'Redis connection (empty to disable)' ''
+
+    Write-Host ''
+    Write-Host 'Application security'
+    $JWT_ISSUER = Prompt-Default 'JWT issuer' 'ATLAS'
+    $JWT_AUDIENCE = Prompt-Default 'JWT audience' 'ATLAS.i18n'
+
+    Write-Host '  Generating JWT secret...'
+    # Linux/macOS use: JWT_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
+    if (Get-Command openssl -ErrorAction SilentlyContinue) {
+        $JWT_SECRET = ((& openssl rand -base64 48) -join '').Trim()
+    }
+    else {
+        $bytes = New-Object byte[] 48
+        [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+        $JWT_SECRET = [Convert]::ToBase64String($bytes)
+    }
+
+    if ($JWT_SECRET.Length -lt 32) {
+        Fail 'Generated JWT secret is too short.'
+    }
+
+    $ConnectionPassword = $DB_PASSWORD.Replace('"', '""')
+    $ConnectionUser = $DB_USER.Replace('"', '""')
+    $ConnectionHost = $DB_HOST.Replace('"', '""')
+    $ConnectionPort = $DB_PORT.Replace('"', '""')
+    $ConnectionDatabase = $DB_NAME.Replace('"', '""')
+    $Quote = [char]34
+    $CONNECTION_STRING = 'Host=' + $Quote + $ConnectionHost + $Quote +
+        ';Port=' + $Quote + $ConnectionPort + $Quote +
+        ';Database=' + $Quote + $ConnectionDatabase + $Quote +
+        ';Username=' + $Quote + $ConnectionUser + $Quote +
+        ';Password=' + $Quote + $ConnectionPassword + $Quote
+
+    Write-Host ''
+    Write-Host 'Docker network'
+    $null = & docker @DOCKER_ARGS network inspect $NETWORK_NAME 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host ('  Network ' + $NETWORK_NAME + ' already exists.')
+    }
+    else {
+        Invoke-Docker @('network', 'create', $NETWORK_NAME)
+        Write-Host ('  Network ' + $NETWORK_NAME + ' created.')
+    }
+
+    Write-Host ''
+    Write-Host 'Image'
+    $TARGET_IMAGE = $IMAGE_REPOSITORY + ':' + $LATEST_VERSION
+    Invoke-Docker @('pull', $TARGET_IMAGE)
+    Write-Host ('  Pulled ' + $TARGET_IMAGE)
+
+    Write-Host ''
+    Write-Host 'Container'
+    if ($ACTION -eq 'update') {
+        $oldVersion = if ([string]::IsNullOrWhiteSpace($CURRENT_VERSION)) { 'unknown' } else { $CURRENT_VERSION }
+        Write-Host ('  Updating ' + $CONTAINER_NAME + ': ' + $oldVersion + ' -> ' + $LATEST_VERSION)
+        Invoke-Docker @('rm', '--force', $CONTAINER_NAME)
+    }
+    else {
+        Write-Host ('  Creating ' + $CONTAINER_NAME + ' at version ' + $LATEST_VERSION)
+    }
+
+    $runArguments = @(
+        'run', '--detach',
+        '--name', $CONTAINER_NAME,
+        '--network', $NETWORK_NAME,
+        '--publish', ($HTTP_PORT + ':8080'),
+        '--env', 'ASPNETCORE_HTTP_PORTS=8080',
+        '--env', 'Kukulcan__Database__Provider=PostgresSql',
+        '--env', ('Kukulcan__Database__ConnectionString=' + $CONNECTION_STRING),
+        '--env', ('Kukulcan__Database__Migration__AutoMigrateOnStartup=' + $AUTO_MIGRATE),
+        '--env', ('Kukulcan__Database__Migration__SeedDataOnStartup=' + $SEED_DATA),
+        '--env', ('Jwt__SecretKey=' + $JWT_SECRET),
+        '--env', ('Jwt__Issuer=' + $JWT_ISSUER),
+        '--env', ('Jwt__Audience=' + $JWT_AUDIENCE),
+        '--env', ('ConnectionStrings__Redis=' + $REDIS_CONNECTION),
+        $TARGET_IMAGE
+    )
+
+    $null = & docker @DOCKER_ARGS @runArguments
+    if ($LASTEXITCODE -ne 0) {
+        Fail ('Unable to start container ' + $CONTAINER_NAME + '.')
+    }
+
+    Write-Host '  Container started.'
+
+    Write-Host ''
+    Write-Host 'Health'
+    $LIVE_URL = 'http://' + $HEALTH_HOST + ':' + $HTTP_PORT + '/health/live'
+    $READY_URL = 'http://' + $HEALTH_HOST + ':' + $HTTP_PORT + '/health/ready'
+
+    $liveOk = $false
+    for ($attempt = 1; $attempt -le 30; $attempt++) {
+        try {
+            Invoke-WebRequest -Uri $LIVE_URL -UseBasicParsing -TimeoutSec 2 | Out-Null
+            $liveOk = $true
+            break
+        }
+        catch {
+            Start-Sleep -Seconds 2
+        }
+    }
+
+    if (-not $liveOk) {
+        Fail ('/health/live did not become available. Check: docker logs ' + $CONTAINER_NAME)
+    }
+
+    $readyOk = $false
+    for ($attempt = 1; $attempt -le 30; $attempt++) {
+        try {
+            Invoke-WebRequest -Uri $READY_URL -UseBasicParsing -TimeoutSec 2 | Out-Null
+            $readyOk = $true
+            break
+        }
+        catch {
+            Start-Sleep -Seconds 2
+        }
+    }
+
+    if (-not $readyOk) {
+        Fail ('/health/ready did not become available. Check: docker logs ' + $CONTAINER_NAME)
+    }
+
+    Write-Host '  /health/live  -> Healthy'
+    Write-Host '  /health/ready -> Healthy'
+    Write-Host '========================================================'
+    Write-Host (' KUKULCAN.SharedKernel.I18N ' + $LATEST_VERSION)
+    if ($ACTION -eq 'update') {
+        Write-Host ' Status: Updated successfully'
+    }
+    else {
+        Write-Host ' Status: Created successfully'
+    }
+    Write-Host '========================================================'
+}
+catch {
+    Write-Host ('[ERROR] ' + $_.Exception.Message) -ForegroundColor Red
     exit 1
 }
-
-Step 'Waiting for readiness endpoint (PostgreSQL).'
-$ReadyUrl = 'http://127.0.0.1:' + $HttpPort + '/health/ready'
-$ReadyOk = $false
-for ($Attempt = 1; $Attempt -le 30; $Attempt++) {
-    try {
-        Invoke-WebRequest -Uri $ReadyUrl -UseBasicParsing -TimeoutSec 2 | Out-Null
-        $ReadyOk = $true
-        Write-Host "      Readiness is UP (attempt $Attempt/30)."
-        break
-    } catch {
-        Write-Host "      Waiting... ($Attempt/30)"
-        Start-Sleep -Seconds 2
-    }
+finally {
+    Cleanup
 }
-if (-not $ReadyOk) {
-    Write-Host '[ERROR] /health/ready did not become available.' -ForegroundColor Red
-    Write-Host '[ERROR] Container logs:'
-    & docker logs $ContainerName
-    exit 1
-}
-
-Write-Host '[100%] Deployment completed successfully.'
-Write-Host ("      API:       http://127.0.0.1:{0}" -f $HttpPort)
-Write-Host "      Liveness:  $LiveUrl"
-Write-Host "      Readiness: $ReadyUrl"
-Write-Host "      Logs:      docker logs -f $ContainerName"
