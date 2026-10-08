@@ -3,7 +3,6 @@ $ErrorActionPreference = 'Stop'
 $envFile = Join-Path $HOME '.config/kukulcan/database.env'
 $dotnetToolsPath = Join-Path $HOME '.dotnet/tools'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$apiProject = 'Source/KUKULCAN.SharedKernel.i18n.API/KUKULCAN.SharedKernel.i18n.API.csproj'
 
 function Read-MaskedPassword {
     $password = [System.Text.StringBuilder]::new()
@@ -136,7 +135,7 @@ Set-Location $repoRoot
 Ensure-EfTool
 
 Write-Host "Ejecutando migraciones EF Core para $provider..."
-& dotnet ef database update --project $migrationProject --startup-project $apiProject --configuration Release
+& dotnet ef database update --project $migrationProject --configuration Release
 
 if ($LASTEXITCODE -ne 0) {
     throw "EF Core database migration failed for provider $provider."
